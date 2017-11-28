@@ -1,0 +1,119 @@
+K 25
+svn:wc:ra_dav:version-url
+V 53
+/svn/!svn/ver/2/trunk/src/org/cloudbus/cloudsim/power
+END
+PowerHostUtilizationHistory.java
+K 25
+svn:wc:ra_dav:version-url
+V 86
+/svn/!svn/ver/2/trunk/src/org/cloudbus/cloudsim/power/PowerHostUtilizationHistory.java
+END
+PowerVmAllocationPolicyAbstract.java
+K 25
+svn:wc:ra_dav:version-url
+V 90
+/svn/!svn/ver/2/trunk/src/org/cloudbus/cloudsim/power/PowerVmAllocationPolicyAbstract.java
+END
+PowerVmAllocationPolicyMigrationLocalRegressionRobust.java
+K 25
+svn:wc:ra_dav:version-url
+V 112
+/svn/!svn/ver/2/trunk/src/org/cloudbus/cloudsim/power/PowerVmAllocationPolicyMigrationLocalRegressionRobust.java
+END
+PowerVmSelectionPolicyMinimumMigrationTime.java
+K 25
+svn:wc:ra_dav:version-url
+V 101
+/svn/!svn/ver/2/trunk/src/org/cloudbus/cloudsim/power/PowerVmSelectionPolicyMinimumMigrationTime.java
+END
+PowerVmAllocationPolicyMigrationLocalRegression.java
+K 25
+svn:wc:ra_dav:version-url
+V 106
+/svn/!svn/ver/2/trunk/src/org/cloudbus/cloudsim/power/PowerVmAllocationPolicyMigrationLocalRegression.java
+END
+PowerVmSelectionPolicyMinimumUtilization.java
+K 25
+svn:wc:ra_dav:version-url
+V 99
+/svn/!svn/ver/2/trunk/src/org/cloudbus/cloudsim/power/PowerVmSelectionPolicyMinimumUtilization.java
+END
+PowerVmAllocationPolicyMigrationMedianAbsoluteDeviation.java
+K 25
+svn:wc:ra_dav:version-url
+V 114
+/svn/!svn/ver/2/trunk/src/org/cloudbus/cloudsim/power/PowerVmAllocationPolicyMigrationMedianAbsoluteDeviation.java
+END
+PowerVmAllocationPolicyMigrationAbstract.java
+K 25
+svn:wc:ra_dav:version-url
+V 99
+/svn/!svn/ver/2/trunk/src/org/cloudbus/cloudsim/power/PowerVmAllocationPolicyMigrationAbstract.java
+END
+PowerVmAllocationPolicyMigrationStaticThreshold.java
+K 25
+svn:wc:ra_dav:version-url
+V 106
+/svn/!svn/ver/2/trunk/src/org/cloudbus/cloudsim/power/PowerVmAllocationPolicyMigrationStaticThreshold.java
+END
+PowerVmSelectionPolicy.java
+K 25
+svn:wc:ra_dav:version-url
+V 81
+/svn/!svn/ver/2/trunk/src/org/cloudbus/cloudsim/power/PowerVmSelectionPolicy.java
+END
+PowerVmSelectionPolicyMaximumCorrelation.java
+K 25
+svn:wc:ra_dav:version-url
+V 99
+/svn/!svn/ver/2/trunk/src/org/cloudbus/cloudsim/power/PowerVmSelectionPolicyMaximumCorrelation.java
+END
+PowerVmAllocationPolicyMigrationInterQuartileRange.java
+K 25
+svn:wc:ra_dav:version-url
+V 109
+/svn/!svn/ver/2/trunk/src/org/cloudbus/cloudsim/power/PowerVmAllocationPolicyMigrationInterQuartileRange.java
+END
+PowerDatacenter.java
+K 25
+svn:wc:ra_dav:version-url
+V 74
+/svn/!svn/ver/2/trunk/src/org/cloudbus/cloudsim/power/PowerDatacenter.java
+END
+PowerHost.java
+K 25
+svn:wc:ra_dav:version-url
+V 68
+/svn/!svn/ver/2/trunk/src/org/cloudbus/cloudsim/power/PowerHost.java
+END
+PowerVmSelectionPolicyRandomSelection.java
+K 25
+svn:wc:ra_dav:version-url
+V 96
+/svn/!svn/ver/2/trunk/src/org/cloudbus/cloudsim/power/PowerVmSelectionPolicyRandomSelection.java
+END
+PowerDatacenterBroker.java
+K 25
+svn:wc:ra_dav:version-url
+V 80
+/svn/!svn/ver/2/trunk/src/org/cloudbus/cloudsim/power/PowerDatacenterBroker.java
+END
+PowerVmAllocationPolicySimple.java
+K 25
+svn:wc:ra_dav:version-url
+V 88
+/svn/!svn/ver/2/trunk/src/org/cloudbus/cloudsim/power/PowerVmAllocationPolicySimple.java
+END
+PowerDatacenterNonPowerAware.java
+K 25
+svn:wc:ra_dav:version-url
+V 87
+/svn/!svn/ver/2/trunk/src/org/cloudbus/cloudsim/power/PowerDatacenterNonPowerAware.java
+END
+PowerVm.java
+K 25
+svn:wc:ra_dav:version-url
+V 66
+/svn/!svn/ver/2/trunk/src/org/cloudbus/cloudsim/power/PowerVm.java
+END

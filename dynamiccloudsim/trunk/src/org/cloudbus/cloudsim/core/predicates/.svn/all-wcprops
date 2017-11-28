@@ -1,0 +1,47 @@
+K 25
+svn:wc:ra_dav:version-url
+V 63
+/svn/!svn/ver/2/trunk/src/org/cloudbus/cloudsim/core/predicates
+END
+PredicateAny.java
+K 25
+svn:wc:ra_dav:version-url
+V 81
+/svn/!svn/ver/2/trunk/src/org/cloudbus/cloudsim/core/predicates/PredicateAny.java
+END
+PredicateNone.java
+K 25
+svn:wc:ra_dav:version-url
+V 82
+/svn/!svn/ver/2/trunk/src/org/cloudbus/cloudsim/core/predicates/PredicateNone.java
+END
+Predicate.java
+K 25
+svn:wc:ra_dav:version-url
+V 78
+/svn/!svn/ver/2/trunk/src/org/cloudbus/cloudsim/core/predicates/Predicate.java
+END
+PredicateType.java
+K 25
+svn:wc:ra_dav:version-url
+V 82
+/svn/!svn/ver/2/trunk/src/org/cloudbus/cloudsim/core/predicates/PredicateType.java
+END
+PredicateNotType.java
+K 25
+svn:wc:ra_dav:version-url
+V 85
+/svn/!svn/ver/2/trunk/src/org/cloudbus/cloudsim/core/predicates/PredicateNotType.java
+END
+PredicateFrom.java
+K 25
+svn:wc:ra_dav:version-url
+V 82
+/svn/!svn/ver/2/trunk/src/org/cloudbus/cloudsim/core/predicates/PredicateFrom.java
+END
+PredicateNotFrom.java
+K 25
+svn:wc:ra_dav:version-url
+V 85
+/svn/!svn/ver/2/trunk/src/org/cloudbus/cloudsim/core/predicates/PredicateNotFrom.java
+END

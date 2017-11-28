@@ -1,0 +1,10 @@
+K 10
+svn:ignore
+V 53
+Thumbs.db
+workflow.png
+.settings
+.project
+.classpath
+
+END

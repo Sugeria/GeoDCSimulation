@@ -1,0 +1,47 @@
+K 25
+svn:wc:ra_dav:version-url
+V 26
+/svn/!svn/ver/11/trunk/lib
+END
+log4j-1.2.17.jar
+K 25
+svn:wc:ra_dav:version-url
+V 43
+/svn/!svn/ver/10/trunk/lib/log4j-1.2.17.jar
+END
+pegasus-4.4.0cvs.jar
+K 25
+svn:wc:ra_dav:version-url
+V 47
+/svn/!svn/ver/10/trunk/lib/pegasus-4.4.0cvs.jar
+END
+cuneiform-core-2.0.0-SNAPSHOT.jar
+K 25
+svn:wc:ra_dav:version-url
+V 60
+/svn/!svn/ver/10/trunk/lib/cuneiform-core-2.0.0-SNAPSHOT.jar
+END
+json-20140107.jar
+K 25
+svn:wc:ra_dav:version-url
+V 44
+/svn/!svn/ver/10/trunk/lib/json-20140107.jar
+END
+commons-math3-3.3.jar
+K 25
+svn:wc:ra_dav:version-url
+V 48
+/svn/!svn/ver/10/trunk/lib/commons-math3-3.3.jar
+END
+flanagan.jar
+K 25
+svn:wc:ra_dav:version-url
+V 38
+/svn/!svn/ver/2/trunk/lib/flanagan.jar
+END
+xercesImpl-2.11.0.jar
+K 25
+svn:wc:ra_dav:version-url
+V 48
+/svn/!svn/ver/10/trunk/lib/xercesImpl-2.11.0.jar
+END
