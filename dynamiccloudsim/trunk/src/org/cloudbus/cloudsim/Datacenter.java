@@ -56,6 +56,11 @@ public class Datacenter extends SimEntity {
 
 	/** The scheduling interval. */
 	private double schedulingInterval;
+	
+	private double uplink;
+	private double downlink;
+	private double avaUplink;
+	private double avaDownlink;
 
 	/**
 	 * Allocates a new PowerDatacenter object.
@@ -1111,7 +1116,7 @@ public class Datacenter extends SimEntity {
 	 * 
 	 * @return the characteristics
 	 */
-	protected DatacenterCharacteristics getCharacteristics() {
+	public DatacenterCharacteristics getCharacteristics() {
 		return characteristics;
 	}
 
@@ -1250,5 +1255,44 @@ public class Datacenter extends SimEntity {
 	protected void setSchedulingInterval(double schedulingInterval) {
 		this.schedulingInterval = schedulingInterval;
 	}
+	
+	public double getUplink() {
+		return uplink;
+	}
+	
+	public double getDownlink() {
+		return downlink;
+	}
+	
+	public void setUplink(double uplink) {
+		this.uplink = uplink;
+		this.avaUplink = uplink;
+		this.characteristics.setUplink(uplink);
+	}
+	
+	public void setDownlink(double downlink) {
+		this.downlink = downlink;
+		this.avaDownlink = downlink;
+		this.characteristics.setDownlink(downlink);
+	}
+	
+	public double getAvaUplink() {
+		return avaUplink;
+	}
+	
+	public double getAvaDownlink() {
+		return avaDownlink;
+	}
+	
+	public void setAvaUplink(double avaUplink) {
+		this.avaUplink = avaUplink;
+	}
+	
+	public void setAvaDownlink(double avaDownlink) {
+		this.avaDownlink = avaDownlink;
+	}
+	
+	
+	
 
 }

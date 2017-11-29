@@ -186,9 +186,16 @@ public class LATEScheduler extends AbstractWorkflowScheduler {
 		nSucceededTasksPerVm.put(vm, nSucceededTasksPerVm.get(vm)
 				+ progressScores.get(task));
 	}
+	
 
 	@Override
 	public void terminate() {
+	}
+
+	@Override
+	public Queue<Task> getTaskQueue() {
+		// TODO Auto-generated method stub
+		return taskQueue;
 	}
 
 	@Override

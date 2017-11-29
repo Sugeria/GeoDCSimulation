@@ -1,6 +1,7 @@
 package de.huberlin.wbi.dcs.workflow.scheduler;
 
 import java.util.Collection;
+import java.util.Queue;
 
 import org.cloudbus.cloudsim.Vm;
 
@@ -19,6 +20,8 @@ public interface WorkflowScheduler {
 	public void taskFailed(Task task, Vm vm);
 
 	public boolean tasksRemaining();
+	
+	public Queue<Task> getTaskQueue();
 
 	public void terminate();
 	

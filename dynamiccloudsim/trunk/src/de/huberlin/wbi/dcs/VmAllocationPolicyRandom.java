@@ -81,10 +81,18 @@ public class VmAllocationPolicyRandom extends VmAllocationPolicy {
 				if (indexes.isEmpty()) {
 					break;
 				}
-				
-				int randomHostIndex = indexes.get((int)(numGen.nextDouble() * indexes.size()));
+				int randomHostIndex;
+				Host host;
+				while(true) {
+					
+					randomHostIndex = indexes.get((int)(numGen.nextDouble() * indexes.size()));
 
-				Host host = getHostList().get(randomHostIndex);
+					host = getHostList().get(randomHostIndex);
+					if (!host.hostAllocated()) {
+						break;
+					}
+				}
+				
 				result = host.vmCreate(vm);
 
 				if (result) { // if vm were succesfully created in the host

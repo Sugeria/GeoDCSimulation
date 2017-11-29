@@ -77,6 +77,14 @@ public class DatacenterCharacteristics {
 
 	/** The cost per bw. */
 	private double costPerBw;
+	
+	private double uplink;
+	private double downlink;
+	
+	private double likelihoodOfFailure;
+	private double runtimeFactorIncaseOfFailure;
+	private double likelihoodOfDCFailure;
+	private int numberOfVM;
 
 	/**
 	 * Allocates a new DatacenterCharacteristics object. If the time zone is invalid, then by
@@ -437,6 +445,57 @@ public class DatacenterCharacteristics {
 	public int getId() {
 		return id;
 	}
+	
+	
+	public double getUplink() {
+		return uplink;
+	}
+	
+	public double getDownlink() {
+		return downlink;
+	}
+	
+	public void setUplink(double uplink) {
+		this.uplink = uplink;
+	}
+	
+	public void setDownlink(double downlink) {
+		this.downlink = downlink;
+	}
+	
+	public double getLikelihoodOfFailure() {
+		return likelihoodOfFailure;
+	}
+	
+	public void setLikelihoodOfFailure(double likelihoodOfFailure) {
+		this.likelihoodOfFailure = likelihoodOfFailure;
+	}
+	
+	public double getRuntimeFactorIncaseOfFailure() {
+		return runtimeFactorIncaseOfFailure;
+	}
+	
+	public void setRuntimeFactorIncaseOfFailure(double runtimeFactorIncaseOfFailure) {
+		this.runtimeFactorIncaseOfFailure = runtimeFactorIncaseOfFailure;
+	}
+	
+	public double getLikelihoodOfDCFailure() {
+		return likelihoodOfDCFailure;
+	}
+	
+	public void setLikelihoodOfDCFailure(double likelihoodOfDCFailure) {
+		this.likelihoodOfDCFailure = likelihoodOfDCFailure;
+	}
+	
+	public int getNumberOfVM() {
+		return numberOfVM;
+	}
+	
+	public void setNumberOfVM(int numberOfVM) {
+		this.numberOfVM = numberOfVM;
+	}
+	
+	
 
 	/**
 	 * Sets the id.

@@ -17,12 +17,19 @@ import org.cloudbus.cloudsim.core.CloudSim;
 import org.cloudbus.cloudsim.core.CloudSimTags;
 import org.cloudbus.cloudsim.core.SimEvent;
 
+import com.mathworks.toolbox.javabuilder.MWClassID;
+import com.mathworks.toolbox.javabuilder.MWComplexity;
+import com.mathworks.toolbox.javabuilder.MWNumericArray;
+import com.sun.javafx.sg.prism.web.NGWebView;
+
+import EDU.oswego.cs.dl.util.concurrent.FJTask.Par;
 import de.huberlin.wbi.dcs.DynamicHost;
 import de.huberlin.wbi.dcs.DynamicVm;
 import de.huberlin.wbi.dcs.examples.Parameters;
 import de.huberlin.wbi.dcs.workflow.DataDependency;
 import de.huberlin.wbi.dcs.workflow.Task;
 import de.huberlin.wbi.dcs.workflow.Workflow;
+import taksassign.TaskAssign;
 
 public abstract class AbstractWorkflowScheduler extends DatacenterBroker
 		implements WorkflowScheduler {
@@ -30,13 +37,16 @@ public abstract class AbstractWorkflowScheduler extends DatacenterBroker
 	private List<Workflow> workflows;
 	private Map<Integer, Vm> vms;
 	private int taskSlotsPerVm;
-	private Queue<Vm> idleTaskSlots;
+	//private Queue<Vm> idleTaskSlots;
+	private Map<Integer, LinkedList<Vm>> idleTaskSlotsOfDC;
 	private double runtime;
 
 	// two collections of tasks, which are currently running;
 	// note that the second collections is a subset of the first collection
 	private Map<Integer, Task> tasks;
 	private Map<Integer, Task> speculativeTasks;
+	
+	
 
 	public AbstractWorkflowScheduler(String name, int taskSlotsPerVm)
 			throws Exception {
@@ -44,10 +54,21 @@ public abstract class AbstractWorkflowScheduler extends DatacenterBroker
 		workflows = new ArrayList<>();
 		vms = new HashMap<>();
 		this.taskSlotsPerVm = taskSlotsPerVm;
-		idleTaskSlots = new LinkedList<>();
+		//idleTaskSlots = new LinkedList<>();
+		idleTaskSlotsOfDC = new HashMap<>();
 		tasks = new HashMap<>();
 		speculativeTasks = new HashMap<>();
+		
+		
 	}
+	
+	
+	
+	
+	
+	
+	
+	
 
 	public List<Workflow> getWorkflows() {
 		return workflows;
@@ -60,6 +81,10 @@ public abstract class AbstractWorkflowScheduler extends DatacenterBroker
 	public void submitWorkflow(Workflow workflow) {
 		workflows.add(workflow);
 	}
+	
+	public Map<Integer, LinkedList<Vm>> getIdleTaskSlotsOfDC(){
+		return idleTaskSlotsOfDC;
+	}
 
 	private void submitTask(Task task, Vm vm) {
 		Log.printLine(CloudSim.clock() + ": " + getName() + ": VM # "
@@ -67,9 +92,9 @@ public abstract class AbstractWorkflowScheduler extends DatacenterBroker
 				+ task.getCloudletId() + " \"" + task.getName() + " "
 				+ task.getParams() + " \"");
 		task.setVmId(vm.getId());
-		if (Parameters.numGen.nextDouble() < Parameters.likelihoodOfFailure[task.getAssignmentDCId()-2]) {
+		if (Parameters.numGen.nextDouble() < getLikelihoodOfFailureOfDC().get(task.getAssignmentDCId())) {
 			task.setScheduledToFail(true);
-			task.setCloudletLength((long) (task.getCloudletLength() * Parameters.runtimeFactorInCaseOfFailure[task.getAssignmentDCId()-2]));
+			task.setCloudletLength((long) (task.getCloudletLength() * getRuntimeFactorIncaseOfFailureOfDC().get(task.getAssignmentDCId())));
 		} else {
 			task.setScheduledToFail(false);
 		}
@@ -83,9 +108,9 @@ public abstract class AbstractWorkflowScheduler extends DatacenterBroker
 				+ task.getCloudletId() + " \"" + task.getName() + " "
 				+ task.getParams() + " \"");
 		task.setVmId(vm.getId());
-		if (Parameters.numGen.nextDouble() < Parameters.likelihoodOfFailure[task.getAssignmentDCId()-2]) {
+		if (Parameters.numGen.nextDouble() < getLikelihoodOfFailureOfDC().get(task.getAssignmentDCId())) {
 			task.setScheduledToFail(true);
-			task.setCloudletLength((long) (task.getCloudletLength() * Parameters.runtimeFactorInCaseOfFailure[task.getAssignmentDCId()-2]));
+			task.setCloudletLength((long) (task.getCloudletLength() * getRuntimeFactorIncaseOfFailureOfDC().get(task.getAssignmentDCId())));
 		} else {
 			task.setScheduledToFail(false);
 		}
@@ -105,7 +130,14 @@ public abstract class AbstractWorkflowScheduler extends DatacenterBroker
 		for (Vm vm : getVmsCreatedList()) {
 			vms.put(vm.getId(), vm);
 			for (int i = 0; i < getTaskSlotsPerVm(); i++) {
-				idleTaskSlots.add(vm);
+				Integer dcId = getVmsToDatacentersMap().get(vm.getId());
+				if (!getIdleTaskSlotsOfDC().containsKey(dcId)) {
+					getIdleTaskSlotsOfDC().put(dcId, new LinkedList<>());
+					getIdleTaskSlotsOfDC().get(dcId).add(vm);
+				}else {
+					getIdleTaskSlotsOfDC().get(dcId).add(vm);
+				}
+				//idleTaskSlots.add(vm);
 			}
 		}
 		for (Workflow workflow : workflows) {
@@ -123,6 +155,86 @@ public abstract class AbstractWorkflowScheduler extends DatacenterBroker
 	protected void submitTasks() {
 		Queue<Vm> taskSlotsKeptIdle = new LinkedList<>();
 		// compute the task assignment among datacenters for ready tasks
+		TaskAssign taskassign = null;
+		taskassign = new TaskAssign();
+		Integer numberOfTask = getTaskQueue().size();
+		int[] numberOfDataOfTask = new int[numberOfTask];
+		int maxDatanumber = 1;
+		for (int index = 0; index < numberOfTask; index++) {
+			numberOfDataOfTask[index] = (int)(Math.random()*Parameters.ubOfData);
+			if (numberOfDataOfTask[index]>maxDatanumber) {
+				maxDatanumber = numberOfDataOfTask[index];
+			}
+		}
+		MWNumericArray tasknum = null;
+		MWNumericArray dcnum = null;
+		MWNumericArray probArray = null;
+		MWNumericArray allDuraArray = null;
+		MWNumericArray data = null;
+		MWNumericArray datapos = null;
+		MWNumericArray bandwidth = null;
+		MWNumericArray SlotArray = null;
+		MWNumericArray UpArray = null;
+		MWNumericArray DownArray = null;
+		MWNumericArray iteration_bound = null;
+		Object[] result = null;	/* Stores the result */
+		MWNumericArray x = null;	/* Location of minimal value */
+		MWNumericArray flag = null;	/* solvable flag */
+		
+		int[] dims = {1,1};
+		tasknum = MWNumericArray.newInstance(dims, MWClassID.INT64,MWComplexity.REAL);
+		dcnum = MWNumericArray.newInstance(dims, MWClassID.INT64, MWComplexity.REAL);
+		iteration_bound = MWNumericArray.newInstance(dims, MWClassID.INT64, MWComplexity.REAL);
+		dims[0] = Parameters.numberOfDC;
+		dims[1] = 4;
+		probArray = MWNumericArray.newInstance(dims, MWClassID.DOUBLE, MWComplexity.REAL);
+		dims[0] = numberOfTask * Parameters.numberOfDC;
+		allDuraArray = MWNumericArray.newInstance(dims, MWClassID.DOUBLE, MWComplexity.REAL);
+		dims[0] = 1;
+		dims[1] = numberOfTask;
+		data = MWNumericArray.newInstance(dims, MWClassID.INT64, MWComplexity.REAL);
+		dims[0] = numberOfTask;
+		dims[1] = maxDatanumber;
+		datapos = MWNumericArray.newInstance(dims, MWClassID.INT64, MWComplexity.REAL);
+		dims[0] = numberOfTask * Parameters.numberOfDC;
+		bandwidth = MWNumericArray.newInstance(dims, MWClassID.DOUBLE, MWComplexity.REAL);
+		dims[0] = 1;
+		dims[1] = Parameters.numberOfDC;
+		SlotArray = MWNumericArray.newInstance(dims, MWClassID.INT64, MWComplexity.REAL);
+		UpArray = MWNumericArray.newInstance(dims, MWClassID.DOUBLE, MWComplexity.REAL);
+		DownArray = MWNumericArray.newInstance(dims, MWClassID.DOUBLE, MWComplexity.REAL);
+		
+		
+		// set value to the above arguments
+		
+		tasknum.set(1, numberOfTask);
+		dcnum.set(1, Parameters.numberOfDC);
+		iteration_bound.set(1, Parameters.boundOfIter);
+		
+		//probArray
+		for (int dcindex = 0; dcindex < Parameters.numberOfDC; dcindex++) {
+			for (int iterm = 0; iterm < 4; iterm++) {
+				int[] pos = {dcindex,iterm};
+				probArray.set(pos,1);
+			}
+		}
+		
+		//allDuraArray
+		for (int xindex = 0; xindex < numberOfTask*Parameters.numberOfDC; xindex++) {
+			for (int iterm = 0; iterm < 4; iterm++) {
+				int[] pos = {xindex,iterm};
+				allDuraArray.set(pos,1);
+			}
+		}
+		
+		
+		result = taskassign.command(11, tasknum,dcnum,probArray,allDuraArray,data,datapos,bandwidth,SlotArray,UpArray,DownArray,iteration_bound);
+		x = (MWNumericArray)result[0];
+		double[] xd = x.getDoubleData();
+		flag = (MWNumericArray)result[1];
+		int flagi = flag.getInt();
+		
+		
 		
 		while (tasksRemaining() && !idleTaskSlots.isEmpty()) {
 			Vm vm = idleTaskSlots.remove();

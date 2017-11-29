@@ -55,6 +55,9 @@ public class Host {
 
 	/** The datacenter where the host is placed. */
 	private Datacenter datacenter;
+	
+	/** Whether the host already have one VM. */
+	private boolean hasVM;
 
 	/**
 	 * Instantiates a new host.
@@ -81,6 +84,8 @@ public class Host {
 
 		setPeList(peList);
 		setFailed(false);
+		setHasVM(false);
+		
 	}
 
 	/**
@@ -231,6 +236,7 @@ public class Host {
 		setStorage(getStorage() - vm.getSize());
 		getVmList().add(vm);
 		vm.setHost(this);
+		setHasVM(true);
 		return true;
 	}
 
@@ -283,6 +289,14 @@ public class Host {
 		getRamProvisioner().deallocateRamForAllVms();
 		getBwProvisioner().deallocateBwForAllVms();
 		getVmScheduler().deallocatePesForAllVms();
+	}
+	
+	public boolean hostAllocated() {
+		return hasVM;
+	}
+	
+	public void setHasVM(boolean hasVM) {
+		this.hasVM = hasVM;
 	}
 
 	/**

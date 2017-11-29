@@ -2,6 +2,7 @@ package de.huberlin.wbi.dcs.examples;
 
 import java.util.Random;
 
+import org.apache.commons.collections15.functors.ForClosure;
 import org.cloudbus.cloudsim.distributions.ContinuousDistribution;
 import org.cloudbus.cloudsim.distributions.ExponentialDistr;
 import org.cloudbus.cloudsim.distributions.GammaDistr;
@@ -13,6 +14,7 @@ import org.cloudbus.cloudsim.distributions.WeibullDistr;
 import org.cloudbus.cloudsim.distributions.ZipfDistr;
 
 import de.huberlin.wbi.dcs.distributions.NormalDistribution;
+import edu.isi.pegasus.planner.namespace.aggregator.Sum;
 
 public class Parameters {
 
@@ -25,27 +27,21 @@ public class Parameters {
 	public static long iopsPerPe = 20 * 1024;
 
 	public static int nOpteron270 = 200;
-	public static int nCusPerCoreOpteron270 = 2;
+	public static int nCusPerCoreOpteron270 = 1;
 	public static int nCoresOpteron270 = 4;
 	public static int mipsPerCoreOpteron270 = 174;
 
 	public static int nOpteron2218 = 200;
-	public static int nCusPerCoreOpteron2218 = 2;
+	public static int nCusPerCoreOpteron2218 = 1;
 	public static int nCoresOpteron2218 = 4;
 	public static int mipsPerCoreOpteron2218 = 247;
 
 	public static int nXeonE5430 = 100;
-	public static int nCusPerCoreXeonE5430 = 2;
+	public static int nCusPerCoreXeonE5430 = 1;
 	public static int nCoresXeonE5430 = 8;
 	public static int mipsPerCoreXeonE5430 = 355;
 
-	// vm params
-	public static int nVms = 8;
-	public static int taskSlotsPerVm = 1;
-
-	public static double numberOfCusPerPe = 1;
-	public static int numberOfPes = 1;
-	public static int ram = (int) (1.7 * 1024);
+	public static int machineType = 3;
 
 	public enum Experiment {
 		MONTAGE_TRACE_1, MONTAGE_TRACE_12, MONTAGE_25, MONTAGE_1000, EPIGENOMICS_997, CYBERSHAKE_1000, ALIGNMENT_TRACE, CUNEIFORM_VARIANT_CALL, HETEROGENEOUS_TEST_WORKFLOW
@@ -183,11 +179,79 @@ public class Parameters {
 	public static int bwNoisePopulation = 0;
 
 	// straggler parameters
-	public static double likelihoodOfStraggler = 0.015;
-	public static double stragglerPerformanceCoefficient = 0.5;
-
+	public static double[] likelihoodOfStragglerOfDC = {0.015,0.015};
+	public static double[] stragglerPerformanceCoefficientOfDC = {0.5,0.5};
+	
+	public double likelihoodOfStraggler;
+	public double stragglerPerformanceCoefficient;
+	
+	public void setLikelihoodOfStraggler(double likelihoodOfStraggler) {
+		this.likelihoodOfStraggler = likelihoodOfStraggler;
+	}
+	
+	public double getLikelihoodOfStraggler() {
+		return likelihoodOfStraggler;
+	}
+	
+	public void setStragglerPerformanceCoefficient(double stragglerPerformanceCoefficient) {
+		this.stragglerPerformanceCoefficient = stragglerPerformanceCoefficient;
+	}
+	
+	public double getStragglerPerformanceCoefficient() {
+		return stragglerPerformanceCoefficient;
+	}
+	
+	
+	
+	
 	// datacenter number
 	public static int numberOfDC = 2;
+	
+	
+	// number of machineType in each datacenter
+	public static int[][] nOpteronOfMachineTypeOfDC = {{200,200,100},{200,200,100}};
+	
+	
+	
+	
+	// Information of machineType
+	
+	// datacenter params
+	// Kb / s
+	public static long[] bwpsPerPeOfMachineType = {256,256,256};
+	// Kb / s
+	public static long[] iopsPerPeOfMachineType = {20 * 1024, 20 * 1024, 20 * 1024};
+
+	public static int[] nCusPerCoreOpteronOfMachineType = {1,1,1};
+	public static int[] nCoresOpteronOfMachineType = {4,4,8};
+	public static int[] mipsPerCoreOpteronOfMachineType = {174,247,355};
+
+	
+	// performance baseline of datacenter
+	public static double[] MIPSbaselineOfDC = getMIPSBaseline();
+	public static double[] bwBaselineOfDC = getBwBaseline();
+	public static double[] ioBaselineOfDC = getIoBaseline();
+	
+	
+	
+	// upperbound of inputdata
+	public static int ubOfData = 10;
+	
+	//iteration_bound
+	public static int boundOfIter = 50;
+	
+	
+	// number of vms of datacenter
+	public static int[] numberOfVMperDC = {200,200};
+	
+	// vm params
+	
+	public static int nVms = sumOfVM(numberOfVMperDC);
+	public static int taskSlotsPerVm = 1;
+
+	public static double numberOfCusPerPe = 1;
+	public static int numberOfPes = 1;
+	public static int ram = (int) (1.7 * 1024);
 	
 	// uplink of datacenter
 	public static double[] uplinkOfDC = {500,500};
@@ -247,80 +311,142 @@ public class Parameters {
 		}
 		return dist;
 	}
-
-	public static void parseParameters(String[] args) {
-
-		for (int i = 0; i < args.length; i++) {
-			if (args[i].compareTo("-" + "outputVmPerformanceLogs") == 0) {
-				outputVmPerformanceLogs = Boolean.valueOf(args[++i]);
-			}
-			if (args[i].compareTo("-" + "scheduler") == 0) {
-				scheduler = Scheduler.valueOf(args[++i]);
-			}
-			if (args[i].compareTo("-" + "numberOfRuns") == 0) {
-				numberOfRuns = Integer.valueOf(args[++i]);
-			}
-			if (args[i].compareTo("-" + "heterogeneityCV") == 0) {
-				cpuHeterogeneityCV = ioHeterogeneityCV = bwHeterogeneityCV = Double
-						.valueOf(args[++i]);
-			}
-			if (args[i].compareTo("-" + "cpuHeterogeneityCV") == 0) {
-				cpuHeterogeneityCV = Double.valueOf(args[++i]);
-			}
-			if (args[i].compareTo("-" + "ioHeterogeneityCV") == 0) {
-				ioHeterogeneityCV = Double.valueOf(args[++i]);
-			}
-			if (args[i].compareTo("-" + "bwHeterogeneityCV") == 0) {
-				bwHeterogeneityCV = Double.valueOf(args[++i]);
-			}
-			if (args[i].compareTo("-" + "baselineChangesPerHour") == 0) {
-				cpuBaselineChangesPerHour = ioBaselineChangesPerHour = bwBaselineChangesPerHour = Double
-						.valueOf(args[++i]);
-			}
-			if (args[i].compareTo("-" + "baselineCV") == 0) {
-				cpuDynamicsCV = ioDynamicsCV = bwDynamicsCV = Double
-						.valueOf(args[++i]);
-			}
-			if (args[i].compareTo("-" + "cpuDynamicsCV") == 0) {
-				cpuDynamicsCV = Double.valueOf(args[++i]);
-			}
-			if (args[i].compareTo("-" + "ioDynamicsCV") == 0) {
-				ioDynamicsCV = Double.valueOf(args[++i]);
-			}
-			if (args[i].compareTo("-" + "bwDynamicsCV") == 0) {
-				bwDynamicsCV = Double.valueOf(args[++i]);
-			}
-			if (args[i].compareTo("-" + "noiseCV") == 0) {
-				cpuNoiseCV = ioNoiseCV = bwNoiseCV = Double.valueOf(args[++i]);
-			}
-			if (args[i].compareTo("-" + "cpuNoiseCV") == 0) {
-				cpuNoiseCV = Double.valueOf(args[++i]);
-			}
-			if (args[i].compareTo("-" + "ioNoiseCV") == 0) {
-				ioNoiseCV = Double.valueOf(args[++i]);
-			}
-			if (args[i].compareTo("-" + "bwNoiseCV") == 0) {
-				bwNoiseCV = Double.valueOf(args[++i]);
-			}
-			if (args[i].compareTo("-" + "likelihoodOfStraggler") == 0) {
-				likelihoodOfStraggler = Double.valueOf(args[++i]);
-			}
-			if (args[i].compareTo("-" + "stragglerPerformanceCoefficient") == 0) {
-				stragglerPerformanceCoefficient = Double.valueOf(args[++i]);
-			}
-			if (args[i].compareTo("-" + "likelihoodOfFailure") == 0) {
-				for (int dcindex = 0;dcindex < numberOfDC;dcindex++) {
-					likelihoodOfFailure[dcindex] = Double.valueOf(args[++i]);
-				}
-				
-			}
-			if (args[i].compareTo("-" + "runtimeFactorInCaseOfFailure") == 0) {
-				for (int dcindex = 0;dcindex < numberOfDC;dcindex++) {
-					runtimeFactorInCaseOfFailure[dcindex] = Double.valueOf(args[++i]);
-				}
+	
+	
+	
+	
+	private static double[] getIoBaseline() {
+		double[] result = new double[numberOfDC];
+		
+		for (int dcindex = 0; dcindex < numberOfDC; dcindex++) {
+			double[] machineDis = getMachineDis(dcindex);
+			for (int typeindex = 0; typeindex < machineType; typeindex++) {
+				result[typeindex] = machineDis[typeindex]*iopsPerPeOfMachineType[typeindex];
 			}
 		}
-
+		return result;
 	}
+
+	private static double[] getBwBaseline() {
+		double[] result = new double[numberOfDC];
+		
+		for (int dcindex = 0; dcindex < numberOfDC; dcindex++) {
+			double[] machineDis = getMachineDis(dcindex);
+			for (int typeindex = 0; typeindex < machineType; typeindex++) {
+				result[typeindex] = machineDis[typeindex]*bwpsPerPeOfMachineType[typeindex];
+			}
+		}
+		return result;
+	}
+
+	public static double[] getMachineDis(int dcindex) {
+		double[] result = new double[machineType] ;
+		int sum = 0;
+		for (int typeindex = 0; typeindex < machineType; typeindex++) {
+			sum += nOpteronOfMachineTypeOfDC[dcindex][typeindex];
+		}
+		for (int typeindex = 0; typeindex < machineType; typeindex++) {
+			result[typeindex] = nOpteronOfMachineTypeOfDC[dcindex][typeindex]/sum;
+		}
+		return result;
+	}
+	
+	
+	
+	
+	public static double[] getMIPSBaseline() {
+		double[] result = new double[numberOfDC];
+		
+		for (int dcindex = 0; dcindex < numberOfDC; dcindex++) {
+			double[] machineDis = getMachineDis(dcindex);
+			for (int typeindex = 0; typeindex < machineType; typeindex++) {
+				result[typeindex] = machineDis[typeindex]*mipsPerCoreOpteronOfMachineType[typeindex];
+			}
+		}
+		return result;
+	}
+
+	public static int sumOfVM(int[] vmlist) {
+		int sumOfVM = 0;
+		for (int index = 0; index<numberOfDC;index++) {
+			sumOfVM += numberOfVMperDC[index];
+		}
+		return sumOfVM;
+	}
+
+//	public static void parseParameters(String[] args) {
+//
+//		for (int i = 0; i < args.length; i++) {
+//			if (args[i].compareTo("-" + "outputVmPerformanceLogs") == 0) {
+//				outputVmPerformanceLogs = Boolean.valueOf(args[++i]);
+//			}
+//			if (args[i].compareTo("-" + "scheduler") == 0) {
+//				scheduler = Scheduler.valueOf(args[++i]);
+//			}
+//			if (args[i].compareTo("-" + "numberOfRuns") == 0) {
+//				numberOfRuns = Integer.valueOf(args[++i]);
+//			}
+//			if (args[i].compareTo("-" + "heterogeneityCV") == 0) {
+//				cpuHeterogeneityCV = ioHeterogeneityCV = bwHeterogeneityCV = Double
+//						.valueOf(args[++i]);
+//			}
+//			if (args[i].compareTo("-" + "cpuHeterogeneityCV") == 0) {
+//				cpuHeterogeneityCV = Double.valueOf(args[++i]);
+//			}
+//			if (args[i].compareTo("-" + "ioHeterogeneityCV") == 0) {
+//				ioHeterogeneityCV = Double.valueOf(args[++i]);
+//			}
+//			if (args[i].compareTo("-" + "bwHeterogeneityCV") == 0) {
+//				bwHeterogeneityCV = Double.valueOf(args[++i]);
+//			}
+//			if (args[i].compareTo("-" + "baselineChangesPerHour") == 0) {
+//				cpuBaselineChangesPerHour = ioBaselineChangesPerHour = bwBaselineChangesPerHour = Double
+//						.valueOf(args[++i]);
+//			}
+//			if (args[i].compareTo("-" + "baselineCV") == 0) {
+//				cpuDynamicsCV = ioDynamicsCV = bwDynamicsCV = Double
+//						.valueOf(args[++i]);
+//			}
+//			if (args[i].compareTo("-" + "cpuDynamicsCV") == 0) {
+//				cpuDynamicsCV = Double.valueOf(args[++i]);
+//			}
+//			if (args[i].compareTo("-" + "ioDynamicsCV") == 0) {
+//				ioDynamicsCV = Double.valueOf(args[++i]);
+//			}
+//			if (args[i].compareTo("-" + "bwDynamicsCV") == 0) {
+//				bwDynamicsCV = Double.valueOf(args[++i]);
+//			}
+//			if (args[i].compareTo("-" + "noiseCV") == 0) {
+//				cpuNoiseCV = ioNoiseCV = bwNoiseCV = Double.valueOf(args[++i]);
+//			}
+//			if (args[i].compareTo("-" + "cpuNoiseCV") == 0) {
+//				cpuNoiseCV = Double.valueOf(args[++i]);
+//			}
+//			if (args[i].compareTo("-" + "ioNoiseCV") == 0) {
+//				ioNoiseCV = Double.valueOf(args[++i]);
+//			}
+//			if (args[i].compareTo("-" + "bwNoiseCV") == 0) {
+//				bwNoiseCV = Double.valueOf(args[++i]);
+//			}
+//			if (args[i].compareTo("-" + "likelihoodOfStraggler") == 0) {
+//				likelihoodOfStraggler = Double.valueOf(args[++i]);
+//			}
+//			if (args[i].compareTo("-" + "stragglerPerformanceCoefficient") == 0) {
+//				stragglerPerformanceCoefficient = Double.valueOf(args[++i]);
+//			}
+//			if (args[i].compareTo("-" + "likelihoodOfFailure") == 0) {
+//				for (int dcindex = 0;dcindex < numberOfDC;dcindex++) {
+//					likelihoodOfFailure[dcindex] = Double.valueOf(args[++i]);
+//				}
+//				
+//			}
+//			if (args[i].compareTo("-" + "runtimeFactorInCaseOfFailure") == 0) {
+//				for (int dcindex = 0;dcindex < numberOfDC;dcindex++) {
+//					runtimeFactorInCaseOfFailure[dcindex] = Double.valueOf(args[++i]);
+//				}
+//			}
+//		}
+//
+//	}
 
 }

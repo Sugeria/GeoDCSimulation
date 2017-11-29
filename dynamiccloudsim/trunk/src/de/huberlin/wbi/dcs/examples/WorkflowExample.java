@@ -14,6 +14,7 @@ import org.cloudbus.cloudsim.Vm;
 import org.cloudbus.cloudsim.core.CloudSim;
 import org.cloudbus.cloudsim.distributions.ContinuousDistribution;
 
+import de.huberlin.wbi.cuneiform.core.semanticmodel.Param;
 import de.huberlin.wbi.dcs.CloudletSchedulerGreedyDivided;
 import de.huberlin.wbi.dcs.DynamicHost;
 import de.huberlin.wbi.dcs.DynamicModel;
@@ -37,7 +38,7 @@ public class WorkflowExample {
 
 	public static void main(String[] args) {
 		double totalRuntime = 0d;
-		Parameters.parseParameters(args);
+		//Parameters.parseParameters(args);
 
 		try {
 			for (int i = 0; i < Parameters.numberOfRuns; i++) {
@@ -51,7 +52,8 @@ public class WorkflowExample {
 				boolean trace_flag = false; // mean trace events
 				CloudSim.init(num_user, calendar, trace_flag);
 
-				ex.createDatacenter("Datacenter");
+				// ex.createDatacenter("Datacenter");
+				ex.createMulDatacenters(Parameters.numberOfDC);
 				AbstractWorkflowScheduler scheduler = ex.createScheduler(i);
 				ex.createVms(i, scheduler);
 				Workflow workflow = buildWorkflow(scheduler);
@@ -82,6 +84,9 @@ public class WorkflowExample {
 		}
 
 	}
+	
+	
+	
 
 	public AbstractWorkflowScheduler createScheduler(int i) {
 		try {
@@ -159,9 +164,30 @@ public class WorkflowExample {
 		scheduler.submitWorkflow(workflow);
 	}
 
+	
+	public void createMulDatacenters(int numberOfDC) {
+		StringBuilder sb = new StringBuilder("Datacenter_");
+		Parameters Para = new Parameters();
+		for (int dcindex = 0;dcindex < numberOfDC; dcindex++) {
+			StringBuilder dcname = sb;
+			dcname.append(String.valueOf(dcindex));
+			Para.setLikelihoodOfStraggler(Parameters.likelihoodOfStragglerOfDC[dcindex]);
+			Para.setStragglerPerformanceCoefficient(Parameters.stragglerPerformanceCoefficientOfDC[dcindex]);
+			Datacenter dc = createDatacenter(dcname.toString());
+			dc.setDownlink(Parameters.downlinkOfDC[numberOfDC]);
+			dc.setUplink(Parameters.uplinkOfDC[numberOfDC]);
+			dc.getCharacteristics().setLikelihoodOfFailure(Parameters.likelihoodOfFailure[numberOfDC]);
+			dc.getCharacteristics().setRuntimeFactorIncaseOfFailure(Parameters.runtimeFactorInCaseOfFailure[numberOfDC]);
+			dc.getCharacteristics().setLikelihoodOfDCFailure(Parameters.likelihoodOfDCFailure[numberOfDC]);
+		}
+	}
+	
+	
+	
 	// all numbers in 1000 (e.g. kb/s)
 	public Datacenter createDatacenter(String name) {
 		Random numGen;
+		Parameters parameters = new Parameters();
 		numGen = Parameters.numGen;
 		List<DynamicHost> hostList = new ArrayList<DynamicHost>();
 		int hostId = 0;
@@ -217,10 +243,10 @@ public class WorkflowExample {
 			while (mips <= 0) {
 				mips = (long) (long) (dist.sample() * Parameters.mipsPerCoreOpteron270);
 			}
-			if (numGen.nextDouble() < Parameters.likelihoodOfStraggler) {
-				bwps *= Parameters.stragglerPerformanceCoefficient;
-				iops *= Parameters.stragglerPerformanceCoefficient;
-				mips *= Parameters.stragglerPerformanceCoefficient;
+			if (numGen.nextDouble() < parameters.likelihoodOfStraggler) {
+				bwps *= parameters.stragglerPerformanceCoefficient;
+				iops *= parameters.stragglerPerformanceCoefficient;
+				mips *= parameters.stragglerPerformanceCoefficient;
 			}
 			hostList.add(new DynamicHost(hostId++, ram, bwps, iops, storage,
 					Parameters.nCusPerCoreOpteron270, Parameters.nCoresOpteron270, mips));
@@ -276,10 +302,10 @@ public class WorkflowExample {
 			while (mips <= 0) {
 				mips = (long) (long) (dist.sample() * Parameters.mipsPerCoreOpteron2218);
 			}
-			if (numGen.nextDouble() < Parameters.likelihoodOfStraggler) {
-				bwps *= Parameters.stragglerPerformanceCoefficient;
-				iops *= Parameters.stragglerPerformanceCoefficient;
-				mips *= Parameters.stragglerPerformanceCoefficient;
+			if (numGen.nextDouble() < parameters.likelihoodOfStraggler) {
+				bwps *= parameters.stragglerPerformanceCoefficient;
+				iops *= parameters.stragglerPerformanceCoefficient;
+				mips *= parameters.stragglerPerformanceCoefficient;
 			}
 			hostList.add(new DynamicHost(hostId++, ram, bwps, iops, storage,
 					Parameters.nCusPerCoreOpteron2218, Parameters.nCoresOpteron2218, mips));
@@ -335,10 +361,10 @@ public class WorkflowExample {
 			while (mips <= 0) {
 				mips = (long) (long) (dist.sample() * Parameters.mipsPerCoreXeonE5430);
 			}
-			if (numGen.nextDouble() < Parameters.likelihoodOfStraggler) {
-				bwps *= Parameters.stragglerPerformanceCoefficient;
-				iops *= Parameters.stragglerPerformanceCoefficient;
-				mips *= Parameters.stragglerPerformanceCoefficient;
+			if (numGen.nextDouble() < parameters.likelihoodOfStraggler) {
+				bwps *= parameters.stragglerPerformanceCoefficient;
+				iops *= parameters.stragglerPerformanceCoefficient;
+				mips *= parameters.stragglerPerformanceCoefficient;
 			}
 			hostList.add(new DynamicHost(hostId++, ram, bwps, iops, storage,
 					Parameters.nCusPerCoreXeonE5430, Parameters.nCoresXeonE5430, mips));
