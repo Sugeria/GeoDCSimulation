@@ -11,6 +11,7 @@ import org.cloudbus.cloudsim.ParameterException;
 import org.cloudbus.cloudsim.UtilizationModel;
 import org.cloudbus.cloudsim.UtilizationModelFull;
 
+import de.huberlin.wbi.dcs.examples.Parameters;
 import de.huberlin.wbi.dcs.workflow.Task;
 import de.huberlin.wbi.dcs.workflow.Workflow;
 import edu.isi.pegasus.common.logging.LogManager;
@@ -110,6 +111,27 @@ public class DaxFileReader extends LogFileReader {
 							&& tasks.containsAll(dag.getParents(childId)))
 						jobQueue.add(childId);
 				}
+				
+				int numberofData = (int)(Math.random()*Parameters.ubOfData);
+				int[] positionOfData = null;
+				long[] sizeOfData = null;
+				
+				if (numberofData != 0) {
+					
+					positionOfData = new int[numberofData];
+					
+					sizeOfData = new long[numberofData];
+					
+					inputSize = 0;
+					
+					for (int dataindex = 0; dataindex < numberofData; dataindex++) {
+						positionOfData[dataindex] = (int)(Math.random()%Parameters.numberOfDC + 1);
+						sizeOfData[dataindex] = (long)(Math.random()%(Parameters.ubOfDataSize - Parameters.lbOfDataSize + 1) + Parameters.lbOfDataSize);
+						inputSize += sizeOfData[dataindex];
+					}
+				}
+				
+				
 
 				long ioLength = (inputSize + outputSize) / 1024;
 
@@ -117,7 +139,13 @@ public class DaxFileReader extends LogFileReader {
 						(int) cloudletId, cloudletLength, ioLength, bwLength,
 						pesNumber, inputSize, outputSize, utilizationModel,
 						utilizationModel, utilizationModel);
-
+				
+				if (numberofData != 0) {
+					task.numberOfData = numberofData;
+					task.positionOfData = positionOfData;
+					task.sizeOfData = sizeOfData;
+				}
+				
 				taskIdToTask.put((long)cloudletId, task);
 				cloudletId++;
 			}

@@ -23,6 +23,7 @@ import org.cloudbus.cloudsim.lists.CloudletList;
 import org.cloudbus.cloudsim.lists.VmList;
 
 import com.sun.org.apache.bcel.internal.generic.I2F;
+import com.sun.org.apache.bcel.internal.generic.RETURN;
 
 import de.huberlin.wbi.dcs.examples.Parameters;
 
@@ -81,6 +82,10 @@ public class DatacenterBroker extends SimEntity {
 	private Map<Integer, Double> runtimeFactorIncaseOfFailureOfDC;
 	private Map<Integer, Double> likelihoodOfDCFailureOfDC;
 	private Map<Integer, Integer> numberOfVMOfDC;
+	private Map<Integer, Double> likelihoodOfStragglerOfDC;
+	private Map<Integer, Double> stragglerPerformanceCoefficientOfDC;
+	
+	public int DCbase;
 
 	/**
 	 * Created a new DatacenterBroker object.
@@ -116,6 +121,8 @@ public class DatacenterBroker extends SimEntity {
 		likelihoodOfFailureOfDC = new HashMap<>();
 		runtimeFactorIncaseOfFailureOfDC = new HashMap<>();
 		numberOfVMOfDC = new HashMap<>();
+		likelihoodOfStragglerOfDC = new HashMap<>();
+		stragglerPerformanceCoefficientOfDC = new HashMap<>();
 	}
 
 	/**
@@ -215,7 +222,13 @@ public class DatacenterBroker extends SimEntity {
 		return numberOfVMOfDC;
 	}
 	
+	public Map<Integer, Double> getLikelihoodOfStragglerOfDC(){
+		return likelihoodOfStragglerOfDC;
+	}
 	
+	public Map<Integer, Double> getStragglerPerformanceCoefficient(){
+		return stragglerPerformanceCoefficientOfDC;
+	}
 	
 	
 	
@@ -243,16 +256,29 @@ public class DatacenterBroker extends SimEntity {
 		getRuntimeFactorIncaseOfFailureOfDC().put(characteristics.getId(), characteristics.getRuntimeFactorIncaseOfFailure());
 		getLikelihoodOfDCFailureOfDC().put(characteristics.getId(), characteristics.getLikelihoodOfDCFailure());
 		getNumberOfVMOfDC().put(characteristics.getId(), characteristics.getNumberOfVM());
+		getLikelihoodOfStragglerOfDC().put(characteristics.getId(), characteristics.getLikelihoodOfStraggler());
+		getStragglerPerformanceCoefficient().put(characteristics.getId(), characteristics.getStragglerPerformanceCoefficient());
+		
 		
 		if (getDatacenterCharacteristicsList().size() == getDatacenterIdsList().size()) {
 			setDatacenterRequestedIdsList(new ArrayList<Integer>());
 			List<Integer> dcList = getDatacenterIdsList();
 			Iterator<Integer> it = dcList.iterator();
+			int minDCId = Integer.MAX_VALUE;
 			while(it.hasNext()) {
 				Integer dcId = it.next();
+				if (dcId < minDCId) {
+					minDCId = dcId;
+				}
+				//createVmsInDatacenter(dcId);
+			}
+			DCbase = minDCId;
+			// createVmsInDatacenter(getDatacenterIdsList().get(0));
+			Iterator<Integer> anotherit = dcList.iterator();
+			while(anotherit.hasNext()) {
+				Integer dcId = anotherit.next();
 				createVmsInDatacenter(dcId);
 			}
-			// createVmsInDatacenter(getDatacenterIdsList().get(0));
 		}
 	}
 
@@ -385,15 +411,16 @@ public class DatacenterBroker extends SimEntity {
 		int requestedVms = 0;
 		String datacenterName = CloudSim.getEntityName(datacenterId);
 		for (Vm vm : getVmList()) {
-			if (requestedVms >= getNumberOfVMOfDC().get(datacenterId)) {
-				break;
+			if (vm.DCindex == (datacenterId - DCbase + 1)) {
+				if (!getVmsToDatacentersMap().containsKey(vm.getId())) {
+					vm.DCId = datacenterId;
+					Log.printLine(CloudSim.clock() + ": " + getName() + ": Trying to Create VM #" + vm.getId()
+							+ " in " + datacenterName);
+					sendNow(datacenterId, CloudSimTags.VM_CREATE_ACK, vm);
+					requestedVms++;
+				}
 			}
-			if (!getVmsToDatacentersMap().containsKey(vm.getId())) {
-				Log.printLine(CloudSim.clock() + ": " + getName() + ": Trying to Create VM #" + vm.getId()
-						+ " in " + datacenterName);
-				sendNow(datacenterId, CloudSimTags.VM_CREATE_ACK, vm);
-				requestedVms++;
-			}
+			
 		}
 
 		getDatacenterRequestedIdsList().add(datacenterId);

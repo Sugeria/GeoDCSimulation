@@ -24,6 +24,12 @@ public class Task extends HeterogeneousCloudlet implements Comparable<Task> {
 	
 	private int assignmentDCId;
 	
+	public int numberOfData;
+	
+	public int[] positionOfData;
+	
+	public long[] sizeOfData;
+	
 	public Task(
 			final String name,
 			final String params,

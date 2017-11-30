@@ -76,6 +76,11 @@ public class Vm {
 	/** The mips allocation history. */
 	private final List<VmStateHistoryEntry> stateHistory = new LinkedList<VmStateHistoryEntry>();
 
+	public int DCId;
+	
+	public int DCindex;
+	
+	
 	/**
 	 * Creates a new VMCharacteristics object.
 	 * 

@@ -6,6 +6,8 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Random;
 
+import javax.jws.soap.SOAPBinding.ParameterStyle;
+
 import org.cloudbus.cloudsim.Datacenter;
 import org.cloudbus.cloudsim.DatacenterCharacteristics;
 import org.cloudbus.cloudsim.Log;
@@ -14,12 +16,16 @@ import org.cloudbus.cloudsim.Vm;
 import org.cloudbus.cloudsim.core.CloudSim;
 import org.cloudbus.cloudsim.distributions.ContinuousDistribution;
 
+import com.sun.org.apache.xalan.internal.xsltc.runtime.Parameter;
+
+import EDU.oswego.cs.dl.util.concurrent.FJTask.Par;
 import de.huberlin.wbi.cuneiform.core.semanticmodel.Param;
 import de.huberlin.wbi.dcs.CloudletSchedulerGreedyDivided;
 import de.huberlin.wbi.dcs.DynamicHost;
 import de.huberlin.wbi.dcs.DynamicModel;
 import de.huberlin.wbi.dcs.DynamicVm;
 import de.huberlin.wbi.dcs.VmAllocationPolicyRandom;
+import de.huberlin.wbi.dcs.examples.Parameters.Distribution;
 import de.huberlin.wbi.dcs.workflow.Task;
 import de.huberlin.wbi.dcs.workflow.Workflow;
 import de.huberlin.wbi.dcs.workflow.io.AlignmentTraceFileReader;
@@ -173,12 +179,125 @@ public class WorkflowExample {
 			dcname.append(String.valueOf(dcindex));
 			Para.setLikelihoodOfStraggler(Parameters.likelihoodOfStragglerOfDC[dcindex]);
 			Para.setStragglerPerformanceCoefficient(Parameters.stragglerPerformanceCoefficientOfDC[dcindex]);
+			
+			Para.setDCHeterogeneity(
+					Parameters.cpuHeterogeneityDistributionOfDC[dcindex],
+					Parameters.cpuHeterogeneityCVOfDC[dcindex],
+					Parameters.cpuHeterogeneityAlphaOfDC[dcindex],
+					Parameters.cpuHeterogeneityBetaOfDC[dcindex],
+					Parameters.cpuHeterogeneityShapeOfDC[dcindex],
+					Parameters.cpuHeterogeneityLocationOfDC[dcindex],
+					Parameters.cpuHeterogeneityShiftOfDC[dcindex],
+					Parameters.cpuHeterogeneityMinOfDC[dcindex],
+					Parameters.cpuHeterogeneityMaxOfDC[dcindex],
+					Parameters.cpuHeterogeneityPopulationOfDC[dcindex],
+					Parameters.ioHeterogeneityDistributionOfDC[dcindex],
+					Parameters.ioHeterogeneityCVOfDC[dcindex],
+					Parameters.ioHeterogeneityAlphaOfDC[dcindex],
+					Parameters.ioHeterogeneityBetaOfDC[dcindex],
+					Parameters.ioHeterogeneityShapeOfDC[dcindex],
+					Parameters.ioHeterogeneityLocationOfDC[dcindex],
+					Parameters.ioHeterogeneityShiftOfDC[dcindex],
+					Parameters.ioHeterogeneityMinOfDC[dcindex],
+					Parameters.ioHeterogeneityMaxOfDC[dcindex],
+					Parameters.ioHeterogeneityPopulationOfDC[dcindex],
+					Parameters.bwHeterogeneityDistributionOfDC[dcindex],
+					Parameters.bwHeterogeneityCVOfDC[dcindex],
+					Parameters.bwHeterogeneityAlphaOfDC[dcindex],
+					Parameters.bwHeterogeneityBetaOfDC[dcindex],
+					Parameters.bwHeterogeneityShapeOfDC[dcindex],
+					Parameters.bwHeterogeneityLocationOfDC[dcindex],
+					Parameters.bwHeterogeneityShiftOfDC[dcindex],
+					Parameters.bwHeterogeneityMinOfDC[dcindex],
+					Parameters.bwHeterogeneityMaxOfDC[dcindex],
+					Parameters.bwHeterogeneityPopulationOfDC[dcindex],
+					Parameters.nOpteronOfMachineTypeOfDC[dcindex]
+					);
 			Datacenter dc = createDatacenter(dcname.toString());
 			dc.setDownlink(Parameters.downlinkOfDC[numberOfDC]);
 			dc.setUplink(Parameters.uplinkOfDC[numberOfDC]);
-			dc.getCharacteristics().setLikelihoodOfFailure(Parameters.likelihoodOfFailure[numberOfDC]);
-			dc.getCharacteristics().setRuntimeFactorIncaseOfFailure(Parameters.runtimeFactorInCaseOfFailure[numberOfDC]);
-			dc.getCharacteristics().setLikelihoodOfDCFailure(Parameters.likelihoodOfDCFailure[numberOfDC]);
+			DatacenterCharacteristics dcc = dc.getCharacteristics();
+			dcc.setLikelihoodOfFailure(Parameters.likelihoodOfFailure[numberOfDC]);
+			dcc.setRuntimeFactorIncaseOfFailure(Parameters.runtimeFactorInCaseOfFailure[numberOfDC]);
+			dcc.setLikelihoodOfDCFailure(Parameters.likelihoodOfDCFailure[numberOfDC]);
+			// CPU Dynamics
+			dcc.cpuBaselineChangesPerHour = Parameters.cpuBaselineChangesPerHourOfDC[dcindex];
+			dcc.cpuDynamicsDistribution = Parameters.cpuDynamicsDistributionOfDC[dcindex];
+			dcc.cpuDynamicsCV = Parameters.cpuDynamicsCVOfDC[dcindex];
+			dcc.cpuDynamicsAlpha = Parameters.cpuDynamicsAlphaOfDC[dcindex];
+			dcc.cpuDynamicsBeta = Parameters.cpuDynamicsBetaOfDC[dcindex];
+			dcc.cpuDynamicsShape = Parameters.cpuDynamicsShapeOfDC[dcindex];
+			dcc.cpuDynamicsLocation = Parameters.cpuDynamicsLocationOfDC[dcindex];
+			dcc.cpuDynamicsShift = Parameters.cpuDynamicsShiftOfDC[dcindex];
+			dcc.cpuDynamicsMin = Parameters.cpuDynamicsMinOfDC[dcindex];
+			dcc.cpuDynamicsMax = Parameters.cpuDynamicsMaxOfDC[dcindex];
+			dcc.cpuDynamicsPopulation = Parameters.cpuDynamicsPopulationOfDC[dcindex];
+
+			// IO Dynamics
+			dcc.ioBaselineChangesPerHour = Parameters.ioBaselineChangesPerHourOfDC[dcindex];
+			dcc.ioDynamicsDistribution = Parameters.ioDynamicsDistributionOfDC[dcindex];
+			dcc.ioDynamicsCV = Parameters.ioDynamicsCVOfDC[dcindex];
+			dcc.ioDynamicsAlpha = Parameters.ioDynamicsAlphaOfDC[dcindex];
+			dcc.ioDynamicsBeta = Parameters.ioDynamicsBetaOfDC[dcindex];
+			dcc.ioDynamicsShape = Parameters.ioDynamicsShapeOfDC[dcindex];
+			dcc.ioDynamicsLocation = Parameters.ioDynamicsLocationOfDC[dcindex];
+			dcc.ioDynamicsShift = Parameters.ioDynamicsShiftOfDC[dcindex];
+			dcc.ioDynamicsMin = Parameters.ioDynamicsMinOfDC[dcindex];
+			dcc.ioDynamicsMax = Parameters.ioDynamicsMaxOfDC[dcindex];
+			dcc.ioDynamicsPopulation = Parameters.ioDynamicsPopulationOfDC[dcindex];
+
+			// BW Dynamics
+			dcc.bwBaselineChangesPerHour = Parameters.bwBaselineChangesPerHourOfDC[dcindex];
+			dcc.bwDynamicsDistribution = Parameters.bwDynamicsDistributionOfDC[dcindex];
+			dcc.bwDynamicsCV = Parameters.bwDynamicsCVOfDC[dcindex];
+			dcc.bwDynamicsAlpha = Parameters.bwDynamicsAlphaOfDC[dcindex];
+			dcc.bwDynamicsBeta = Parameters.bwDynamicsBetaOfDC[dcindex];
+			dcc.bwDynamicsShape = Parameters.bwDynamicsShapeOfDC[dcindex];
+			dcc.bwDynamicsLocation = Parameters.bwDynamicsLocationOfDC[dcindex];
+			dcc.bwDynamicsShift = Parameters.bwDynamicsShiftOfDC[dcindex];
+			dcc.bwDynamicsMin = Parameters.bwDynamicsMinOfDC[dcindex];
+			dcc.bwDynamicsMax = Parameters.bwDynamicsMaxOfDC[dcindex];
+			dcc.bwDynamicsPopulation = Parameters.bwDynamicsPopulationOfDC[dcindex];
+
+			// CPU noise
+			dcc.cpuNoiseDistribution = Parameters.cpuNoiseDistributionOfDC[dcindex];
+			dcc.cpuNoiseCV = Parameters.cpuNoiseCVOfDC[dcindex];
+			dcc.cpuNoiseAlpha = Parameters.cpuNoiseAlphaOfDC[dcindex];
+			dcc.cpuNoiseBeta = Parameters.cpuNoiseBetaOfDC[dcindex];
+			dcc.cpuNoiseShape = Parameters.cpuNoiseShapeOfDC[dcindex];
+			dcc.cpuNoiseLocation = Parameters.cpuNoiseLocationOfDC[dcindex];
+			dcc.cpuNoiseShift = Parameters.cpuNoiseShiftOfDC[dcindex];
+			dcc.cpuNoiseMin = Parameters.cpuNoiseMinOfDC[dcindex];
+			dcc.cpuNoiseMax = Parameters.cpuNoiseMaxOfDC[dcindex];
+			dcc.cpuNoisePopulation = Parameters.cpuNoisePopulationOfDC[dcindex];
+
+			// IO noise
+			dcc.ioNoiseDistribution = Parameters.ioNoiseDistributionOfDC[dcindex];
+			dcc.ioNoiseCV = Parameters.ioNoiseCVOfDC[dcindex];
+			dcc.ioNoiseAlpha = Parameters.ioNoiseAlphaOfDC[dcindex];
+			dcc.ioNoiseBeta = Parameters.ioNoiseBetaOfDC[dcindex];
+			dcc.ioNoiseShape = Parameters.ioNoiseShapeOfDC[dcindex];
+			dcc.ioNoiseLocation = Parameters.ioNoiseLocationOfDC[dcindex];
+			dcc.ioNoiseShift = Parameters.ioNoiseShiftOfDC[dcindex];
+			dcc.ioNoiseMin = Parameters.ioNoiseMinOfDC[dcindex];
+			dcc.ioNoiseMax = Parameters.ioNoiseMaxOfDC[dcindex];
+			dcc.ioNoisePopulation = Parameters.ioNoisePopulationOfDC[dcindex];
+
+			// BW noise
+			dcc.bwNoiseDistribution = Parameters.bwNoiseDistributionOfDC[dcindex];
+			dcc.bwNoiseCV = Parameters.bwNoiseCVOfDC[dcindex];
+			dcc.bwNoiseAlpha = Parameters.bwNoiseAlphaOfDC[dcindex];
+			dcc.bwNoiseBeta = Parameters.bwNoiseBetaOfDC[dcindex];
+			dcc.bwNoiseShape = Parameters.bwNoiseShapeOfDC[dcindex];
+			dcc.bwNoiseLocation = Parameters.bwNoiseLocationOfDC[dcindex];
+			dcc.bwNoiseShift = Parameters.bwNoiseShiftOfDC[dcindex];
+			dcc.bwNoiseMin = Parameters.bwNoiseMinOfDC[dcindex];
+			dcc.bwNoiseMax = Parameters.bwNoiseMaxOfDC[dcindex];
+			dcc.bwNoisePopulation = Parameters.bwNoisePopulationOfDC[dcindex];
+			
+			dcc.MIPSbaseline = Parameters.MIPSbaselineOfDC[dcindex];
+			dcc.bwBaseline = Parameters.bwBaselineOfDC[dcindex];
+			dcc.ioBaseline = Parameters.ioBaselineOfDC[dcindex];
 		}
 	}
 	
@@ -193,183 +312,68 @@ public class WorkflowExample {
 		int hostId = 0;
 		long storage = 1024 * 1024;
 
-		int ram = (int) (2 * 1024 * Parameters.nCusPerCoreOpteron270 * Parameters.nCoresOpteron270);
-		for (int i = 0; i < Parameters.nOpteron270; i++) {
-			double mean = 1d;
-			double dev = Parameters.bwHeterogeneityCV;
-			ContinuousDistribution dist = Parameters.getDistribution(
-					Parameters.bwHeterogeneityDistribution, mean,
-					Parameters.bwHeterogeneityAlpha,
-					Parameters.bwHeterogeneityBeta, dev,
-					Parameters.bwHeterogeneityShape,
-					Parameters.bwHeterogeneityLocation,
-					Parameters.bwHeterogeneityShift,
-					Parameters.bwHeterogeneityMin,
-					Parameters.bwHeterogeneityMax,
-					Parameters.bwHeterogeneityPopulation);
-			long bwps = 0;
-			while (bwps <= 0) {
-				bwps = (long) (dist.sample() * Parameters.bwpsPerPe);
+		for(int typeindex = 0; typeindex < Parameters.machineType; typeindex++) {
+			int ram = (int) (2 * 1024 * Parameters.nCusPerCoreOpteronOfMachineType[typeindex] * Parameters.nCoresOpteronOfMachineType[typeindex]);
+			for (int i = 0; i < parameters.nOpteronOfMachineType[typeindex]; i++) {
+				double mean = 1d;
+				double dev = parameters.bwHeterogeneityCV;
+				ContinuousDistribution dist = Parameters.getDistribution(
+						parameters.bwHeterogeneityDistribution, mean,
+						parameters.bwHeterogeneityAlpha,
+						parameters.bwHeterogeneityBeta, dev,
+						parameters.bwHeterogeneityShape,
+						parameters.bwHeterogeneityLocation,
+						parameters.bwHeterogeneityShift,
+						parameters.bwHeterogeneityMin,
+						parameters.bwHeterogeneityMax,
+						parameters.bwHeterogeneityPopulation);
+				long bwps = 0;
+				while (bwps <= 0) {
+					bwps = (long) (dist.sample() * Parameters.bwpsPerPeOfMachineType[typeindex]);
+				}
+				mean = 1d;
+				dev = parameters.ioHeterogeneityCV;
+				dist = Parameters.getDistribution(
+						parameters.ioHeterogeneityDistribution, mean,
+						parameters.ioHeterogeneityAlpha,
+						parameters.ioHeterogeneityBeta, dev,
+						parameters.ioHeterogeneityShape,
+						parameters.ioHeterogeneityLocation,
+						parameters.ioHeterogeneityShift,
+						parameters.ioHeterogeneityMin,
+						parameters.ioHeterogeneityMax,
+						parameters.ioHeterogeneityPopulation);
+				long iops = 0;
+				while (iops <= 0) {
+					iops = (long) (long) (dist.sample() * Parameters.iopsPerPeOfMachineType[typeindex]);
+				}
+				mean = 1d;
+				dev = parameters.cpuHeterogeneityCV;
+				dist = Parameters.getDistribution(
+						parameters.cpuHeterogeneityDistribution, mean,
+						parameters.cpuHeterogeneityAlpha,
+						parameters.cpuHeterogeneityBeta, dev,
+						parameters.cpuHeterogeneityShape,
+						parameters.cpuHeterogeneityLocation,
+						parameters.cpuHeterogeneityShift,
+						parameters.cpuHeterogeneityMin,
+						parameters.cpuHeterogeneityMax,
+						parameters.cpuHeterogeneityPopulation);
+				long mips = 0;
+				while (mips <= 0) {
+					mips = (long) (long) (dist.sample() * Parameters.mipsPerCoreOpteronOfMachineType[typeindex]);
+				}
+				if (numGen.nextDouble() < parameters.likelihoodOfStraggler) {
+					bwps *= parameters.stragglerPerformanceCoefficient;
+					iops *= parameters.stragglerPerformanceCoefficient;
+					mips *= parameters.stragglerPerformanceCoefficient;
+				}
+				hostList.add(new DynamicHost(hostId++, ram, bwps, iops, storage,
+						Parameters.nCusPerCoreOpteronOfMachineType[typeindex], Parameters.nCoresOpteronOfMachineType[typeindex], mips));
 			}
-			mean = 1d;
-			dev = Parameters.ioHeterogeneityCV;
-			dist = Parameters.getDistribution(
-					Parameters.ioHeterogeneityDistribution, mean,
-					Parameters.ioHeterogeneityAlpha,
-					Parameters.ioHeterogeneityBeta, dev,
-					Parameters.ioHeterogeneityShape,
-					Parameters.ioHeterogeneityLocation,
-					Parameters.ioHeterogeneityShift,
-					Parameters.ioHeterogeneityMin,
-					Parameters.ioHeterogeneityMax,
-					Parameters.ioHeterogeneityPopulation);
-			long iops = 0;
-			while (iops <= 0) {
-				iops = (long) (long) (dist.sample() * Parameters.iopsPerPe);
-			}
-			mean = 1d;
-			dev = Parameters.cpuHeterogeneityCV;
-			dist = Parameters.getDistribution(
-					Parameters.cpuHeterogeneityDistribution, mean,
-					Parameters.cpuHeterogeneityAlpha,
-					Parameters.cpuHeterogeneityBeta, dev,
-					Parameters.cpuHeterogeneityShape,
-					Parameters.cpuHeterogeneityLocation,
-					Parameters.cpuHeterogeneityShift,
-					Parameters.cpuHeterogeneityMin,
-					Parameters.cpuHeterogeneityMax,
-					Parameters.cpuHeterogeneityPopulation);
-			long mips = 0;
-			while (mips <= 0) {
-				mips = (long) (long) (dist.sample() * Parameters.mipsPerCoreOpteron270);
-			}
-			if (numGen.nextDouble() < parameters.likelihoodOfStraggler) {
-				bwps *= parameters.stragglerPerformanceCoefficient;
-				iops *= parameters.stragglerPerformanceCoefficient;
-				mips *= parameters.stragglerPerformanceCoefficient;
-			}
-			hostList.add(new DynamicHost(hostId++, ram, bwps, iops, storage,
-					Parameters.nCusPerCoreOpteron270, Parameters.nCoresOpteron270, mips));
 		}
-
-		ram = (int) (2 * 1024 * Parameters.nCusPerCoreOpteron2218 * Parameters.nCoresOpteron2218);
-		for (int i = 0; i < Parameters.nOpteron2218; i++) {
-			double mean = 1d;
-			double dev = Parameters.bwHeterogeneityCV;
-			ContinuousDistribution dist = Parameters.getDistribution(
-					Parameters.bwHeterogeneityDistribution, mean,
-					Parameters.bwHeterogeneityAlpha,
-					Parameters.bwHeterogeneityBeta, dev,
-					Parameters.bwHeterogeneityShape,
-					Parameters.bwHeterogeneityLocation,
-					Parameters.bwHeterogeneityShift,
-					Parameters.bwHeterogeneityMin,
-					Parameters.bwHeterogeneityMax,
-					Parameters.bwHeterogeneityPopulation);
-			long bwps = 0;
-			while (bwps <= 0) {
-				bwps = (long) (dist.sample() * Parameters.bwpsPerPe);
-			}
-			mean = 1d;
-			dev = Parameters.ioHeterogeneityCV;
-			dist = Parameters.getDistribution(
-					Parameters.ioHeterogeneityDistribution, mean,
-					Parameters.ioHeterogeneityAlpha,
-					Parameters.ioHeterogeneityBeta, dev,
-					Parameters.ioHeterogeneityShape,
-					Parameters.ioHeterogeneityLocation,
-					Parameters.ioHeterogeneityShift,
-					Parameters.ioHeterogeneityMin,
-					Parameters.ioHeterogeneityMax,
-					Parameters.ioHeterogeneityPopulation);
-			long iops = 0;
-			while (iops <= 0) {
-				iops = (long) (long) (dist.sample() * Parameters.iopsPerPe);
-			}
-			mean = 1d;
-			dev = Parameters.cpuHeterogeneityCV;
-			dist = Parameters.getDistribution(
-					Parameters.cpuHeterogeneityDistribution, mean,
-					Parameters.cpuHeterogeneityAlpha,
-					Parameters.cpuHeterogeneityBeta, dev,
-					Parameters.cpuHeterogeneityShape,
-					Parameters.cpuHeterogeneityLocation,
-					Parameters.cpuHeterogeneityShift,
-					Parameters.cpuHeterogeneityMin,
-					Parameters.cpuHeterogeneityMax,
-					Parameters.cpuHeterogeneityPopulation);
-			long mips = 0;
-			while (mips <= 0) {
-				mips = (long) (long) (dist.sample() * Parameters.mipsPerCoreOpteron2218);
-			}
-			if (numGen.nextDouble() < parameters.likelihoodOfStraggler) {
-				bwps *= parameters.stragglerPerformanceCoefficient;
-				iops *= parameters.stragglerPerformanceCoefficient;
-				mips *= parameters.stragglerPerformanceCoefficient;
-			}
-			hostList.add(new DynamicHost(hostId++, ram, bwps, iops, storage,
-					Parameters.nCusPerCoreOpteron2218, Parameters.nCoresOpteron2218, mips));
-		}
-
-		ram = (int) (2 * 1024 * Parameters.nCusPerCoreXeonE5430 * Parameters.nCoresXeonE5430);
-		for (int i = 0; i < Parameters.nXeonE5430; i++) {
-			double mean = 1d;
-			double dev = Parameters.bwHeterogeneityCV;
-			ContinuousDistribution dist = Parameters.getDistribution(
-					Parameters.bwHeterogeneityDistribution, mean,
-					Parameters.bwHeterogeneityAlpha,
-					Parameters.bwHeterogeneityBeta, dev,
-					Parameters.bwHeterogeneityShape,
-					Parameters.bwHeterogeneityLocation,
-					Parameters.bwHeterogeneityShift,
-					Parameters.bwHeterogeneityMin,
-					Parameters.bwHeterogeneityMax,
-					Parameters.bwHeterogeneityPopulation);
-			long bwps = 0;
-			while (bwps <= 0) {
-				bwps = (long) (dist.sample() * Parameters.bwpsPerPe);
-			}
-			mean = 1d;
-			dev = Parameters.ioHeterogeneityCV;
-			dist = Parameters.getDistribution(
-					Parameters.ioHeterogeneityDistribution, mean,
-					Parameters.ioHeterogeneityAlpha,
-					Parameters.ioHeterogeneityBeta, dev,
-					Parameters.ioHeterogeneityShape,
-					Parameters.ioHeterogeneityLocation,
-					Parameters.ioHeterogeneityShift,
-					Parameters.ioHeterogeneityMin,
-					Parameters.ioHeterogeneityMax,
-					Parameters.ioHeterogeneityPopulation);
-			long iops = 0;
-			while (iops <= 0) {
-				iops = (long) (long) (dist.sample() * Parameters.iopsPerPe);
-			}
-			mean = 1d;
-			dev = Parameters.cpuHeterogeneityCV;
-			dist = Parameters.getDistribution(
-					Parameters.cpuHeterogeneityDistribution, mean,
-					Parameters.cpuHeterogeneityAlpha,
-					Parameters.cpuHeterogeneityBeta, dev,
-					Parameters.cpuHeterogeneityShape,
-					Parameters.cpuHeterogeneityLocation,
-					Parameters.cpuHeterogeneityShift,
-					Parameters.cpuHeterogeneityMin,
-					Parameters.cpuHeterogeneityMax,
-					Parameters.cpuHeterogeneityPopulation);
-			long mips = 0;
-			while (mips <= 0) {
-				mips = (long) (long) (dist.sample() * Parameters.mipsPerCoreXeonE5430);
-			}
-			if (numGen.nextDouble() < parameters.likelihoodOfStraggler) {
-				bwps *= parameters.stragglerPerformanceCoefficient;
-				iops *= parameters.stragglerPerformanceCoefficient;
-				mips *= parameters.stragglerPerformanceCoefficient;
-			}
-			hostList.add(new DynamicHost(hostId++, ram, bwps, iops, storage,
-					Parameters.nCusPerCoreXeonE5430, Parameters.nCoresXeonE5430, mips));
-		}
-
+		
+		
 		String arch = "x86";
 		String os = "Linux";
 		String vmm = "Xen";
@@ -408,14 +412,47 @@ public class WorkflowExample {
 
 		// create VMs
 		Vm[] vm = new DynamicVm[Parameters.nVms];
-
-		for (int i = 0; i < Parameters.nVms; i++) {
-			DynamicModel dynamicModel = new DynamicModel();
-			vm[i] = new DynamicVm(i, userId, Parameters.numberOfCusPerPe, Parameters.numberOfPes,
-					Parameters.ram, storage, vmm, new CloudletSchedulerGreedyDivided(),
-					dynamicModel, "output/run_" + run + "_vm_" + i + ".csv",
-					Parameters.taskSlotsPerVm);
-			list.add(vm[i]);
+		int vmnum = 0;
+		for (int dcindex = 0; dcindex < Parameters.numberOfDC; dcindex++) {
+			for (int j = 0; j < Parameters.numberOfVMperDC[dcindex]; j++) {
+				DynamicModel dynamicModel = new DynamicModel(
+						Parameters.cpuDynamicsDistributionOfDC[dcindex],
+						Parameters.cpuDynamicsCVOfDC[dcindex],
+						Parameters.cpuDynamicsAlphaOfDC[dcindex],
+						Parameters.cpuDynamicsBetaOfDC[dcindex],
+						Parameters.cpuDynamicsShapeOfDC[dcindex],
+						Parameters.cpuDynamicsLocationOfDC[dcindex],
+						Parameters.cpuDynamicsShiftOfDC[dcindex],
+						Parameters.cpuDynamicsMinOfDC[dcindex],
+						Parameters.cpuDynamicsMaxOfDC[dcindex],
+						Parameters.cpuDynamicsPopulationOfDC[dcindex],
+						Parameters.ioDynamicsDistributionOfDC[dcindex],
+						Parameters.ioDynamicsCVOfDC[dcindex],
+						Parameters.ioDynamicsAlphaOfDC[dcindex],
+						Parameters.ioDynamicsBetaOfDC[dcindex],
+						Parameters.ioDynamicsShapeOfDC[dcindex],
+						Parameters.ioDynamicsLocationOfDC[dcindex],
+						Parameters.ioDynamicsShiftOfDC[dcindex],
+						Parameters.ioDynamicsMinOfDC[dcindex],
+						Parameters.ioDynamicsMaxOfDC[dcindex],
+						Parameters.ioDynamicsPopulationOfDC[dcindex],
+						Parameters.bwDynamicsDistributionOfDC[dcindex],
+						Parameters.bwDynamicsCVOfDC[dcindex],
+						Parameters.bwDynamicsAlphaOfDC[dcindex],
+						Parameters.bwDynamicsBetaOfDC[dcindex],
+						Parameters.bwDynamicsShapeOfDC[dcindex],
+						Parameters.bwDynamicsLocationOfDC[dcindex],
+						Parameters.bwDynamicsShiftOfDC[dcindex],
+						Parameters.bwDynamicsMinOfDC[dcindex],
+						Parameters.bwDynamicsMaxOfDC[dcindex],
+						Parameters.bwDynamicsPopulationOfDC[dcindex]
+						);
+				vm[vmnum] = new DynamicVm(vmnum, userId, Parameters.numberOfCusPerPe, Parameters.numberOfPes,
+						Parameters.ram, storage, vmm, new CloudletSchedulerGreedyDivided(),
+						dynamicModel, "output/run_" + run + "_vm_" + vmnum + ".csv",
+						Parameters.taskSlotsPerVm,dcindex);
+				list.add(vm[vmnum]);
+			}
 		}
 
 		return list;

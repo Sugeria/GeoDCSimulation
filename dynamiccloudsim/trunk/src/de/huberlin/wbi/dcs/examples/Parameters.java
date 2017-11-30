@@ -67,116 +67,227 @@ public class Parameters {
 		EXPONENTIAL, GAMMA, LOGNORMAL, LOMAX, NORMAL, PARETO, UNIFORM, WEIBULL, ZIPF
 	}
 
+	public int[] nOpteronOfMachineType = {200,200,100};
+	
 	// CPU Heterogeneity
-	public static Distribution cpuHeterogeneityDistribution = Distribution.NORMAL;
-	public static double cpuHeterogeneityCV = 0.4;
-	public static int cpuHeterogeneityAlpha = 0;
-	public static double cpuHeterogeneityBeta = 0d;
-	public static double cpuHeterogeneityShape = 0d;
-	public static double cpuHeterogeneityLocation = 0d;
-	public static double cpuHeterogeneityShift = 0d;
-	public static double cpuHeterogeneityMin = 0d;
-	public static double cpuHeterogeneityMax = 0d;
-	public static int cpuHeterogeneityPopulation = 0;
+	public static Distribution[] cpuHeterogeneityDistributionOfDC = {Distribution.NORMAL,Distribution.NORMAL};
+	public static double[] cpuHeterogeneityCVOfDC = {0.4,0.4};
+	public static int[] cpuHeterogeneityAlphaOfDC = {0,0};
+	public static double[] cpuHeterogeneityBetaOfDC = {0d,0d};
+	public static double[] cpuHeterogeneityShapeOfDC = {0d,0d};
+	public static double[] cpuHeterogeneityLocationOfDC = {0d,0d};
+	public static double[] cpuHeterogeneityShiftOfDC = {0d,0d};
+	public static double[] cpuHeterogeneityMinOfDC = {0d,0d};
+	public static double[] cpuHeterogeneityMaxOfDC = {0d,0d};
+	public static int[] cpuHeterogeneityPopulationOfDC = {0,0};;
+	
+	// CPU Default Heterogeneity
+	public Distribution cpuHeterogeneityDistribution = Distribution.NORMAL;
+	public double cpuHeterogeneityCV = 0.4;
+	public int cpuHeterogeneityAlpha = 0;
+	public double cpuHeterogeneityBeta = 0d;
+	public double cpuHeterogeneityShape = 0d;
+	public double cpuHeterogeneityLocation = 0d;
+	public double cpuHeterogeneityShift = 0d;
+	public double cpuHeterogeneityMin = 0d;
+	public double cpuHeterogeneityMax = 0d;
+	public int cpuHeterogeneityPopulation = 0;
 
 	// IO Heterogeneity
-	public static Distribution ioHeterogeneityDistribution = Distribution.NORMAL;
-	public static double ioHeterogeneityCV = 0.15;
-	public static int ioHeterogeneityAlpha = 0;
-	public static double ioHeterogeneityBeta = 0d;
-	public static double ioHeterogeneityShape = 0d;
-	public static double ioHeterogeneityLocation = 0d;
-	public static double ioHeterogeneityShift = 0d;
-	public static double ioHeterogeneityMin = 0d;
-	public static double ioHeterogeneityMax = 0d;
-	public static int ioHeterogeneityPopulation = 0;
+	public static Distribution[] ioHeterogeneityDistributionOfDC = {Distribution.NORMAL,Distribution.NORMAL};
+	public static double[] ioHeterogeneityCVOfDC = {0.15,0.15};
+	public static int[] ioHeterogeneityAlphaOfDC = {0,0};
+	public static double[] ioHeterogeneityBetaOfDC = {0d,0d};
+	public static double[] ioHeterogeneityShapeOfDC = {0d,0d};
+	public static double[] ioHeterogeneityLocationOfDC = {0d,0d};
+	public static double[] ioHeterogeneityShiftOfDC = {0d,0d};
+	public static double[] ioHeterogeneityMinOfDC = {0d,0d};
+	public static double[] ioHeterogeneityMaxOfDC = {0d,0d};
+	public static int[] ioHeterogeneityPopulationOfDC = {0,0};
+	
+	
+	// IO Default Heterogeneity
+	public Distribution ioHeterogeneityDistribution = Distribution.NORMAL;
+	public double ioHeterogeneityCV = 0.15;
+	public int ioHeterogeneityAlpha = 0;
+	public double ioHeterogeneityBeta = 0d;
+	public double ioHeterogeneityShape = 0d;
+	public double ioHeterogeneityLocation = 0d;
+	public double ioHeterogeneityShift = 0d;
+	public double ioHeterogeneityMin = 0d;
+	public double ioHeterogeneityMax = 0d;
+	public int ioHeterogeneityPopulation = 0;
+	
 
 	// BW Heterogeneity
-	public static Distribution bwHeterogeneityDistribution = Distribution.NORMAL;
-	public static double bwHeterogeneityCV = 0.2;
-	public static int bwHeterogeneityAlpha = 0;
-	public static double bwHeterogeneityBeta = 0d;
-	public static double bwHeterogeneityShape = 0d;
-	public static double bwHeterogeneityLocation = 0d;
-	public static double bwHeterogeneityShift = 0d;
-	public static double bwHeterogeneityMin = 0d;
-	public static double bwHeterogeneityMax = 0d;
-	public static int bwHeterogeneityPopulation = 0;
+	public static Distribution[] bwHeterogeneityDistributionOfDC = {Distribution.NORMAL,Distribution.NORMAL};
+	public static double[] bwHeterogeneityCVOfDC = {0.2,0.2};
+	public static int[] bwHeterogeneityAlphaOfDC = {0,0};
+	public static double[] bwHeterogeneityBetaOfDC = {0d,0d};
+	public static double[] bwHeterogeneityShapeOfDC = {0d,0d};
+	public static double[] bwHeterogeneityLocationOfDC = {0d,0d};
+	public static double[] bwHeterogeneityShiftOfDC = {0d,0d};
+	public static double[] bwHeterogeneityMinOfDC = {0d,0d};
+	public static double[] bwHeterogeneityMaxOfDC = {0d,0d};
+	public static int[] bwHeterogeneityPopulationOfDC = {0,0};
+	
+	
+	// BW Default Heterogeneity
+	public Distribution bwHeterogeneityDistribution = Distribution.NORMAL;
+	public double bwHeterogeneityCV = 0.2;
+	public int bwHeterogeneityAlpha = 0;
+	public double bwHeterogeneityBeta = 0d;
+	public double bwHeterogeneityShape = 0d;
+	public double bwHeterogeneityLocation = 0d;
+	public double bwHeterogeneityShift = 0d;
+	public double bwHeterogeneityMin = 0d;
+	public double bwHeterogeneityMax = 0d;
+	public int bwHeterogeneityPopulation = 0;
+	
+	
+	public void setDCHeterogeneity(
+			Distribution cpuHeterogeneityDistribution,
+			double cpuHeterogeneityCV,
+			int cpuHeterogeneityAlpha,
+			double cpuHeterogeneityBeta,
+			double cpuHeterogeneityShape,
+			double cpuHeterogeneityLocation,
+			double cpuHeterogeneityShift,
+			double cpuHeterogeneityMin,
+			double cpuHeterogeneityMax,
+			int cpuHeterogeneityPopulation,
+			Distribution ioHeterogeneityDistribution,
+			double ioHeterogeneityCV,
+			int ioHeterogeneityAlpha,
+			double ioHeterogeneityBeta,
+			double ioHeterogeneityShape,
+			double ioHeterogeneityLocation,
+			double ioHeterogeneityShift,
+			double ioHeterogeneityMin,
+			double ioHeterogeneityMax,
+			int ioHeterogeneityPopulation,
+			Distribution bwHeterogeneityDistribution,
+			double bwHeterogeneityCV,
+			int bwHeterogeneityAlpha,
+			double bwHeterogeneityBeta,
+			double bwHeterogeneityShape,
+			double bwHeterogeneityLocation,
+			double bwHeterogeneityShift,
+			double bwHeterogeneityMin,
+			double bwHeterogeneityMax,
+			int bwHeterogeneityPopulation,
+			int[] nOpteronOfMachineType
+			) {
+		this.cpuHeterogeneityDistribution = cpuHeterogeneityDistribution;
+		this.cpuHeterogeneityCV = cpuHeterogeneityCV;
+		this.cpuHeterogeneityAlpha = cpuHeterogeneityAlpha;
+		this.cpuHeterogeneityBeta = cpuHeterogeneityBeta;
+		this.cpuHeterogeneityShape = cpuHeterogeneityShape;
+		this.cpuHeterogeneityLocation = cpuHeterogeneityLocation;
+		this.cpuHeterogeneityShift = cpuHeterogeneityShift;
+		this.cpuHeterogeneityMin = cpuHeterogeneityMin;
+		this.cpuHeterogeneityMax = cpuHeterogeneityMax;
+		this.cpuHeterogeneityPopulation = cpuHeterogeneityPopulation;
+		
+		this.ioHeterogeneityDistribution = ioHeterogeneityDistribution;
+		this.ioHeterogeneityCV = ioHeterogeneityCV;
+		this.ioHeterogeneityAlpha = ioHeterogeneityAlpha;
+		this.ioHeterogeneityBeta = ioHeterogeneityBeta;
+		this.ioHeterogeneityShape = ioHeterogeneityShape;
+		this.ioHeterogeneityLocation = ioHeterogeneityLocation;
+		this.ioHeterogeneityShift = ioHeterogeneityShift;
+		this.ioHeterogeneityMin = ioHeterogeneityMin;
+		this.ioHeterogeneityMax = ioHeterogeneityMax;
+		this.ioHeterogeneityPopulation = ioHeterogeneityPopulation;
+		
+		this.bwHeterogeneityDistribution = bwHeterogeneityDistribution;
+		this.bwHeterogeneityCV = bwHeterogeneityCV;
+		this.bwHeterogeneityAlpha = bwHeterogeneityAlpha;
+		this.bwHeterogeneityBeta = bwHeterogeneityBeta;
+		this.bwHeterogeneityShape = bwHeterogeneityShape;
+		this.bwHeterogeneityLocation = bwHeterogeneityLocation;
+		this.bwHeterogeneityShift = bwHeterogeneityShift;
+		this.bwHeterogeneityMin = bwHeterogeneityMin;
+		this.bwHeterogeneityMax = bwHeterogeneityMax;
+		this.bwHeterogeneityPopulation = bwHeterogeneityPopulation;
+		
+		this.nOpteronOfMachineType = nOpteronOfMachineType;
+	}
 
 	// CPU Dynamics
-	public static double cpuBaselineChangesPerHour = 0.5;
-	public static Distribution cpuDynamicsDistribution = Distribution.NORMAL;
-	public static double cpuDynamicsCV = 0.054;
-	public static int cpuDynamicsAlpha = 0;
-	public static double cpuDynamicsBeta = 0d;
-	public static double cpuDynamicsShape = 0d;
-	public static double cpuDynamicsLocation = 0d;
-	public static double cpuDynamicsShift = 0d;
-	public static double cpuDynamicsMin = 0d;
-	public static double cpuDynamicsMax = 0d;
-	public static int cpuDynamicsPopulation = 0;
+	public static double[] cpuBaselineChangesPerHourOfDC = {0.5,0.5};
+	public static Distribution[] cpuDynamicsDistributionOfDC = {Distribution.NORMAL,Distribution.NORMAL};
+	public static double[] cpuDynamicsCVOfDC = {0.054,0.054};
+	public static int[] cpuDynamicsAlphaOfDC = {0,0};
+	public static double[] cpuDynamicsBetaOfDC = {0d,0d};
+	public static double[] cpuDynamicsShapeOfDC = {0d,0d};
+	public static double[] cpuDynamicsLocationOfDC = {0d,0d};
+	public static double[] cpuDynamicsShiftOfDC = {0d,0d};
+	public static double[] cpuDynamicsMinOfDC = {0d,0d};
+	public static double[] cpuDynamicsMaxOfDC = {0d,0d};
+	public static int[] cpuDynamicsPopulationOfDC = {0,0};
 
 	// IO Dynamics
-	public static double ioBaselineChangesPerHour = 0.5;
-	public static Distribution ioDynamicsDistribution = Distribution.NORMAL;
-	public static double ioDynamicsCV = 0.033;
-	public static int ioDynamicsAlpha = 0;
-	public static double ioDynamicsBeta = 0d;
-	public static double ioDynamicsShape = 0d;
-	public static double ioDynamicsLocation = 0d;
-	public static double ioDynamicsShift = 0d;
-	public static double ioDynamicsMin = 0d;
-	public static double ioDynamicsMax = 0d;
-	public static int ioDynamicsPopulation = 0;
+	public static double[] ioBaselineChangesPerHourOfDC = {0.5,0.5};
+	public static Distribution[] ioDynamicsDistributionOfDC = {Distribution.NORMAL,Distribution.NORMAL};
+	public static double[] ioDynamicsCVOfDC = {0.033,0.033};
+	public static int[] ioDynamicsAlphaOfDC = {0,0};
+	public static double[] ioDynamicsBetaOfDC = {0d,0d};
+	public static double[] ioDynamicsShapeOfDC = {0d,0d};
+	public static double[] ioDynamicsLocationOfDC = {0d,0d};
+	public static double[] ioDynamicsShiftOfDC = {0d,0d};
+	public static double[] ioDynamicsMinOfDC = {0d,0d};
+	public static double[] ioDynamicsMaxOfDC = {0d,0d};
+	public static int[] ioDynamicsPopulationOfDC = {0,0};
 
 	// BW Dynamics
-	public static double bwBaselineChangesPerHour = 0.5;
-	public static Distribution bwDynamicsDistribution = Distribution.NORMAL;
-	public static double bwDynamicsCV = 0.04;
-	public static int bwDynamicsAlpha = 0;
-	public static double bwDynamicsBeta = 0d;
-	public static double bwDynamicsShape = 0d;
-	public static double bwDynamicsLocation = 0d;
-	public static double bwDynamicsShift = 0d;
-	public static double bwDynamicsMin = 0d;
-	public static double bwDynamicsMax = 0d;
-	public static int bwDynamicsPopulation = 0;
+	public static double[] bwBaselineChangesPerHourOfDC = {0.5,0.5};
+	public static Distribution[] bwDynamicsDistributionOfDC = {Distribution.NORMAL,Distribution.NORMAL};
+	public static double[] bwDynamicsCVOfDC = {0.04,0.04};
+	public static int[] bwDynamicsAlphaOfDC = {0,0};
+	public static double[] bwDynamicsBetaOfDC = {0d,0d};
+	public static double[] bwDynamicsShapeOfDC = {0d,0d};
+	public static double[] bwDynamicsLocationOfDC = {0d,0d};
+	public static double[] bwDynamicsShiftOfDC = {0d,0d};
+	public static double[] bwDynamicsMinOfDC = {0d,0d};
+	public static double[] bwDynamicsMaxOfDC = {0d,0d};
+	public static int[] bwDynamicsPopulationOfDC = {0,0};
 
 	// CPU noise
-	public static Distribution cpuNoiseDistribution = Distribution.NORMAL;
-	public static double cpuNoiseCV = 0.028;
-	public static int cpuNoiseAlpha = 0;
-	public static double cpuNoiseBeta = 0d;
-	public static double cpuNoiseShape = 0d;
-	public static double cpuNoiseLocation = 0d;
-	public static double cpuNoiseShift = 0d;
-	public static double cpuNoiseMin = 0d;
-	public static double cpuNoiseMax = 0d;
-	public static int cpuNoisePopulation = 0;
+	public static Distribution[] cpuNoiseDistributionOfDC = {Distribution.NORMAL,Distribution.NORMAL};
+	public static double[] cpuNoiseCVOfDC = {0.028,0.028};
+	public static int[] cpuNoiseAlphaOfDC = {0,0};
+	public static double[] cpuNoiseBetaOfDC = {0d,0d};
+	public static double[] cpuNoiseShapeOfDC = {0d,0d};
+	public static double[] cpuNoiseLocationOfDC = {0d,0d};
+	public static double[] cpuNoiseShiftOfDC = {0d,0d};
+	public static double[] cpuNoiseMinOfDC = {0d,0d};
+	public static double[] cpuNoiseMaxOfDC = {0d,0d};
+	public static int[] cpuNoisePopulationOfDC = {0,0};
 
 	// IO noise
-	public static Distribution ioNoiseDistribution = Distribution.NORMAL;
-	public static double ioNoiseCV = 0.007;
-	public static int ioNoiseAlpha = 0;
-	public static double ioNoiseBeta = 0d;
-	public static double ioNoiseShape = 0d;
-	public static double ioNoiseLocation = 0d;
-	public static double ioNoiseShift = 0d;
-	public static double ioNoiseMin = 0d;
-	public static double ioNoiseMax = 0d;
-	public static int ioNoisePopulation = 0;
+	public static Distribution[] ioNoiseDistributionOfDC = {Distribution.NORMAL,Distribution.NORMAL};
+	public static double[] ioNoiseCVOfDC = {0.007,0.007};
+	public static int[] ioNoiseAlphaOfDC = {0,0};
+	public static double[] ioNoiseBetaOfDC = {0d,0d};
+	public static double[] ioNoiseShapeOfDC = {0d,0d};
+	public static double[] ioNoiseLocationOfDC = {0d,0d};
+	public static double[] ioNoiseShiftOfDC = {0d,0d};
+	public static double[] ioNoiseMinOfDC = {0d,0d};
+	public static double[] ioNoiseMaxOfDC = {0d,0d};
+	public static int[] ioNoisePopulationOfDC = {0,0};
 
 	// BW noise
-	public static Distribution bwNoiseDistribution = Distribution.NORMAL;
-	public static double bwNoiseCV = 0.01;
-	public static int bwNoiseAlpha = 0;
-	public static double bwNoiseBeta = 0d;
-	public static double bwNoiseShape = 0d;
-	public static double bwNoiseLocation = 0d;
-	public static double bwNoiseShift = 0d;
-	public static double bwNoiseMin = 0d;
-	public static double bwNoiseMax = 0d;
-	public static int bwNoisePopulation = 0;
+	public static Distribution[] bwNoiseDistributionOfDC = {Distribution.NORMAL,Distribution.NORMAL};
+	public static double[] bwNoiseCVOfDC = {0.01,0.01};
+	public static int[] bwNoiseAlphaOfDC = {0,0};
+	public static double[] bwNoiseBetaOfDC = {0d,0d};
+	public static double[] bwNoiseShapeOfDC = {0d,0d};
+	public static double[] bwNoiseLocationOfDC = {0d,0d};
+	public static double[] bwNoiseShiftOfDC = {0d,0d};
+	public static double[] bwNoiseMinOfDC = {0d,0d};
+	public static double[] bwNoiseMaxOfDC = {0d,0d};
+	public static int[] bwNoisePopulationOfDC = {0,0};
 
 	// straggler parameters
 	public static double[] likelihoodOfStragglerOfDC = {0.015,0.015};
@@ -232,6 +343,12 @@ public class Parameters {
 	public static double[] bwBaselineOfDC = getBwBaseline();
 	public static double[] ioBaselineOfDC = getIoBaseline();
 	
+	
+	//upperbound of datasize
+	public static long ubOfDataSize = 2048 * 1024 * 1024; // 2G
+	
+	//lowerbound of datasize
+	public static long lbOfDataSize = 128 * 1024; // 128K
 	
 	
 	// upperbound of inputdata

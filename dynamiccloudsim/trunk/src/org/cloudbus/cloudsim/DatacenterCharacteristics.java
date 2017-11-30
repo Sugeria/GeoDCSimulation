@@ -14,6 +14,8 @@ import org.cloudbus.cloudsim.core.CloudSim;
 import org.cloudbus.cloudsim.lists.HostList;
 import org.cloudbus.cloudsim.lists.PeList;
 
+import de.huberlin.wbi.dcs.examples.Parameters.Distribution;
+
 /**
  * DatacenterCharacteristics represents static properties of a resource such as resource
  * architecture, Operating System (OS), management policy (time- or space-shared), cost and time
@@ -81,10 +83,111 @@ public class DatacenterCharacteristics {
 	private double uplink;
 	private double downlink;
 	
+	private double likelihoodOfStraggler;
+	private double stragglerPerformanceCoefficient;
+	
+	public void setLikelihoodOfStraggler(double likelihoodOfStraggler) {
+		this.likelihoodOfStraggler = likelihoodOfStraggler;
+	}
+	
+	public double getLikelihoodOfStraggler() {
+		return likelihoodOfStraggler;
+	}
+	
+	public void setStragglerPerformanceCoefficient(double stragglerPerformanceCoefficient) {
+		this.stragglerPerformanceCoefficient = stragglerPerformanceCoefficient;
+	}
+	
+	public double getStragglerPerformanceCoefficient() {
+		return stragglerPerformanceCoefficient;
+	}
+	
 	private double likelihoodOfFailure;
 	private double runtimeFactorIncaseOfFailure;
 	private double likelihoodOfDCFailure;
+
 	private int numberOfVM;
+	
+	// CPU Dynamics
+	public double cpuBaselineChangesPerHour = 0.5;
+	public Distribution cpuDynamicsDistribution = Distribution.NORMAL;
+	public double cpuDynamicsCV = 0.054;
+	public int cpuDynamicsAlpha = 0;
+	public double cpuDynamicsBeta = 0d;
+	public double cpuDynamicsShape = 0d;
+	public double cpuDynamicsLocation = 0d;
+	public double cpuDynamicsShift = 0d;
+	public double cpuDynamicsMin = 0d;
+	public double cpuDynamicsMax = 0d;
+	public int cpuDynamicsPopulation = 0;
+
+	// IO Dynamics
+	public double ioBaselineChangesPerHour = 0.5;
+	public Distribution ioDynamicsDistribution = Distribution.NORMAL;
+	public double ioDynamicsCV = 0.033;
+	public int ioDynamicsAlpha = 0;
+	public double ioDynamicsBeta = 0d;
+	public double ioDynamicsShape = 0d;
+	public double ioDynamicsLocation = 0d;
+	public double ioDynamicsShift = 0d;
+	public double ioDynamicsMin = 0d;
+	public double ioDynamicsMax = 0d;
+	public int ioDynamicsPopulation = 0;
+
+	// BW Dynamics
+	public double bwBaselineChangesPerHour = 0.5;
+	public Distribution bwDynamicsDistribution = Distribution.NORMAL;
+	public double bwDynamicsCV = 0.04;
+	public int bwDynamicsAlpha = 0;
+	public double bwDynamicsBeta = 0d;
+	public double bwDynamicsShape = 0d;
+	public double bwDynamicsLocation = 0d;
+	public double bwDynamicsShift = 0d;
+	public double bwDynamicsMin = 0d;
+	public double bwDynamicsMax = 0d;
+	public int bwDynamicsPopulation = 0;
+
+	// CPU noise
+	public Distribution cpuNoiseDistribution = Distribution.NORMAL;
+	public double cpuNoiseCV = 0.028;
+	public int cpuNoiseAlpha = 0;
+	public double cpuNoiseBeta = 0d;
+	public double cpuNoiseShape = 0d;
+	public double cpuNoiseLocation = 0d;
+	public double cpuNoiseShift = 0d;
+	public double cpuNoiseMin = 0d;
+	public double cpuNoiseMax = 0d;
+	public int cpuNoisePopulation = 0;
+
+	// IO noise
+	public Distribution ioNoiseDistribution = Distribution.NORMAL;
+	public double ioNoiseCV = 0.007;
+	public int ioNoiseAlpha = 0;
+	public double ioNoiseBeta = 0d;
+	public double ioNoiseShape = 0d;
+	public double ioNoiseLocation = 0d;
+	public double ioNoiseShift = 0d;
+	public double ioNoiseMin = 0d;
+	public double ioNoiseMax = 0d;
+	public int ioNoisePopulation = 0;
+
+	// BW noise
+	public Distribution bwNoiseDistribution = Distribution.NORMAL;
+	public double bwNoiseCV = 0.01;
+	public int bwNoiseAlpha = 0;
+	public double bwNoiseBeta = 0d;
+	public double bwNoiseShape = 0d;
+	public double bwNoiseLocation = 0d;
+	public double bwNoiseShift = 0d;
+	public double bwNoiseMin = 0d;
+	public double bwNoiseMax = 0d;
+	public int bwNoisePopulation = 0;
+	
+	
+	// performance baseline of datacenter
+	public double MIPSbaseline;
+	public double bwBaseline;
+	public double ioBaseline;
 
 	/**
 	 * Allocates a new DatacenterCharacteristics object. If the time zone is invalid, then by
