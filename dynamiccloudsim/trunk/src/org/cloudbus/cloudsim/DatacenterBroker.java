@@ -411,7 +411,7 @@ public class DatacenterBroker extends SimEntity {
 		int requestedVms = 0;
 		String datacenterName = CloudSim.getEntityName(datacenterId);
 		for (Vm vm : getVmList()) {
-			if (vm.DCindex == (datacenterId - DCbase + 1)) {
+			if (vm.DCindex == (datacenterId - DCbase)) {
 				if (!getVmsToDatacentersMap().containsKey(vm.getId())) {
 					vm.DCId = datacenterId;
 					Log.printLine(CloudSim.clock() + ": " + getName() + ": Trying to Create VM #" + vm.getId()
