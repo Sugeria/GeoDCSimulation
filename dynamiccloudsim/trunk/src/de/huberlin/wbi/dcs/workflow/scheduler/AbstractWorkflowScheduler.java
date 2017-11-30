@@ -3,6 +3,7 @@ package de.huberlin.wbi.dcs.workflow.scheduler;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -30,7 +31,6 @@ import de.huberlin.wbi.dcs.examples.Parameters;
 import de.huberlin.wbi.dcs.workflow.DataDependency;
 import de.huberlin.wbi.dcs.workflow.Task;
 import de.huberlin.wbi.dcs.workflow.Workflow;
-import sun.security.provider.JavaKeyStore.CaseExactJKS;
 import taksassign.TaskAssign;
 
 public abstract class AbstractWorkflowScheduler extends DatacenterBroker
@@ -46,7 +46,7 @@ public abstract class AbstractWorkflowScheduler extends DatacenterBroker
 	// two collections of tasks, which are currently running;
 	// note that the second collections is a subset of the first collection
 	private Map<Integer, Task> tasks;
-	private Map<Integer, Task> speculativeTasks;
+	private Map<Integer, Queue<Task>> speculativeTasks;
 	
 	
 
@@ -157,10 +157,9 @@ public abstract class AbstractWorkflowScheduler extends DatacenterBroker
 	protected void submitTasks() {
 		Queue<Vm> taskSlotsKeptIdle = new LinkedList<>();
 		// compute the task assignment among datacenters for ready tasks
-		TaskAssign taskassign = null;
-		taskassign = new TaskAssign();
-		Integer numberOfTask = getTaskQueue().size();
 		
+		Integer numberOfTask = getTaskQueue().size();
+		TaskAssign taskassign = null;
 		MWNumericArray tasknum = null;
 		MWNumericArray dcnum = null;
 		MWNumericArray probArray = null;
@@ -175,182 +174,224 @@ public abstract class AbstractWorkflowScheduler extends DatacenterBroker
 		Object[] result = null;	/* Stores the result */
 		MWNumericArray x = null;	/* Location of minimal value */
 		MWNumericArray flag = null;	/* solvable flag */
-		
-		int[] dims = {1,1};
-		tasknum = MWNumericArray.newInstance(dims, MWClassID.INT64,MWComplexity.REAL);
-		dcnum = MWNumericArray.newInstance(dims, MWClassID.INT64, MWComplexity.REAL);
-		iteration_bound = MWNumericArray.newInstance(dims, MWClassID.INT64, MWComplexity.REAL);
-		dims[0] = Parameters.numberOfDC;
-		dims[1] = 4;
-		probArray = MWNumericArray.newInstance(dims, MWClassID.DOUBLE, MWComplexity.REAL);
-		dims[0] = numberOfTask * Parameters.numberOfDC;
-		allDuraArray = MWNumericArray.newInstance(dims, MWClassID.DOUBLE, MWComplexity.REAL);
-		dims[0] = 1;
-		dims[1] = numberOfTask;
-		data = MWNumericArray.newInstance(dims, MWClassID.INT64, MWComplexity.REAL);
-		dims[0] = numberOfTask;
-		dims[1] = Parameters.ubOfData;
-		datapos = MWNumericArray.newInstance(dims, MWClassID.INT64, MWComplexity.REAL);
-		dims[0] = numberOfTask * Parameters.numberOfDC;
-		bandwidth = MWNumericArray.newInstance(dims, MWClassID.DOUBLE, MWComplexity.REAL);
-		dims[0] = 1;
-		dims[1] = Parameters.numberOfDC;
-		SlotArray = MWNumericArray.newInstance(dims, MWClassID.INT64, MWComplexity.REAL);
-		UpArray = MWNumericArray.newInstance(dims, MWClassID.DOUBLE, MWComplexity.REAL);
-		DownArray = MWNumericArray.newInstance(dims, MWClassID.DOUBLE, MWComplexity.REAL);
-		
-		
-		// set value to the above arguments
-		
-		tasknum.set(1, numberOfTask);
-		dcnum.set(1, Parameters.numberOfDC);
-		iteration_bound.set(1, Parameters.boundOfIter);
-		
-		//probArray
-		for (int dcindex = 0; dcindex < Parameters.numberOfDC; dcindex++) {
-			for (int iterm = 0; iterm < 4; iterm++) {
-				int[] pos = {dcindex,iterm};
-				double value = 0d;
-				switch (iterm) {
-				case 0:
-					value = (1-Parameters.likelihoodOfDCFailure[dcindex])*(1-Parameters.likelihoodOfFailure[dcindex])*(1-Parameters.likelihoodOfStragglerOfDC[dcindex]);
-					break;
-				case 1:
-					value = (1-Parameters.likelihoodOfDCFailure[dcindex])*(1-Parameters.likelihoodOfFailure[dcindex])*Parameters.likelihoodOfStragglerOfDC[dcindex];
-					break;
-				case 2:
-					value = (1-Parameters.likelihoodOfDCFailure[dcindex])*Parameters.likelihoodOfFailure[dcindex];
-					break;
-				case 3:
-					value = Parameters.likelihoodOfDCFailure[dcindex];
-					break;
-				default:
-					break;
-				}
-				probArray.set(pos,value);
-			}
-		}
-		
-		//data datapos 
-		double[] Totaldatasize = new double[numberOfTask];
-		double[][] datasize = new double[numberOfTask][Parameters.ubOfData];
+		double[] xd = null;
+		int flagi = 0;
 		LinkedList<Task> ReadyTasks = (LinkedList<Task>)getTaskQueue();
-		int[] pos = new int[2];
-		for (int tindex = 0; tindex < numberOfTask; tindex++) {
-			Task task = ReadyTasks.get(tindex);
-			pos[0] = 1;
-			pos[1] = tindex;
-			data.set(pos, task.numberOfData);
-			Totaldatasize[tindex] = 0d;
-			for(int dataindex = 0; dataindex < task.numberOfData; dataindex++) {
-				pos[0] = tindex;
-				pos[1] = dataindex;
-				datapos.set(pos, task.positionOfData[dataindex]);
-				datasize[tindex][dataindex] = task.sizeOfData[dataindex];
-				Totaldatasize[tindex] += task.sizeOfData[dataindex];
-			}
-		}
-		
-		//bandwidth allDuraArray
-		for (int tindex = 0; tindex < numberOfTask; tindex++) {
-			Task task = ReadyTasks.get(tindex);
+		try {
+			
+			taskassign = new TaskAssign();
+			int[] dims = {1,1};
+			tasknum = MWNumericArray.newInstance(dims, MWClassID.INT64,MWComplexity.REAL);
+			dcnum = MWNumericArray.newInstance(dims, MWClassID.INT64, MWComplexity.REAL);
+			iteration_bound = MWNumericArray.newInstance(dims, MWClassID.INT64, MWComplexity.REAL);
+			dims[0] = Parameters.numberOfDC;
+			dims[1] = 4;
+			probArray = MWNumericArray.newInstance(dims, MWClassID.DOUBLE, MWComplexity.REAL);
+			dims[0] = numberOfTask * Parameters.numberOfDC;
+			allDuraArray = MWNumericArray.newInstance(dims, MWClassID.DOUBLE, MWComplexity.REAL);
+			dims[0] = 1;
+			dims[1] = numberOfTask;
+			data = MWNumericArray.newInstance(dims, MWClassID.INT64, MWComplexity.REAL);
+			dims[0] = numberOfTask;
+			dims[1] = Parameters.ubOfData;
+			datapos = MWNumericArray.newInstance(dims, MWClassID.INT64, MWComplexity.REAL);
+			dims[0] = numberOfTask * Parameters.numberOfDC;
+			bandwidth = MWNumericArray.newInstance(dims, MWClassID.DOUBLE, MWComplexity.REAL);
+			dims[0] = 1;
+			dims[1] = Parameters.numberOfDC;
+			SlotArray = MWNumericArray.newInstance(dims, MWClassID.INT64, MWComplexity.REAL);
+			UpArray = MWNumericArray.newInstance(dims, MWClassID.DOUBLE, MWComplexity.REAL);
+			DownArray = MWNumericArray.newInstance(dims, MWClassID.DOUBLE, MWComplexity.REAL);
+			
+			
+			// set value to the above arguments
+			
+			tasknum.set(1, numberOfTask);
+			dcnum.set(1, Parameters.numberOfDC);
+			iteration_bound.set(1, Parameters.boundOfIter);
+			
+			//probArray
 			for (int dcindex = 0; dcindex < Parameters.numberOfDC; dcindex++) {
-				int xindex = (tindex - 1)*Parameters.numberOfDC + dcindex;
-				pos[0] = 1;
-				pos[1] = tindex;
-				int datanumber = data.getInt(pos);
-				double[] datasizeOfTask = datasize[tindex];
-				double TotaldatasizeOfTask = Totaldatasize[tindex];
-				for(int dataindex = 0; dataindex < datanumber; dataindex++) {
-					pos[0] = tindex;
-					pos[1] = dataindex;
-					if (datapos.getInt(pos) == dcindex) {
-						TotaldatasizeOfTask -= datasizeOfTask[dataindex];
-						datasizeOfTask[dataindex] = 0;
-					}
-				}
-				for(int dataindex = 0; dataindex < datanumber; dataindex++) {
-					pos[0] = xindex;
-					pos[1] = dataindex;
-					bandwidth.set(pos, Parameters.bwBaselineOfDC[dcindex]*datasizeOfTask[dataindex]/TotaldatasizeOfTask);
-				}
 				for (int iterm = 0; iterm < 4; iterm++) {
-					pos[0] = xindex;
-					pos[1] = iterm;
+					int[] pos = {dcindex,iterm};
 					double value = 0d;
 					switch (iterm) {
 					case 0:
-						value = task.getMi()/Parameters.MIPSbaselineOfDC[dcindex]
-								+ TotaldatasizeOfTask/Parameters.bwBaselineOfDC[dcindex]
-								+ 2*task.getIo()/Parameters.ioBaselineOfDC[dcindex];
+						value = (1-Parameters.likelihoodOfDCFailure[dcindex])*(1-Parameters.likelihoodOfFailure[dcindex])*(1-Parameters.likelihoodOfStragglerOfDC[dcindex]);
 						break;
 					case 1:
-						value = task.getMi()/(Parameters.MIPSbaselineOfDC[dcindex]*Parameters.stragglerPerformanceCoefficientOfDC[dcindex])
-								+ TotaldatasizeOfTask/(Parameters.bwBaselineOfDC[dcindex]*Parameters.stragglerPerformanceCoefficientOfDC[dcindex])
-								+ 2*task.getIo()/(Parameters.ioBaselineOfDC[dcindex]*Parameters.stragglerPerformanceCoefficientOfDC[dcindex]);
+						value = (1-Parameters.likelihoodOfDCFailure[dcindex])*(1-Parameters.likelihoodOfFailure[dcindex])*Parameters.likelihoodOfStragglerOfDC[dcindex];
 						break;
 					case 2:
-						value = (Parameters.runtimeFactorInCaseOfFailure[dcindex] + 1)
-								* task.getMi()/Parameters.MIPSbaselineOfDC[dcindex]
-								+ TotaldatasizeOfTask/Parameters.bwBaselineOfDC[dcindex]
-								+ 2*task.getIo()/Parameters.ioBaselineOfDC[dcindex];
+						value = (1-Parameters.likelihoodOfDCFailure[dcindex])*Parameters.likelihoodOfFailure[dcindex];
 						break;
 					case 3:
-						value = 2
-								* task.getMi()/Parameters.MIPSbaselineOfDC[dcindex]
-								+ TotaldatasizeOfTask/Parameters.bwBaselineOfDC[dcindex]
-								+ 2*task.getIo()/Parameters.ioBaselineOfDC[dcindex];
+						value = Parameters.likelihoodOfDCFailure[dcindex];
 						break;
 					default:
 						break;
 					}
-					allDuraArray.set(pos,value);
+					probArray.set(pos,value);
+				}
+			}
+			
+			//data datapos 
+			double[] Totaldatasize = new double[numberOfTask];
+			double[][] datasize = new double[numberOfTask][Parameters.ubOfData];
+			
+			int[] pos = new int[2];
+			for (int tindex = 0; tindex < numberOfTask; tindex++) {
+				Task task = ReadyTasks.get(tindex);
+				pos[0] = 1;
+				pos[1] = tindex;
+				data.set(pos, task.numberOfData);
+				Totaldatasize[tindex] = 0d;
+				for(int dataindex = 0; dataindex < task.numberOfData; dataindex++) {
+					pos[0] = tindex;
+					pos[1] = dataindex;
+					datapos.set(pos, task.positionOfData[dataindex]);
+					datasize[tindex][dataindex] = task.sizeOfData[dataindex];
+					Totaldatasize[tindex] += task.sizeOfData[dataindex];
+				}
+			}
+			
+			//bandwidth allDuraArray
+			for (int tindex = 0; tindex < numberOfTask; tindex++) {
+				Task task = ReadyTasks.get(tindex);
+				for (int dcindex = 0; dcindex < Parameters.numberOfDC; dcindex++) {
+					int xindex = (tindex - 1)*Parameters.numberOfDC + dcindex;
+					pos[0] = 1;
+					pos[1] = tindex;
+					int datanumber = data.getInt(pos);
+					double[] datasizeOfTask = datasize[tindex];
+					double TotaldatasizeOfTask = Totaldatasize[tindex];
+					for(int dataindex = 0; dataindex < datanumber; dataindex++) {
+						pos[0] = tindex;
+						pos[1] = dataindex;
+						if (datapos.getInt(pos) == dcindex) {
+							TotaldatasizeOfTask -= datasizeOfTask[dataindex];
+							datasizeOfTask[dataindex] = 0;
+						}
+					}
+					for(int dataindex = 0; dataindex < datanumber; dataindex++) {
+						pos[0] = xindex;
+						pos[1] = dataindex;
+						bandwidth.set(pos, Parameters.bwBaselineOfDC[dcindex]*datasizeOfTask[dataindex]/TotaldatasizeOfTask);
+					}
+					for (int iterm = 0; iterm < 4; iterm++) {
+						pos[0] = xindex;
+						pos[1] = iterm;
+						double value = 0d;
+						switch (iterm) {
+						case 0:
+							value = task.getMi()/Parameters.MIPSbaselineOfDC[dcindex]
+									+ TotaldatasizeOfTask/Parameters.bwBaselineOfDC[dcindex]
+									+ 2*task.getIo()/Parameters.ioBaselineOfDC[dcindex];
+							break;
+						case 1:
+							value = task.getMi()/(Parameters.MIPSbaselineOfDC[dcindex]*Parameters.stragglerPerformanceCoefficientOfDC[dcindex])
+									+ TotaldatasizeOfTask/(Parameters.bwBaselineOfDC[dcindex]*Parameters.stragglerPerformanceCoefficientOfDC[dcindex])
+									+ 2*task.getIo()/(Parameters.ioBaselineOfDC[dcindex]*Parameters.stragglerPerformanceCoefficientOfDC[dcindex]);
+							break;
+						case 2:
+							value = (Parameters.runtimeFactorInCaseOfFailure[dcindex] + 1)
+									* task.getMi()/Parameters.MIPSbaselineOfDC[dcindex]
+									+ TotaldatasizeOfTask/Parameters.bwBaselineOfDC[dcindex]
+									+ 2*task.getIo()/Parameters.ioBaselineOfDC[dcindex];
+							break;
+						case 3:
+							value = 2
+									* task.getMi()/Parameters.MIPSbaselineOfDC[dcindex]
+									+ TotaldatasizeOfTask/Parameters.bwBaselineOfDC[dcindex]
+									+ 2*task.getIo()/Parameters.ioBaselineOfDC[dcindex];
+							break;
+						default:
+							break;
+						}
+						allDuraArray.set(pos,value);
+					}
+				}
+				
+			}
+			
+			//SlotArray UpArray DownArray
+			
+			for(int dcindex = 0; dcindex < Parameters.numberOfDC; dcindex++) {
+				pos[0] = 1;
+				pos[1] = dcindex;
+				SlotArray.set(pos, idleTaskSlotsOfDC.get(dcindex + DCbase).size());
+				UpArray.set(pos, getUplinkOfDC().get(dcindex + DCbase));
+				DownArray.set(pos, getDownlinkOfDC().get(dcindex + DCbase));
+			}
+			
+			result = taskassign.command(11, tasknum,dcnum,probArray,allDuraArray,data,datapos,bandwidth,SlotArray,UpArray,DownArray,iteration_bound);
+			x = (MWNumericArray)result[0];
+			xd = x.getDoubleData();
+			flag = (MWNumericArray)result[1];
+			flagi = flag.getInt();
+		}catch(Exception e) {
+			System.out.println("Exception: "+e.toString());
+		}finally {
+			MWNumericArray.disposeArray(tasknum);
+			MWNumericArray.disposeArray(dcnum);
+			MWNumericArray.disposeArray(probArray);
+			MWNumericArray.disposeArray(allDuraArray);
+			MWNumericArray.disposeArray(data);
+			MWNumericArray.disposeArray(datapos);
+			MWNumericArray.disposeArray(bandwidth);
+			MWNumericArray.disposeArray(SlotArray);
+			MWNumericArray.disposeArray(UpArray);
+			MWNumericArray.disposeArray(DownArray);
+			MWNumericArray.disposeArray(iteration_bound);
+			MWNumericArray.disposeArray(x);
+			MWNumericArray.disposeArray(flag);
+			if(taskassign != null)
+				taskassign.dispose();
+		}
+		
+		
+		if (flagi > 0) {
+			// successful assignment
+			for (int tindex = 0; tindex < numberOfTask; tindex++) {
+				Task task = getTaskQueue().remove();
+				for (int dcindex = 0; dcindex < Parameters.numberOfDC; dcindex++) {
+					if (xd[(tindex-1)*Parameters.numberOfDC + dcindex] == 1) {
+						Vm vm = idleTaskSlotsOfDC.get(dcindex + DCbase).remove();
+						if (tasks.containsKey(task.getCloudletId())) {
+							Task speculativeTask = new Task(task);
+							speculativeTask.setSpeculativeCopy(true);
+							speculativeTasks.get(speculativeTask.getCloudletId()).add(speculativeTask);
+							submitSpeculativeTask(speculativeTask, vm);
+						} else {
+							tasks.put(task.getCloudletId(), task);
+							submitTask(task, vm);
+							speculativeTasks.put(task.getCloudletId(), new LinkedList<>());
+						}
+					}
 				}
 			}
 			
 		}
 		
-		//SlotArray UpArray DownArray
-		
-		for(int dcindex = 0; dcindex < Parameters.numberOfDC; dcindex++) {
-			pos[0] = 1;
-			pos[1] = dcindex;
-			SlotArray.set(pos, idleTaskSlotsOfDC.get(dcindex + DCbase).size());
-			UpArray.set(pos, getUplinkOfDC().get(dcindex + DCbase));
-			DownArray.set(pos, getDownlinkOfDC().get(dcindex + DCbase));
-		}
-		
-		
-		
-		
-		
-		result = taskassign.command(11, tasknum,dcnum,probArray,allDuraArray,data,datapos,bandwidth,SlotArray,UpArray,DownArray,iteration_bound);
-		x = (MWNumericArray)result[0];
-		double[] xd = x.getDoubleData();
-		flag = (MWNumericArray)result[1];
-		int flagi = flag.getInt();
-		
-		
-		
-		while (tasksRemaining() && !idleTaskSlots.isEmpty()) {
-			Vm vm = idleTaskSlots.remove();
-			Task task = getNextTask(vm);
-			// task will be null if scheduler has tasks to be executed, but not
-			// for this VM (e.g., if it abides to a static schedule or this VM
-			// is a straggler, which the scheduler does not want to assign tasks
-			// to)
-			if (task == null) {
-				taskSlotsKeptIdle.add(vm);
-			} else if (tasks.containsKey(task.getCloudletId())) {
-				speculativeTasks.put(task.getCloudletId(),
-						task);
-				submitSpeculativeTask(task, vm);
-			} else {
-				tasks.put(task.getCloudletId(), task);
-				submitTask(task, vm);
-			}
-		}
-		idleTaskSlots.addAll(taskSlotsKeptIdle);
+//		while (tasksRemaining() && !idleTaskSlots.isEmpty()) {
+//			Vm vm = idleTaskSlots.remove();
+//			Task task = getNextTask(vm);
+//			// task will be null if scheduler has tasks to be executed, but not
+//			// for this VM (e.g., if it abides to a static schedule or this VM
+//			// is a straggler, which the scheduler does not want to assign tasks
+//			// to)
+//			if (task == null) {
+//				taskSlotsKeptIdle.add(vm);
+//			} else if (tasks.containsKey(task.getCloudletId())) {
+//				speculativeTasks.put(task.getCloudletId(),
+//						task);
+//				submitSpeculativeTask(task, vm);
+//			} else {
+//				tasks.put(task.getCloudletId(), task);
+//				submitTask(task, vm);
+//			}
+//		}
+//		idleTaskSlots.addAll(taskSlotsKeptIdle);
 	}
 
 	protected void clearDatacenters() {
@@ -388,21 +429,39 @@ public abstract class AbstractWorkflowScheduler extends DatacenterBroker
 		// both from internal data structures
 		if (task.getCloudletStatus() == Cloudlet.SUCCESS) {
 			Task originalTask = tasks.remove(task.getCloudletId());
-			Task speculativeTask = speculativeTasks
+			LinkedList<Task> speculativeTaskOfTask = (LinkedList<Task>)speculativeTasks
 					.remove(task.getCloudletId());
 
-			if ((task.isSpeculativeCopy() && speculativeTask == null)
+			if ((task.isSpeculativeCopy() && speculativeTaskOfTask.size() == 0)
 					|| originalTask == null) {
 				return;
 			}
 
 			if (task.isSpeculativeCopy()) {
-				Log.printLine(CloudSim.clock() + ": " + getName() + ": VM # "
-						+ speculativeTask.getVmId()
-						+ " completed speculative copy of Task # "
+				
+				Iterator<Task> it = speculativeTaskOfTask.iterator();
+				while(it.hasNext()) {
+					Task speculativeTask = it.next();
+					if (speculativeTask.getVmId() == task.getVmId()) {
+						Log.printLine(CloudSim.clock() + ": " + getName() + ": VM # "
+								+ speculativeTask.getVmId()
+								+ " completed speculative copy of Task # "
+								+ speculativeTask.getCloudletId() + " \""
+								+ speculativeTask.getName() + " "
+								+ speculativeTask.getParams() + " \"");
+					} else {
+						Log.printLine(CloudSim.clock() + ": " + getName()
+						+ ": VM # " + speculativeTask.getVmId()
+						+ " cancelled speculative copy of Task # "
 						+ speculativeTask.getCloudletId() + " \""
 						+ speculativeTask.getName() + " "
 						+ speculativeTask.getParams() + " \"");
+						vms.get(speculativeTask.getVmId()).getCloudletScheduler()
+						.cloudletCancel(speculativeTask.getCloudletId());
+					}
+					
+				}
+				
 				Log.printLine(CloudSim.clock() + ": " + getName() + ": VM # "
 						+ originalTask.getVmId() + " cancelled Task # "
 						+ originalTask.getCloudletId() + " \""
@@ -416,27 +475,40 @@ public abstract class AbstractWorkflowScheduler extends DatacenterBroker
 						+ originalTask.getCloudletId() + " \""
 						+ originalTask.getName() + " "
 						+ originalTask.getParams() + " \"");
-				if (speculativeTask != null) {
-					Log.printLine(CloudSim.clock() + ": " + getName()
-							+ ": VM # " + speculativeTask.getVmId()
-							+ " cancelled speculative copy of Task # "
-							+ speculativeTask.getCloudletId() + " \""
-							+ speculativeTask.getName() + " "
-							+ speculativeTask.getParams() + " \"");
-					vms.get(speculativeTask.getVmId()).getCloudletScheduler()
-							.cloudletCancel(speculativeTask.getCloudletId());
+				if (speculativeTaskOfTask.size() != 0) {
+					
+					Iterator<Task> it = speculativeTaskOfTask.iterator();
+					while(it.hasNext()) {
+						Task speculativeTask = it.next();
+						Log.printLine(CloudSim.clock() + ": " + getName()
+						+ ": VM # " + speculativeTask.getVmId()
+						+ " cancelled speculative copy of Task # "
+						+ speculativeTask.getCloudletId() + " \""
+						+ speculativeTask.getName() + " "
+						+ speculativeTask.getParams() + " \"");
+						vms.get(speculativeTask.getVmId()).getCloudletScheduler()
+						.cloudletCancel(speculativeTask.getCloudletId());
+					}
+					
 				}
 			}
 
 			// free task slots occupied by finished / cancelled tasks
 			Vm originalVm = vms.get(originalTask.getVmId());
-			idleTaskSlots.add(originalVm);
-			taskSucceeded(originalTask, originalVm);
-			if (speculativeTask != null) {
-				Vm speculativeVm = vms.get(speculativeTask.getVmId());
-				idleTaskSlots.add(speculativeVm);
-				taskFailed(speculativeTask, speculativeVm);
+			idleTaskSlotsOfDC.get(originalVm.DCId).add(originalVm);
+			//tasks.remove(originalTask.getCloudletId());
+			//taskSucceeded(originalTask, originalVm);
+			if (speculativeTasks.size() != 0) {
+				Iterator<Task> it = speculativeTaskOfTask.iterator();
+				while(it.hasNext()) {
+					Task speculativeTask = it.next();
+					Vm speculativeVm = vms.get(speculativeTask.getVmId());
+					idleTaskSlotsOfDC.get(speculativeVm.DCId).add(speculativeVm);
+					//taskFailed(speculativeTask, speculativeVm);
+				}
+				//speculativeTasks.remove(originalTask.getCloudletId());
 			}
+			
 
 			// update the task queue by traversing the successor nodes in the
 			// workflow
@@ -459,7 +531,7 @@ public abstract class AbstractWorkflowScheduler extends DatacenterBroker
 			// otherwise, -- if it exists -- the speculative task becomes the
 			// new original
 		} else {
-			Task speculativeTask = speculativeTasks
+			LinkedList<Task> speculativeTaskOfTask = (LinkedList<Task>)speculativeTasks
 					.remove(task.getCloudletId());
 			if (task.isSpeculativeCopy()) {
 				Log.printLine(CloudSim.clock()
@@ -476,21 +548,31 @@ public abstract class AbstractWorkflowScheduler extends DatacenterBroker
 						+ task.getCloudletId() + " \"" + task.getName() + " "
 						+ task.getParams() + " \"");
 				tasks.remove(task.getCloudletId());
-				if (speculativeTask != null) {
-					speculativeTask.setSpeculativeCopy(false);
+				if (speculativeTaskOfTask.size() != 0) {
+					Task speculativeTask = speculativeTaskOfTask.remove();
+					if (speculativeTaskOfTask.size() == 0) {
+						speculativeTask.setSpeculativeCopy(false);
+					} else {
+						speculativeTask.setSpeculativeCopy(true);
+					}
 					tasks.put(speculativeTask.getCloudletId(), speculativeTask);
 				} else {
 					resetTask(task);
 					taskReady(task);
 				}
 			}
-			idleTaskSlots.add(vm);
+			idleTaskSlotsOfDC.get(vm.DCId).add(vm);
 			taskFailed(task, vm);
 		}
-
+		
+		int idleTaskslotsSum = 0;
+		for (int dcindex = 0; dcindex < Parameters.numberOfDC; dcindex++) {
+			idleTaskslotsSum += idleTaskSlotsOfDC.get(dcindex + DCbase).size();
+		}
+		
 		if (tasksRemaining()) {
 			submitTasks();
-		} else if (idleTaskSlots.size() == getVmsCreatedList().size()
+		} else if (idleTaskslotsSum == getVmsCreatedList().size()
 				* getTaskSlotsPerVm()) {
 			Log.printLine(CloudSim.clock() + ": " + getName()
 					+ ": All Tasks executed. Finishing...");
