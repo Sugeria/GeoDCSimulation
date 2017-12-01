@@ -127,9 +127,10 @@ public class LATEScheduler extends AbstractWorkflowScheduler {
 
 	@Override
 	public boolean tasksRemaining() {
-		return !taskQueue.isEmpty()
-				|| (tasks.size() > speculativeTasks.size() && speculativeTasks
-						.size() < speculativeCapAbs);
+//		return !taskQueue.isEmpty()
+//				|| (tasks.size() > speculativeTasks.size() && speculativeTasks
+//						.size() < speculativeCapAbs);
+		return !taskQueue.isEmpty();
 	}
 
 	@Override
