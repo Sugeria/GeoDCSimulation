@@ -50,6 +50,12 @@ public abstract class CloudletScheduler {
 	 */
 	public abstract double updateVmProcessing(double currentTime, List<Double> mipsShare);
 
+	
+	
+	public abstract void setCloudletFailure(Cloudlet cl);
+	
+	
+	
 	/**
 	 * Receives an cloudlet to be executed in the VM managed by this scheduler.
 	 * 

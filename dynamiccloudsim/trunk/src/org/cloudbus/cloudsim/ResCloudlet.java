@@ -27,7 +27,7 @@ import org.cloudbus.cloudsim.core.CloudSim;
 public class ResCloudlet {
 
 	/** The Cloudlet object. */
-	private final Cloudlet cloudlet;
+	private Cloudlet cloudlet;
 
 	/** The Cloudlet arrival time for the first time. */
 	private double arrivalTime;
@@ -101,6 +101,8 @@ public class ResCloudlet {
 		init();
 	}
 
+	
+	
 	/**
 	 * Allocates a new ResCloudlet object upon the arrival of a Cloudlet object. Use this
 	 * constructor to store reserved Cloudlets, i.e. Cloudlets that done reservation before. The
@@ -126,6 +128,10 @@ public class ResCloudlet {
 		this.duration = duration;
 
 		init();
+	}
+	
+	public void setCloudlet(Cloudlet cloudlet) {
+		this.cloudlet = cloudlet;
 	}
 
 	/**

@@ -199,6 +199,13 @@ public class CloudletSchedulerTimeShared extends CloudletScheduler {
 		return null;
 	}
 
+	
+	@Override
+	public void setCloudletFailure(Cloudlet cl) {
+		// TODO Auto-generated method stub
+		
+	}
+
 	/**
 	 * Pauses execution of a cloudlet.
 	 * 
@@ -537,5 +544,8 @@ public class CloudletSchedulerTimeShared extends CloudletScheduler {
 		}
 		return bw;
 	}
+
+	
+	
 
 }

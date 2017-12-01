@@ -43,6 +43,21 @@ public class CloudletSchedulerGreedyDivided extends CloudletSchedulerTimeShared 
 		iops.add(0d);
 		bwps.add(0d);
 	}
+	
+	@Override
+	public void setCloudletFailure(Cloudlet cl) {
+		for (int i = 0; i < getCloudletExecList().size(); i++) {
+			Task task = (Task)getCloudletExecList().get(i).getCloudlet();
+			if(getCloudletExecList().get(i).getCloudletId() == cl.getCloudletId()) {
+				task.setScheduledToFail(true);
+				getCloudletExecList().get(i).setCloudlet(task);
+			}
+		}
+		
+	}
+	
+	
+	
 
 	// Cloudlets utilize Resources in greedy fashion (take as many resources as
 	// possible)
