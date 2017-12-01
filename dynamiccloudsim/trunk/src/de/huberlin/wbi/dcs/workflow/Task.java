@@ -22,13 +22,6 @@ public class Task extends HeterogeneousCloudlet implements Comparable<Task> {
 	
 	private boolean destinedToFail;
 	
-	private int assignmentDCId;
-	
-	public int numberOfData;
-	
-	public int[] positionOfData;
-	
-	public long[] sizeOfData;
 	
 	public Task(
 			final String name,
@@ -156,12 +149,6 @@ public class Task extends HeterogeneousCloudlet implements Comparable<Task> {
 		return speculativeCopy;
 	}
 	
-	public int getAssignmentDCId() {
-		return assignmentDCId;
-	}
 	
-	public void setAssignmentDCId(int dcId) {
-		this.assignmentDCId = dcId;
-	}
 	
 }

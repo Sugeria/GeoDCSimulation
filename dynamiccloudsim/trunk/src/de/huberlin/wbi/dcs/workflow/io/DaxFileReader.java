@@ -125,7 +125,7 @@ public class DaxFileReader extends LogFileReader {
 					inputSize = 0;
 					
 					for (int dataindex = 0; dataindex < numberofData; dataindex++) {
-						positionOfData[dataindex] = (int)(Math.random()%Parameters.numberOfDC + 1);
+						positionOfData[dataindex] = (int)(Math.random()%Parameters.numberOfDC);
 						sizeOfData[dataindex] = (long)(Math.random()%(Parameters.ubOfDataSize - Parameters.lbOfDataSize + 1) + Parameters.lbOfDataSize);
 						inputSize += sizeOfData[dataindex];
 					}

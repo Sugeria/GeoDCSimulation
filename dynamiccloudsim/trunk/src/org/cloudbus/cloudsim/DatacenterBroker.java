@@ -191,6 +191,8 @@ public class DatacenterBroker extends SimEntity {
 			case CloudSimTags.END_OF_SIMULATION:
 				shutdownEntity();
 				break;
+			case CloudSimTags.CLOUDLET_SUBMIT_ACK:
+				processResourceUpdate(ev);
 			// other unknown tags are processed by this method
 			default:
 				processOtherEvent(ev);
@@ -198,6 +200,11 @@ public class DatacenterBroker extends SimEntity {
 		}
 	}
 	
+	private void processResourceUpdate(SimEvent ev) {
+		// update the available uplink and downlink
+		
+	}
+
 	public Map<Integer, Double> getUplinkOfDC(){
 		return uplinkOfDC;
 	}
@@ -454,7 +461,7 @@ public class DatacenterBroker extends SimEntity {
 			Log.printLine(CloudSim.clock() + ": " + getName() + ": Sending cloudlet "
 					+ cloudlet.getCloudletId() + " to VM #" + vm.getId());
 			cloudlet.setVmId(vm.getId());
-			sendNow(getVmsToDatacentersMap().get(vm.getId()), CloudSimTags.CLOUDLET_SUBMIT, cloudlet);
+			sendNow(getVmsToDatacentersMap().get(vm.getId()), CloudSimTags.CLOUDLET_SUBMIT_ACK, cloudlet);
 			cloudletsSubmitted++;
 			vmIndex = (vmIndex + 1) % getVmsCreatedList().size();
 			getCloudletSubmittedList().add(cloudlet);

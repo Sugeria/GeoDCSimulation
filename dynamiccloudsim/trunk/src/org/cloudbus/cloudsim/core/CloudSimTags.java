@@ -8,6 +8,8 @@
 
 package org.cloudbus.cloudsim.core;
 
+import edu.isi.pegasus.planner.refiner.createdir.Strategy;
+
 /**
  * Contains various static command tags that indicate a type of action that
  * needs to be undertaken by CloudSim entities when they receive or send events.
@@ -273,6 +275,12 @@ public class CloudSimTags {
 	public static final int Network_Event_Host = BASE + 47;
 
 	public static final int NextCycle = BASE + 48;
+	
+	public static final int CLOUDLET_TRANSFER_ACK = BASE + 49;
+	
+	public static final int CLOUDLET_TRANSFER = BASE + 50;
+	
+	public static final int DATACENTER_UPDATE = BASE + 51;
 
 	public static String TagText(int tagValue) {
 		switch (tagValue) {
@@ -386,6 +394,12 @@ public class CloudSimTags {
 			return "Network_Event_Host";
 		case 48:
 			return "NextCycle";
+		case 49:
+			return "CLOUDLET_TRANSFER_ACK";
+		case 50:
+			return "CLOUDLET_TRANSFER";
+		case 51:
+			return "DATACENTER_UPDATE";
 		default:
 			return "Invalid tag value";
 		}

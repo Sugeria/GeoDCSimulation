@@ -156,6 +156,7 @@ public abstract class AbstractWorkflowScheduler extends DatacenterBroker
 
 	protected void submitTasks() {
 		Queue<Vm> taskSlotsKeptIdle = new LinkedList<>();
+		Queue<Task> taskSubmitted = new LinkedList<>();
 		// compute the task assignment among datacenters for ready tasks
 		
 		Integer numberOfTask = getTaskQueue().size();
@@ -250,9 +251,11 @@ public abstract class AbstractWorkflowScheduler extends DatacenterBroker
 					pos[0] = tindex;
 					pos[1] = dataindex;
 					datapos.set(pos, task.positionOfData[dataindex]);
+					task.positionOfDataID[dataindex] = task.positionOfData[dataindex] + DCbase;
 					datasize[tindex][dataindex] = task.sizeOfData[dataindex];
 					Totaldatasize[tindex] += task.sizeOfData[dataindex];
 				}
+				ReadyTasks.set(tindex, task);
 			}
 			
 			//bandwidth allDuraArray
@@ -353,24 +356,29 @@ public abstract class AbstractWorkflowScheduler extends DatacenterBroker
 		if (flagi > 0) {
 			// successful assignment
 			for (int tindex = 0; tindex < numberOfTask; tindex++) {
-				Task task = getTaskQueue().remove();
+				Task task = ReadyTasks.get(tindex);
 				for (int dcindex = 0; dcindex < Parameters.numberOfDC; dcindex++) {
 					if (xd[(tindex-1)*Parameters.numberOfDC + dcindex] == 1) {
 						Vm vm = idleTaskSlotsOfDC.get(dcindex + DCbase).remove();
 						if (tasks.containsKey(task.getCloudletId())) {
 							Task speculativeTask = new Task(task);
+							speculativeTask.setAssignmentDCId(dcindex + DCbase);
+							speculativeTask.assignmentDCindex = dcindex;
 							speculativeTask.setSpeculativeCopy(true);
 							speculativeTasks.get(speculativeTask.getCloudletId()).add(speculativeTask);
 							submitSpeculativeTask(speculativeTask, vm);
 						} else {
+							task.setAssignmentDCId(dcindex + DCbase);
+							task.assignmentDCindex = dcindex;
 							tasks.put(task.getCloudletId(), task);
 							submitTask(task, vm);
 							speculativeTasks.put(task.getCloudletId(), new LinkedList<>());
 						}
 					}
 				}
+				taskSubmitted.add(task);
 			}
-			
+			getTaskQueue().removeAll(taskSubmitted);
 		}
 		
 //		while (tasksRemaining() && !idleTaskSlots.isEmpty()) {

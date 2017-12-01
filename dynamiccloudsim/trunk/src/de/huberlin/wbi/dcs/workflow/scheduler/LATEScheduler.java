@@ -41,7 +41,7 @@ public class LATEScheduler extends AbstractWorkflowScheduler {
 
 	}
 
-	protected Queue<Task> taskQueue;
+	protected LinkedList<Task> taskQueue;
 
 	private int taskSlotsPerVm;
 
@@ -194,7 +194,7 @@ public class LATEScheduler extends AbstractWorkflowScheduler {
 	}
 
 	@Override
-	public Queue<Task> getTaskQueue() {
+	public LinkedList<Task> getTaskQueue() {
 		// TODO Auto-generated method stub
 		return taskQueue;
 	}

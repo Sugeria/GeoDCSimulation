@@ -148,7 +148,33 @@ public class Cloudlet {
 	// Data cloudlet
 	/** The required files. */
 	private List<String> requiredFiles = null;   // list of required filenames
+	
+	private int assignmentDCId;
+	
+	public int assignmentDCindex;
+	
+	public int numberOfData;
+	
+	public int[] positionOfData;
+	
+	public int[] positionOfDataID;
+	
+	public long[] sizeOfData;
 
+	
+	public int getAssignmentDCId() {
+		return assignmentDCId;
+	}
+	
+	public void setAssignmentDCId(int dcId) {
+		this.assignmentDCId = dcId;
+	}
+	
+	
+	
+	
+	
+	
 	/**
 	 * Allocates a new Cloudlet object. The Cloudlet length, input and output file sizes should be
 	 * greater than or equal to 1. By default this constructor sets the history of this object.
