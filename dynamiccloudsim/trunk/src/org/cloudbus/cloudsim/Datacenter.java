@@ -284,6 +284,14 @@ public class Datacenter extends SimEntity {
 				checkCloudletCompletion();
 				break;
 
+			case CloudSimTags.UPLINK_RETURN:
+				processUpBandwidthReturn(ev);
+				break;
+				
+			case CloudSimTags.DOWNLINK_RETURN:
+				processDownBandwidthReturn(ev);
+				break;
+				
 			// other unknown tags are processed by this method
 			default:
 				processOtherEvent(ev);
@@ -291,9 +299,21 @@ public class Datacenter extends SimEntity {
 		}
 	}
 
+	private void processDownBandwidthReturn(SimEvent ev) {
+		double downbandwidth = (double)ev.getData();
+		downlink = downlink + downbandwidth;
+		
+	}
+
+	private void processUpBandwidthReturn(SimEvent ev) {
+		double upbandwidth = (double)ev.getData();
+		uplink = uplink + upbandwidth;
+		
+	}
+
 	private void processCloudletTransfer(SimEvent ev) {
 		// process the transfer
-		// the datacenter now is the source of data transfer
+		// the data center now is the source of data transfer
 		UplinkRequest upr = (UplinkRequest)ev.getData();
 		Cloudlet cl = upr.task;
 		double up = upr.requestedUpbandwidth;
@@ -301,16 +321,11 @@ public class Datacenter extends SimEntity {
 		if (uplink > 0) {
 			upr.isSuccess = true;
 			sendNow(cl.getAssignmentDCId(), CloudSimTags.CLOUDLET_TRANSFER_ACK,upr);
-			double[] data = new double[3];
-			data[0] = getId();
-			data[1] = uplink;
-			data[2] = downlink;
-			CloudletTransferSuccessReq.get(cl.getCloudletId()).add(upr);
-			sendNow(cl.getUserId(), CloudSimTags.DATACENTER_UPDATE,data);
+			
 		} else {
 			uplink += up;
 			upr.isSuccess = false;
-			CloudletTransferFailReq.get(cl.getCloudletId()).add(upr);
+			
 			sendNow(cl.getAssignmentDCId(), CloudSimTags.CLOUDLET_TRANSFER_ACK,upr);
 		}
 		
@@ -323,12 +338,12 @@ public class Datacenter extends SimEntity {
 		Task task = upr.task;
 		boolean isSuccess = upr.isSuccess;
 		int ack = CloudletTransferRequest.get(task.getCloudletId());
-		if (isSuccess && ack!=-1 ) {
-			ack = ack + 1;
-			CloudletTransferRequest.put(task.getCloudletId(), ack);
-		} else if(!isSuccess && ack!=-1){
-			ack = -1;
-			CloudletTransferRequest.put(task.getCloudletId(), ack);
+		ack = ack + 1;
+		CloudletTransferRequest.put(task.getCloudletId(), ack);
+		if (isSuccess) {
+			CloudletTransferSuccessReq.get(task.getCloudletId()).add(upr);
+		} else {
+			CloudletTransferFailReq.get(task.getCloudletId()).add(upr);
 			// deal the already decrease uplink and resume downlink
 			
 			
@@ -345,6 +360,29 @@ public class Datacenter extends SimEntity {
 			
 		}
 		if (ack == task.numberOfData) {
+			
+			if (CloudletTransferFailReq.get(task.getCloudletId()).size()!=0) {
+				// return the up bandwidth for each successful transfer request
+				
+				int sizeOfsuccess = CloudletTransferSuccessReq.get(task.getCloudletId()).size();
+				for (int sindex = 0; sindex < sizeOfsuccess; sindex++) {
+					UplinkRequest successUpr = CloudletTransferSuccessReq.get(task.getCloudletId()).get(sindex);
+					
+					sendNow(successUpr.task.positionOfDataID[successUpr.dataindex], CloudSimTags.UPLINK_RETURN,successUpr.requestedUpbandwidth);
+					downlink += successUpr.requestedUpbandwidth;
+				}
+				
+				int sizeOffail = CloudletTransferFailReq.get(task.getCloudletId()).size();
+				for (int sindex = 0; sindex < sizeOffail; sindex++ ) {
+					UplinkRequest failUpr = CloudletTransferFailReq.get(task.getCloudletId()).get(sindex);
+					downlink +=  failUpr.requestedUpbandwidth;
+				}
+				
+				return ;
+			}
+			
+			
+			
 			// process this Cloudlet to this CloudResource
 			task.setResourceParameter(getId(), getCharacteristics().getCostPerSecond(), getCharacteristics()
 					.getCostPerBw());
@@ -365,19 +403,30 @@ public class Datacenter extends SimEntity {
 				estimatedFinishTime += fileTransferTime;
 				send(getId(), estimatedFinishTime, CloudSimTags.VM_DATACENTER_EVENT);
 			}
-
 			
-			double[] data = new double[5];
+			
+			
+
+			// need deal with DatacenterBroker
+			
+			
+			double Totaldown = 0;
+			int sizeOfsuccess = CloudletTransferSuccessReq.get(task.getCloudletId()).size();
+			for (int sindex = 0; sindex < sizeOfsuccess; sindex++) {
+				UplinkRequest successUpr = CloudletTransferSuccessReq.get(task.getCloudletId()).get(sindex);
+				double[] data = new double[3];
+				data[0] = task.positionOfDataID[successUpr.dataindex];
+				data[1] = successUpr.requestedUpbandwidth;
+				data[2] = 0;
+				sendNow(task.getUserId(), CloudSimTags.BANDWIDTH_MINUS,data);
+				Totaldown += successUpr.requestedUpbandwidth;
+			}
+			
+			double[] data = new double[3];
 			data[0] = getId();
-			data[1] = task.getCloudletId();
-			data[2] = CloudSimTags.TRUE;
-			data[3] = uplink;
-			data[4] = downlink;
-
-			// unique tag = operation tag
-			int tag = CloudSimTags.CLOUDLET_SUBMIT_ACK;
-			sendNow(task.getUserId(), tag, data);
-			
+			data[1] = 0;
+			data[2] = Totaldown;
+			sendNow(task.getUserId(), CloudSimTags.BANDWIDTH_MINUS,data);
 			
 		
 			checkCloudletCompletion();
@@ -385,6 +434,9 @@ public class Datacenter extends SimEntity {
 
 		
 	}
+	
+	
+	
 
 	/**
 	 * Process data del.
@@ -858,15 +910,13 @@ public class Datacenter extends SimEntity {
 				// Hence, this might cause CloudSim to be hanged since waiting
 				// for this Cloudlet back.
 				if (ack) {
-					double[] data = new double[5];
+					double[] data = new double[3];
 					data[0] = getId();
-					data[1] = cl.getCloudletId();
-					data[2] = CloudSimTags.FALSE;
-					data[3] = uplink;
-					data[4] = downlink;
+					data[1] = 0;
+					data[2] = 0;
 
 					// unique tag = operation tag
-					int tag = CloudSimTags.CLOUDLET_SUBMIT_ACK;
+					int tag = CloudSimTags.BANDWIDTH_MINUS;
 					sendNow(cl.getUserId(), tag, data);
 				}
 
@@ -930,15 +980,13 @@ public class Datacenter extends SimEntity {
 				}
 
 				if (ack) {
-					double[] data = new double[5];
+					double[] data = new double[3];
 					data[0] = getId();
-					data[1] = cl.getCloudletId();
-					data[2] = CloudSimTags.TRUE;
-					data[3] = uplink;
-					data[4] = downlink;
+					data[1] = 0;
+					data[2] = 0;
 
 					// unique tag = operation tag
-					int tag = CloudSimTags.CLOUDLET_SUBMIT_ACK;
+					int tag = CloudSimTags.BANDWIDTH_MINUS;
 					sendNow(cl.getUserId(), tag, data);
 				}
 				checkCloudletCompletion();

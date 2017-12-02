@@ -21,11 +21,13 @@ import org.cloudbus.cloudsim.core.SimEntity;
 import org.cloudbus.cloudsim.core.SimEvent;
 import org.cloudbus.cloudsim.lists.CloudletList;
 import org.cloudbus.cloudsim.lists.VmList;
+import org.griphyn.vdl.toolkit.UpdateVDC;
 
 import com.sun.org.apache.bcel.internal.generic.I2F;
 import com.sun.org.apache.bcel.internal.generic.RETURN;
 
 import de.huberlin.wbi.dcs.examples.Parameters;
+import de.huberlin.wbi.dcs.examples.Parameters.Distribution;
 
 /**
  * DatacentreBroker represents a broker acting on behalf of a user. It hides VM management, as vm
@@ -191,8 +193,14 @@ public class DatacenterBroker extends SimEntity {
 			case CloudSimTags.END_OF_SIMULATION:
 				shutdownEntity();
 				break;
-			case CloudSimTags.CLOUDLET_SUBMIT_ACK:
-				processResourceUpdate(ev);
+				
+			case CloudSimTags.BANDWIDTH_ADD:
+				processBandwidthAdd(ev);
+				break;
+				
+			case CloudSimTags.BANDWIDTH_MINUS:
+				processBandwidthMinus(ev);
+				break;
 			// other unknown tags are processed by this method
 			default:
 				processOtherEvent(ev);
@@ -200,8 +208,25 @@ public class DatacenterBroker extends SimEntity {
 		}
 	}
 	
-	private void processResourceUpdate(SimEvent ev) {
-		// update the available uplink and downlink
+	
+
+	private void processBandwidthMinus(SimEvent ev) {
+		double[] receivedata = (double[])ev.getData();
+		int DCId = (int)receivedata[0];
+		double updatedup = uplinkOfDC.get(DCId) - receivedata[1];
+		uplinkOfDC.put(DCId, updatedup);
+		double updateddown = downlinkOfDC.get(DCId) - receivedata[2];
+		downlinkOfDC.put(DCId, updateddown);
+		
+	}
+
+	private void processBandwidthAdd(SimEvent ev) {
+		double[] receivedata = (double[])ev.getData();
+		int DCId = (int)receivedata[0];
+		double updatedup = uplinkOfDC.get(DCId) + receivedata[1];
+		uplinkOfDC.put(DCId, updatedup);
+		double updateddown = downlinkOfDC.get(DCId) + receivedata[2];
+		downlinkOfDC.put(DCId, updateddown);
 		
 	}
 
