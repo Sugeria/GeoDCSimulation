@@ -305,11 +305,12 @@ public class Datacenter extends SimEntity {
 			data[0] = getId();
 			data[1] = uplink;
 			data[2] = downlink;
-			
+			CloudletTransferSuccessReq.get(cl.getCloudletId()).add(upr);
 			sendNow(cl.getUserId(), CloudSimTags.DATACENTER_UPDATE,data);
 		} else {
 			uplink += up;
 			upr.isSuccess = false;
+			CloudletTransferFailReq.get(cl.getCloudletId()).add(upr);
 			sendNow(cl.getAssignmentDCId(), CloudSimTags.CLOUDLET_TRANSFER_ACK,upr);
 		}
 		
