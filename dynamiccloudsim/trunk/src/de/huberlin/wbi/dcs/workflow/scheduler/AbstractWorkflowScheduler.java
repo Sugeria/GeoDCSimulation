@@ -141,6 +141,7 @@ public abstract class AbstractWorkflowScheduler extends DatacenterBroker
 		}
 		for (Workflow workflow : workflows) {
 			Collection<Task> tasks = workflow.getTasks();
+			// use the index in workflows to indicate the ID of workflow
 			reschedule(tasks, vms.values());
 			for (Task task : tasks) {
 				if (task.readyToExecute()) {
