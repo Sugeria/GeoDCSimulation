@@ -280,7 +280,15 @@ public class CloudSimTags {
 	
 	public static final int CLOUDLET_TRANSFER = BASE + 50;
 	
-	public static final int DATACENTER_UPDATE = BASE + 51;
+	public static final int BANDWIDTH_ADD = BASE + 51;
+	
+	public static final int UPLINK_RETURN = BASE + 52;
+	
+	public static final int BANDWIDTH_MINUS = BASE + 53;
+	
+	public static final int DOWNLINK_RETURN = BASE + 54;
+	
+	public static final int UPDATE_TASK_USED_BANDWIDTH = BASE + 55;
 
 	public static String TagText(int tagValue) {
 		switch (tagValue) {
@@ -399,7 +407,15 @@ public class CloudSimTags {
 		case 50:
 			return "CLOUDLET_TRANSFER";
 		case 51:
-			return "DATACENTER_UPDATE";
+			return "BANDWIDTH_ADD";
+		case 52:
+			return "UPLINK_RETURN";
+		case 53:
+			return "BANDWIDTH_MINUS";
+		case 54:
+			return "DOWNLINK_RETURN";
+		case 55:
+			return "UPDATE_TASK_USED_BANDWIDTH";
 		default:
 			return "Invalid tag value";
 		}

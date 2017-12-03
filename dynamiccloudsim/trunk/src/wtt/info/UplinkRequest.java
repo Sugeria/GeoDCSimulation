@@ -5,7 +5,7 @@ import de.huberlin.wbi.dcs.workflow.Task;
 
 public class UplinkRequest {
 	public Task task;
-	int dataindex;
+	public int dataindex;
 	public double requestedUpbandwidth;
 	public boolean isSuccess;
 	

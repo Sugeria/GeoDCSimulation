@@ -159,7 +159,9 @@ public class Cloudlet {
 	
 	public int[] positionOfDataID;
 	
-	public long[] sizeOfData;
+	public int[] sizeOfData;
+	
+	public double[] requiredBandwidth;
 
 	
 	public int getAssignmentDCId() {
