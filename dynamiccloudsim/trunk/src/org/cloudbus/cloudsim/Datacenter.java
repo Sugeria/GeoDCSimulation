@@ -377,6 +377,12 @@ public class Datacenter extends SimEntity {
 					UplinkRequest failUpr = CloudletTransferFailReq.get(task.getCloudletId()).get(sindex);
 					downlink +=  failUpr.requestedUpbandwidth;
 				}
+				try {
+					task.setCloudletStatus(Cloudlet.FAILED);
+					sendNow(task.getUserId(), CloudSimTags.CLOUDLET_RETURN, task);
+				} catch (Exception e) {
+					e.printStackTrace();
+				}
 				
 				return ;
 			}
@@ -419,6 +425,7 @@ public class Datacenter extends SimEntity {
 				data[1] = successUpr.requestedUpbandwidth;
 				data[2] = 0;
 				sendNow(task.getUserId(), CloudSimTags.BANDWIDTH_MINUS,data);
+				task.requiredBandwidth[sindex] = successUpr.requestedUpbandwidth;
 				Totaldown += successUpr.requestedUpbandwidth;
 			}
 			
@@ -428,7 +435,7 @@ public class Datacenter extends SimEntity {
 			data[2] = Totaldown;
 			sendNow(task.getUserId(), CloudSimTags.BANDWIDTH_MINUS,data);
 			
-		
+			sendNow(task.getUserId(), CloudSimTags.UPDATE_TASK_USED_BANDWIDTH,task);
 			checkCloudletCompletion();
 		}
 
@@ -988,6 +995,8 @@ public class Datacenter extends SimEntity {
 					// unique tag = operation tag
 					int tag = CloudSimTags.BANDWIDTH_MINUS;
 					sendNow(cl.getUserId(), tag, data);
+					
+					
 				}
 				checkCloudletCompletion();
 			}

@@ -28,6 +28,7 @@ import com.sun.org.apache.bcel.internal.generic.RETURN;
 
 import de.huberlin.wbi.dcs.examples.Parameters;
 import de.huberlin.wbi.dcs.examples.Parameters.Distribution;
+import de.huberlin.wbi.dcs.workflow.Task;
 
 /**
  * DatacentreBroker represents a broker acting on behalf of a user. It hides VM management, as vm
@@ -201,6 +202,11 @@ public class DatacenterBroker extends SimEntity {
 			case CloudSimTags.BANDWIDTH_MINUS:
 				processBandwidthMinus(ev);
 				break;
+				
+			case CloudSimTags.UPDATE_TASK_USED_BANDWIDTH:
+				updateTaskUsedBandwidth(ev);
+				break;
+				
 			// other unknown tags are processed by this method
 			default:
 				processOtherEvent(ev);
@@ -209,6 +215,11 @@ public class DatacenterBroker extends SimEntity {
 	}
 	
 	
+
+	protected void updateTaskUsedBandwidth(SimEvent ev) {
+		
+		
+	}
 
 	private void processBandwidthMinus(SimEvent ev) {
 		double[] receivedata = (double[])ev.getData();

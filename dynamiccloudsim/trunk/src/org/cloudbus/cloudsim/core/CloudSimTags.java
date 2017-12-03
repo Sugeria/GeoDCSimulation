@@ -287,6 +287,8 @@ public class CloudSimTags {
 	public static final int BANDWIDTH_MINUS = BASE + 53;
 	
 	public static final int DOWNLINK_RETURN = BASE + 54;
+	
+	public static final int UPDATE_TASK_USED_BANDWIDTH = BASE + 55;
 
 	public static String TagText(int tagValue) {
 		switch (tagValue) {
@@ -412,6 +414,8 @@ public class CloudSimTags {
 			return "BANDWIDTH_MINUS";
 		case 54:
 			return "DOWNLINK_RETURN";
+		case 55:
+			return "UPDATE_TASK_USED_BANDWIDTH";
 		default:
 			return "Invalid tag value";
 		}

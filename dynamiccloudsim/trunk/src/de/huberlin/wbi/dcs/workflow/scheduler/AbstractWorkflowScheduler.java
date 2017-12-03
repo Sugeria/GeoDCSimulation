@@ -21,10 +21,7 @@ import org.cloudbus.cloudsim.core.SimEvent;
 import com.mathworks.toolbox.javabuilder.MWClassID;
 import com.mathworks.toolbox.javabuilder.MWComplexity;
 import com.mathworks.toolbox.javabuilder.MWNumericArray;
-import com.sun.javafx.sg.prism.web.NGWebView;
 
-import EDU.oswego.cs.dl.util.concurrent.FJTask.Par;
-import de.huberlin.wbi.cuneiform.core.semanticmodel.Param;
 import de.huberlin.wbi.dcs.DynamicHost;
 import de.huberlin.wbi.dcs.DynamicVm;
 import de.huberlin.wbi.dcs.examples.Parameters;
@@ -101,7 +98,7 @@ public abstract class AbstractWorkflowScheduler extends DatacenterBroker
 			task.setScheduledToFail(false);
 		}
 		sendNow(getVmsToDatacentersMap().get(vm.getId()),
-				CloudSimTags.CLOUDLET_SUBMIT, task);
+				CloudSimTags.CLOUDLET_SUBMIT_ACK, task);
 	}
 
 	private void submitSpeculativeTask(Task task, Vm vm) {
@@ -117,7 +114,7 @@ public abstract class AbstractWorkflowScheduler extends DatacenterBroker
 			task.setScheduledToFail(false);
 		}
 		sendNow(getVmsToDatacentersMap().get(vm.getId()),
-				CloudSimTags.CLOUDLET_SUBMIT, task);
+				CloudSimTags.CLOUDLET_SUBMIT_ACK, task);
 	}
 
 	/**
@@ -425,6 +422,11 @@ public abstract class AbstractWorkflowScheduler extends DatacenterBroker
 			e.printStackTrace();
 		}
 	}
+	
+	
+	
+	
+	
 
 	@Override
 	protected void processCloudletReturn(SimEvent ev) {
@@ -504,6 +506,19 @@ public abstract class AbstractWorkflowScheduler extends DatacenterBroker
 			// free task slots occupied by finished / cancelled tasks
 			Vm originalVm = vms.get(originalTask.getVmId());
 			idleTaskSlotsOfDC.get(originalVm.DCId).add(originalVm);
+			// return bandwidth
+			double Totaldown = 0;
+			if(originalTask.numberOfData > 0) {
+				for(int dataindex = 0; dataindex < originalTask.numberOfData; dataindex++ ) {
+					Totaldown += originalTask.requiredBandwidth[dataindex];
+					sendNow(originalTask.positionOfDataID[dataindex], CloudSimTags.UPLINK_RETURN,originalTask.requiredBandwidth[dataindex]);
+					double upbandwidth = getUplinkOfDC().get(originalTask.positionOfDataID[dataindex]) + originalTask.requiredBandwidth[dataindex];
+					getUplinkOfDC().put(originalTask.positionOfDataID[dataindex], upbandwidth);
+				}
+				sendNow(originalTask.getAssignmentDCId(), CloudSimTags.DOWNLINK_RETURN, Totaldown);
+				double downbandwidth = getDownlinkOfDC().get(originalTask.getAssignmentDCId()) + Totaldown;
+				getDownlinkOfDC().put(originalTask.getAssignmentDCId(), downbandwidth);
+			}
 			//tasks.remove(originalTask.getCloudletId());
 			//taskSucceeded(originalTask, originalVm);
 			if (speculativeTasks.size() != 0) {
@@ -512,6 +527,21 @@ public abstract class AbstractWorkflowScheduler extends DatacenterBroker
 					Task speculativeTask = it.next();
 					Vm speculativeVm = vms.get(speculativeTask.getVmId());
 					idleTaskSlotsOfDC.get(speculativeVm.DCId).add(speculativeVm);
+					// return bandwidth
+					Totaldown = 0;
+					if(originalTask.numberOfData > 0) {
+						for(int dataindex = 0; dataindex < originalTask.numberOfData; dataindex++ ) {
+							Totaldown += speculativeTask.requiredBandwidth[dataindex];
+							sendNow(speculativeTask.positionOfDataID[dataindex], CloudSimTags.UPLINK_RETURN,speculativeTask.requiredBandwidth[dataindex]);
+							double upbandwidth = getUplinkOfDC().get(speculativeTask.positionOfDataID[dataindex]) + speculativeTask.requiredBandwidth[dataindex];
+							getUplinkOfDC().put(speculativeTask.positionOfDataID[dataindex], upbandwidth);
+						}
+						sendNow(speculativeTask.getAssignmentDCId(), CloudSimTags.DOWNLINK_RETURN, Totaldown);
+						double downbandwidth = getDownlinkOfDC().get(speculativeTask.getAssignmentDCId()) + Totaldown;
+						getDownlinkOfDC().put(speculativeTask.getAssignmentDCId(), downbandwidth);
+					}
+					
+					
 					//taskFailed(speculativeTask, speculativeVm);
 				}
 				//speculativeTasks.remove(originalTask.getCloudletId());
@@ -550,12 +580,45 @@ public abstract class AbstractWorkflowScheduler extends DatacenterBroker
 						+ " encountered an error with speculative copy of Task # "
 						+ task.getCloudletId() + " \"" + task.getName() + " "
 						+ task.getParams() + " \"");
+				for(int index = 0; index < speculativeTaskOfTask.size(); index++ ) {
+					if (speculativeTaskOfTask.get(index).getVmId() == task.getVmId()) {
+						Task speculativeTask = speculativeTaskOfTask.get(index);
+						double Totaldown = 0;
+						if(speculativeTask.numberOfData > 0) {
+							for(int dataindex = 0; dataindex < speculativeTask.numberOfData; dataindex++ ) {
+								Totaldown += speculativeTask.requiredBandwidth[dataindex];
+								sendNow(speculativeTask.positionOfDataID[dataindex], CloudSimTags.UPLINK_RETURN,speculativeTask.requiredBandwidth[dataindex]);
+								double upbandwidth = getUplinkOfDC().get(speculativeTask.positionOfDataID[dataindex]) + speculativeTask.requiredBandwidth[dataindex];
+								getUplinkOfDC().put(speculativeTask.positionOfDataID[dataindex], upbandwidth);
+							}
+							sendNow(speculativeTask.getAssignmentDCId(), CloudSimTags.DOWNLINK_RETURN, Totaldown);
+							double downbandwidth = getDownlinkOfDC().get(speculativeTask.getAssignmentDCId()) + Totaldown;
+							getDownlinkOfDC().put(speculativeTask.getAssignmentDCId(), downbandwidth);
+						}
+					}
+				}
+				
 			} else {
 				Log.printLine(CloudSim.clock() + ": " + getName() + ": VM # "
 						+ task.getVmId() + " encountered an error with Task # "
 						+ task.getCloudletId() + " \"" + task.getName() + " "
 						+ task.getParams() + " \"");
-				tasks.remove(task.getCloudletId());
+				
+				
+				
+				Task originalTask = tasks.remove(task.getCloudletId());
+				double Totaldown = 0;
+				if(originalTask.numberOfData > 0) {
+					for(int dataindex = 0; dataindex < originalTask.numberOfData; dataindex++ ) {
+						Totaldown += originalTask.requiredBandwidth[dataindex];
+						sendNow(originalTask.positionOfDataID[dataindex], CloudSimTags.UPLINK_RETURN,originalTask.requiredBandwidth[dataindex]);
+						double upbandwidth = getUplinkOfDC().get(originalTask.positionOfDataID[dataindex]) + originalTask.requiredBandwidth[dataindex];
+						getUplinkOfDC().put(originalTask.positionOfDataID[dataindex], upbandwidth);
+					}
+					sendNow(originalTask.getAssignmentDCId(), CloudSimTags.DOWNLINK_RETURN, Totaldown);
+					double downbandwidth = getDownlinkOfDC().get(originalTask.getAssignmentDCId()) + Totaldown;
+					getDownlinkOfDC().put(originalTask.getAssignmentDCId(), downbandwidth);
+				}
 				if (speculativeTaskOfTask.size() != 0) {
 					Task speculativeTask = speculativeTaskOfTask.remove();
 					if (speculativeTaskOfTask.size() == 0) {
@@ -564,6 +627,7 @@ public abstract class AbstractWorkflowScheduler extends DatacenterBroker
 						speculativeTask.setSpeculativeCopy(true);
 					}
 					tasks.put(speculativeTask.getCloudletId(), speculativeTask);
+					speculativeTasks.put(speculativeTask.getCloudletId(), speculativeTaskOfTask);
 				} else {
 					resetTask(task);
 					taskReady(task);
@@ -587,6 +651,33 @@ public abstract class AbstractWorkflowScheduler extends DatacenterBroker
 			terminate();
 			clearDatacenters();
 			finishExecution();
+		}
+	}
+
+
+
+
+
+
+
+
+
+	@Override
+	protected void updateTaskUsedBandwidth(SimEvent ev) {
+		super.updateTaskUsedBandwidth(ev);
+		Task task = (Task)ev.getData();
+		if(task.isSpeculativeCopy()) {
+			LinkedList<Task> speculativeTaskOfTask = (LinkedList<Task>)speculativeTasks
+					.get(task.getCloudletId());
+			for (int index = 0; index < speculativeTaskOfTask.size(); index++ ) {
+				if (task.getVmId() == speculativeTaskOfTask.get(index).getVmId()) {
+					speculativeTaskOfTask.set(index, task);
+					break;
+				}
+			}
+			speculativeTasks.put(task.getCloudletId(), speculativeTaskOfTask);
+		} else {
+			tasks.put(task.getCloudletId(), task);
 		}
 	}
 
