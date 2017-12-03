@@ -20,9 +20,6 @@ import org.cloudbus.cloudsim.core.CloudSimTags;
 import org.cloudbus.cloudsim.core.SimEntity;
 import org.cloudbus.cloudsim.core.SimEvent;
 
-import com.sun.org.apache.bcel.internal.generic.NEW;
-import com.sun.org.apache.xml.internal.serialize.OutputFormat.DTD;
-
 import de.huberlin.wbi.dcs.workflow.Task;
 import wtt.info.UplinkRequest;
 
