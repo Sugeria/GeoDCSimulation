@@ -163,6 +163,7 @@ public class Cloudlet {
 	
 	public double[] requiredBandwidth;
 
+	public int[] numberOfTransferData;
 	
 	public int getAssignmentDCId() {
 		return assignmentDCId;

@@ -22,12 +22,20 @@ import com.mathworks.toolbox.javabuilder.MWClassID;
 import com.mathworks.toolbox.javabuilder.MWComplexity;
 import com.mathworks.toolbox.javabuilder.MWNumericArray;
 
+import EDU.oswego.cs.dl.util.concurrent.FJTask.Par;
 import de.huberlin.wbi.dcs.DynamicHost;
 import de.huberlin.wbi.dcs.DynamicVm;
 import de.huberlin.wbi.dcs.examples.Parameters;
 import de.huberlin.wbi.dcs.workflow.DataDependency;
 import de.huberlin.wbi.dcs.workflow.Task;
 import de.huberlin.wbi.dcs.workflow.Workflow;
+import matlabcontrol.MatlabConnectionException;
+import matlabcontrol.MatlabInvocationException;
+import matlabcontrol.MatlabProxy;
+import matlabcontrol.MatlabProxyFactory;
+import matlabcontrol.MatlabProxyFactoryOptions;
+import matlabcontrol.extensions.MatlabNumericArray;
+import matlabcontrol.extensions.MatlabTypeConverter;
 import taskassign.TaskAssign;
 
 
@@ -46,7 +54,8 @@ public abstract class AbstractWorkflowScheduler extends DatacenterBroker
 	private Map<Integer, Task> tasks;
 	private Map<Integer, Queue<Task>> speculativeTasks;
 	
-	
+	private MatlabProxyFactory factory;
+	private MatlabProxy proxy;
 
 	public AbstractWorkflowScheduler(String name, int taskSlotsPerVm)
 			throws Exception {
@@ -58,7 +67,8 @@ public abstract class AbstractWorkflowScheduler extends DatacenterBroker
 		idleTaskSlotsOfDC = new HashMap<>();
 		tasks = new HashMap<>();
 		speculativeTasks = new HashMap<>();
-		
+		factory = new MatlabProxyFactory();
+		proxy = factory.getProxy();
 		
 	}
 	
@@ -157,199 +167,361 @@ public abstract class AbstractWorkflowScheduler extends DatacenterBroker
 		// Queue<Vm> taskSlotsKeptIdle = new LinkedList<>();
 		Queue<Task> taskSubmitted = new LinkedList<>();
 		// compute the task assignment among datacenters for ready tasks
-		
 		Integer numberOfTask = getTaskQueue().size();
-		TaskAssign taskassign = null;
-		MWNumericArray tasknum = null;
-		MWNumericArray dcnum = null;
-		MWNumericArray probArray = null;
-		MWNumericArray allDuraArray = null;
-		MWNumericArray data = null;
-		MWNumericArray datapos = null;
-		MWNumericArray bandwidth = null;
-		MWNumericArray SlotArray = null;
-		MWNumericArray UpArray = null;
-		MWNumericArray DownArray = null;
-		MWNumericArray iteration_bound = null;
-		Object[] result = null;	/* Stores the result */
-		MWNumericArray x = null;	/* Location of minimal value */
-		MWNumericArray flag = null;	/* solvable flag */
-		double[] xd = null;
+		
+		int tasknum = numberOfTask;
+		int dcnum = Parameters.numberOfDC;
+		int iteration_bound = Parameters.boundOfIter;
+		double[][] probArray = new double[Parameters.numberOfDC][4];
+		double[][] allDuraArray = new double[numberOfTask*Parameters.numberOfDC][4];
+		int[] data = new int[numberOfTask];
+		double[][] datapos = new double[numberOfTask][Parameters.ubOfData];
+		double[][] bandwidth = new double[numberOfTask*Parameters.numberOfDC][Parameters.ubOfData];
+		double[][] SlotArray = new double[1][Parameters.numberOfDC];
+		double[][] UpArray = new double[1][Parameters.numberOfDC];
+		double[][] DownArray = new double[1][Parameters.numberOfDC];
+		double[] xb = null;
 		int flagi = 0;
 		LinkedList<Task> ReadyTasks = (LinkedList<Task>)getTaskQueue();
-		try {
+		
+		//probArray
+		for (int dcindex = 0; dcindex < Parameters.numberOfDC; dcindex++) {
+			for (int iterm = 0; iterm < 4; iterm++) {
+				double value = 0d;
+				switch (iterm) {
+				case 0:
+					value = (1-Parameters.likelihoodOfDCFailure[dcindex])*(1-Parameters.likelihoodOfFailure[dcindex])*(1-Parameters.likelihoodOfStragglerOfDC[dcindex]);
+					break;
+				case 1:
+					value = (1-Parameters.likelihoodOfDCFailure[dcindex])*(1-Parameters.likelihoodOfFailure[dcindex])*Parameters.likelihoodOfStragglerOfDC[dcindex];
+					break;
+				case 2:
+					value = (1-Parameters.likelihoodOfDCFailure[dcindex])*Parameters.likelihoodOfFailure[dcindex];
+					break;
+				case 3:
+					value = Parameters.likelihoodOfDCFailure[dcindex];
+					break;
+				default:
+					break;
+				}
+				probArray[dcindex][iterm] = value;
+			}
+		}
+		
+		//data datapos 
+		double[] Totaldatasize = new double[numberOfTask];
+		double[][] datasize = new double[numberOfTask][Parameters.ubOfData];
+		
+		for (int tindex = 0; tindex < numberOfTask; tindex++) {
+			Task task = ReadyTasks.get(tindex);
+			data[tindex] = task.numberOfData;
+			Totaldatasize[tindex] = 0d;
 			
-			taskassign = new TaskAssign();
-			int[] dims = {1,1};
-			tasknum = MWNumericArray.newInstance(dims, MWClassID.INT64,MWComplexity.REAL);
-			dcnum = MWNumericArray.newInstance(dims, MWClassID.INT64, MWComplexity.REAL);
-			iteration_bound = MWNumericArray.newInstance(dims, MWClassID.INT64, MWComplexity.REAL);
-			dims[0] = Parameters.numberOfDC;
-			dims[1] = 4;
-			probArray = MWNumericArray.newInstance(dims, MWClassID.DOUBLE, MWComplexity.REAL);
-			dims[0] = numberOfTask * Parameters.numberOfDC;
-			allDuraArray = MWNumericArray.newInstance(dims, MWClassID.DOUBLE, MWComplexity.REAL);
-			dims[0] = 1;
-			dims[1] = numberOfTask;
-			data = MWNumericArray.newInstance(dims, MWClassID.INT64, MWComplexity.REAL);
-			dims[0] = numberOfTask;
-			dims[1] = Parameters.ubOfData;
-			datapos = MWNumericArray.newInstance(dims, MWClassID.INT64, MWComplexity.REAL);
-			dims[0] = numberOfTask * Parameters.numberOfDC;
-			bandwidth = MWNumericArray.newInstance(dims, MWClassID.DOUBLE, MWComplexity.REAL);
-			dims[0] = 1;
-			dims[1] = Parameters.numberOfDC;
-			SlotArray = MWNumericArray.newInstance(dims, MWClassID.INT64, MWComplexity.REAL);
-			UpArray = MWNumericArray.newInstance(dims, MWClassID.DOUBLE, MWComplexity.REAL);
-			DownArray = MWNumericArray.newInstance(dims, MWClassID.DOUBLE, MWComplexity.REAL);
-			
-			
-			// set value to the above arguments
-			
-			tasknum.set(1, numberOfTask);
-			dcnum.set(1, Parameters.numberOfDC);
-			iteration_bound.set(1, Parameters.boundOfIter);
-			
-			//probArray
+			for(int dataindex = 0; dataindex < task.numberOfData; dataindex++) {
+				datapos[tindex][dataindex] = task.positionOfData[dataindex];
+				task.positionOfDataID[dataindex] = task.positionOfData[dataindex] + DCbase;
+				datasize[tindex][dataindex] = task.sizeOfData[dataindex];
+				Totaldatasize[tindex] += task.sizeOfData[dataindex];
+			}
+			ReadyTasks.set(tindex, task);
+		}
+		
+		//bandwidth allDuraArray
+		for (int tindex = 0; tindex < numberOfTask; tindex++) {
+			Task task = ReadyTasks.get(tindex);
 			for (int dcindex = 0; dcindex < Parameters.numberOfDC; dcindex++) {
+				int xindex = tindex*Parameters.numberOfDC + dcindex;
+				int numberOfTransferData = 0;
+				int datanumber = (int)data[tindex];
+				double[] datasizeOfTask = datasize[tindex];
+				double TotaldatasizeOfTask = Totaldatasize[tindex];
+				for(int dataindex = 0; dataindex < datanumber; dataindex++) {
+					if (datapos[tindex][dataindex] == dcindex) {
+						TotaldatasizeOfTask -= datasizeOfTask[dataindex];
+						datasizeOfTask[dataindex] = 0;
+					}else {
+						numberOfTransferData++;
+					}
+				}
+				if(datanumber > 0) {
+					task.numberOfTransferData[dcindex] = numberOfTransferData;
+				}
+				
+				for(int dataindex = 0; dataindex < datanumber; dataindex++) {
+					if (TotaldatasizeOfTask > 0) {
+						bandwidth[xindex][dataindex] = Parameters.bwBaselineOfDC[dcindex]*datasizeOfTask[dataindex]/TotaldatasizeOfTask;
+						
+					}else {
+						bandwidth[xindex][dataindex] = 0;
+					}
+				}
 				for (int iterm = 0; iterm < 4; iterm++) {
-					int[] pos = {dcindex + 1,iterm + 1};
 					double value = 0d;
 					switch (iterm) {
 					case 0:
-						value = (1-Parameters.likelihoodOfDCFailure[dcindex])*(1-Parameters.likelihoodOfFailure[dcindex])*(1-Parameters.likelihoodOfStragglerOfDC[dcindex]);
+						value = task.getMi()/Parameters.MIPSbaselineOfDC[dcindex]
+								+ TotaldatasizeOfTask/Parameters.bwBaselineOfDC[dcindex]
+								+ 2*task.getIo()/Parameters.ioBaselineOfDC[dcindex];
 						break;
 					case 1:
-						value = (1-Parameters.likelihoodOfDCFailure[dcindex])*(1-Parameters.likelihoodOfFailure[dcindex])*Parameters.likelihoodOfStragglerOfDC[dcindex];
+						value = task.getMi()/(Parameters.MIPSbaselineOfDC[dcindex]*Parameters.stragglerPerformanceCoefficientOfDC[dcindex])
+								+ TotaldatasizeOfTask/(Parameters.bwBaselineOfDC[dcindex]*Parameters.stragglerPerformanceCoefficientOfDC[dcindex])
+								+ 2*task.getIo()/(Parameters.ioBaselineOfDC[dcindex]*Parameters.stragglerPerformanceCoefficientOfDC[dcindex]);
 						break;
 					case 2:
-						value = (1-Parameters.likelihoodOfDCFailure[dcindex])*Parameters.likelihoodOfFailure[dcindex];
+						value = (Parameters.runtimeFactorInCaseOfFailure[dcindex] + 1)
+								* task.getMi()/Parameters.MIPSbaselineOfDC[dcindex]
+								+ TotaldatasizeOfTask/Parameters.bwBaselineOfDC[dcindex]
+								+ 2*task.getIo()/Parameters.ioBaselineOfDC[dcindex];
 						break;
 					case 3:
-						value = Parameters.likelihoodOfDCFailure[dcindex];
+						value = 2
+								* task.getMi()/Parameters.MIPSbaselineOfDC[dcindex]
+								+ TotaldatasizeOfTask/Parameters.bwBaselineOfDC[dcindex]
+								+ 2*task.getIo()/Parameters.ioBaselineOfDC[dcindex];
 						break;
 					default:
 						break;
 					}
-					probArray.set(pos,value);
+					allDuraArray[xindex][iterm] = value;
 				}
 			}
+			ReadyTasks.set(tindex, task);
 			
-			//data datapos 
-			double[] Totaldatasize = new double[numberOfTask];
-			double[][] datasize = new double[numberOfTask][Parameters.ubOfData];
-			
-			int[] pos = new int[2];
-			for (int tindex = 0; tindex < numberOfTask; tindex++) {
-				Task task = ReadyTasks.get(tindex);
-				pos[0] = 1;
-				pos[1] = tindex + 1;
-				data.set(pos, task.numberOfData);
-				Totaldatasize[tindex] = 0d;
-				for(int dataindex = 0; dataindex < task.numberOfData; dataindex++) {
-					pos[0] = tindex + 1;
-					pos[1] = dataindex + 1;
-					datapos.set(pos, task.positionOfData[dataindex]);
-					task.positionOfDataID[dataindex] = task.positionOfData[dataindex] + DCbase;
-					datasize[tindex][dataindex] = task.sizeOfData[dataindex];
-					Totaldatasize[tindex] += task.sizeOfData[dataindex];
-				}
-				ReadyTasks.set(tindex, task);
-			}
-			
-			//bandwidth allDuraArray
-			for (int tindex = 0; tindex < numberOfTask; tindex++) {
-				Task task = ReadyTasks.get(tindex);
-				for (int dcindex = 0; dcindex < Parameters.numberOfDC; dcindex++) {
-					int xindex = tindex*Parameters.numberOfDC + dcindex;
-					pos[0] = 1;
-					pos[1] = tindex + 1;
-					int datanumber = data.getInt(pos);
-					double[] datasizeOfTask = datasize[tindex];
-					double TotaldatasizeOfTask = Totaldatasize[tindex];
-					for(int dataindex = 0; dataindex < datanumber; dataindex++) {
-						pos[0] = tindex + 1;
-						pos[1] = dataindex + 1;
-						if (datapos.getInt(pos) == dcindex) {
-							TotaldatasizeOfTask -= datasizeOfTask[dataindex];
-							datasizeOfTask[dataindex] = 0;
-						}
-					}
-					for(int dataindex = 0; dataindex < datanumber; dataindex++) {
-						pos[0] = xindex + 1;
-						pos[1] = dataindex + 1;
-						bandwidth.set(pos, Parameters.bwBaselineOfDC[dcindex]*datasizeOfTask[dataindex]/TotaldatasizeOfTask);
-					}
-					for (int iterm = 0; iterm < 4; iterm++) {
-						pos[0] = xindex + 1;
-						pos[1] = iterm + 1;
-						double value = 0d;
-						switch (iterm) {
-						case 0:
-							value = task.getMi()/Parameters.MIPSbaselineOfDC[dcindex]
-									+ TotaldatasizeOfTask/Parameters.bwBaselineOfDC[dcindex]
-									+ 2*task.getIo()/Parameters.ioBaselineOfDC[dcindex];
-							break;
-						case 1:
-							value = task.getMi()/(Parameters.MIPSbaselineOfDC[dcindex]*Parameters.stragglerPerformanceCoefficientOfDC[dcindex])
-									+ TotaldatasizeOfTask/(Parameters.bwBaselineOfDC[dcindex]*Parameters.stragglerPerformanceCoefficientOfDC[dcindex])
-									+ 2*task.getIo()/(Parameters.ioBaselineOfDC[dcindex]*Parameters.stragglerPerformanceCoefficientOfDC[dcindex]);
-							break;
-						case 2:
-							value = (Parameters.runtimeFactorInCaseOfFailure[dcindex] + 1)
-									* task.getMi()/Parameters.MIPSbaselineOfDC[dcindex]
-									+ TotaldatasizeOfTask/Parameters.bwBaselineOfDC[dcindex]
-									+ 2*task.getIo()/Parameters.ioBaselineOfDC[dcindex];
-							break;
-						case 3:
-							value = 2
-									* task.getMi()/Parameters.MIPSbaselineOfDC[dcindex]
-									+ TotaldatasizeOfTask/Parameters.bwBaselineOfDC[dcindex]
-									+ 2*task.getIo()/Parameters.ioBaselineOfDC[dcindex];
-							break;
-						default:
-							break;
-						}
-						allDuraArray.set(pos,value);
-					}
-				}
-				
-			}
-			
-			//SlotArray UpArray DownArray
-			
-			for(int dcindex = 0; dcindex < Parameters.numberOfDC; dcindex++) {
-				pos[0] = 1;
-				pos[1] = dcindex + 1;
-				SlotArray.set(pos, idleTaskSlotsOfDC.get(dcindex + DCbase).size());
-				UpArray.set(pos, getUplinkOfDC().get(dcindex + DCbase));
-				DownArray.set(pos, getDownlinkOfDC().get(dcindex + DCbase));
-			}
-			
-			result = taskassign.command(2,tasknum,dcnum,probArray,allDuraArray,data,datapos,bandwidth,SlotArray,UpArray,DownArray,iteration_bound);
-			x = (MWNumericArray)result[0];
-			xd = x.getDoubleData();
-			flag = (MWNumericArray)result[1];
-			flagi = flag.getInt();
-		}catch(Exception e) {
-			System.out.println("Exception: "+e.toString());
-		}finally {
-			MWNumericArray.disposeArray(tasknum);
-			MWNumericArray.disposeArray(dcnum);
-			MWNumericArray.disposeArray(probArray);
-			MWNumericArray.disposeArray(allDuraArray);
-			MWNumericArray.disposeArray(data);
-			MWNumericArray.disposeArray(datapos);
-			MWNumericArray.disposeArray(bandwidth);
-			MWNumericArray.disposeArray(SlotArray);
-			MWNumericArray.disposeArray(UpArray);
-			MWNumericArray.disposeArray(DownArray);
-			MWNumericArray.disposeArray(iteration_bound);
-			MWNumericArray.disposeArray(x);
-			MWNumericArray.disposeArray(flag);
-			if(taskassign != null)
-				taskassign.dispose();
 		}
+		
+		//SlotArray UpArray DownArray
+		
+		for(int dcindex = 0; dcindex < Parameters.numberOfDC; dcindex++) {
+			SlotArray[0][dcindex] = idleTaskSlotsOfDC.get(dcindex + DCbase).size();
+			UpArray[0][dcindex] = getUplinkOfDC().get(dcindex + DCbase);
+			DownArray[0][dcindex] = getDownlinkOfDC().get(dcindex + DCbase);
+		}
+		
+		try {
+			
+			MatlabTypeConverter processor = new MatlabTypeConverter(proxy);
+			processor.setNumericArray("probArray", new MatlabNumericArray(probArray, null));
+			processor.setNumericArray("allDuraArray", new MatlabNumericArray(allDuraArray, null));
+			processor.setNumericArray("bandwidth", new MatlabNumericArray(bandwidth,null));
+			processor.setNumericArray("SlotArray", new MatlabNumericArray(SlotArray, null));
+			processor.setNumericArray("UpArray", new MatlabNumericArray(UpArray, null));
+			processor.setNumericArray("DownArray", new MatlabNumericArray(DownArray,null));
+			processor.setNumericArray("datapos", new MatlabNumericArray(datapos, null));
+			proxy.setVariable("tasknum", tasknum);
+			proxy.setVariable("dcnum", dcnum);
+			proxy.setVariable("iteration_bound", iteration_bound);
+			proxy.setVariable("data", data);
+			
+			
+			proxy.eval("[x,flag] = command(tasknum,dcnum,probArray,allDuraArray,data,datapos,bandwidth,SlotArray,UpArray,DownArray,iteration_bound);");
+			
+			
+			xb = (double[])proxy.getVariable("x");
+			flagi = (int)((double[])proxy.getVariable("flag"))[0];
+			
+		} catch (MatlabInvocationException e) {
+			e.printStackTrace();
+		}
+		
+		
+		
+		
+//		TaskAssign taskassign = null;
+//		MWNumericArray tasknum = null;
+//		MWNumericArray dcnum = null;
+//		MWNumericArray probArray = null;
+//		MWNumericArray allDuraArray = null;
+//		MWNumericArray data = null;
+//		MWNumericArray datapos = null;
+//		MWNumericArray bandwidth = null;
+//		MWNumericArray SlotArray = null;
+//		MWNumericArray UpArray = null;
+//		MWNumericArray DownArray = null;
+//		MWNumericArray iteration_bound = null;
+//		Object[] result = null;	/* Stores the result */
+//		MWNumericArray x = null;	/* Location of minimal value */
+//		MWNumericArray flag = null;	/* solvable flag */
+//		double[] xd = null;
+//		int flagi = 0;
+//		LinkedList<Task> ReadyTasks = (LinkedList<Task>)getTaskQueue();
+//		try {
+//			
+//			taskassign = new TaskAssign();
+//			int[] dims = {1,1};
+//			tasknum = MWNumericArray.newInstance(dims, MWClassID.INT64,MWComplexity.REAL);
+//			dcnum = MWNumericArray.newInstance(dims, MWClassID.INT64, MWComplexity.REAL);
+//			iteration_bound = MWNumericArray.newInstance(dims, MWClassID.INT64, MWComplexity.REAL);
+//			dims[0] = Parameters.numberOfDC;
+//			dims[1] = 4;
+//			probArray = MWNumericArray.newInstance(dims, MWClassID.DOUBLE, MWComplexity.REAL);
+//			dims[0] = numberOfTask * Parameters.numberOfDC;
+//			allDuraArray = MWNumericArray.newInstance(dims, MWClassID.DOUBLE, MWComplexity.REAL);
+//			dims[0] = 1;
+//			dims[1] = numberOfTask;
+//			data = MWNumericArray.newInstance(dims, MWClassID.INT64, MWComplexity.REAL);
+//			dims[0] = numberOfTask;
+//			dims[1] = Parameters.ubOfData;
+//			datapos = MWNumericArray.newInstance(dims, MWClassID.INT64, MWComplexity.REAL);
+//			dims[0] = numberOfTask * Parameters.numberOfDC;
+//			bandwidth = MWNumericArray.newInstance(dims, MWClassID.DOUBLE, MWComplexity.REAL);
+//			dims[0] = 1;
+//			dims[1] = Parameters.numberOfDC;
+//			SlotArray = MWNumericArray.newInstance(dims, MWClassID.INT64, MWComplexity.REAL);
+//			UpArray = MWNumericArray.newInstance(dims, MWClassID.DOUBLE, MWComplexity.REAL);
+//			DownArray = MWNumericArray.newInstance(dims, MWClassID.DOUBLE, MWComplexity.REAL);
+//			
+//			
+//			// set value to the above arguments
+//			
+//			tasknum.set(1, numberOfTask);
+//			dcnum.set(1, Parameters.numberOfDC);
+//			iteration_bound.set(1, Parameters.boundOfIter);
+//			
+//			//probArray
+//			for (int dcindex = 0; dcindex < Parameters.numberOfDC; dcindex++) {
+//				for (int iterm = 0; iterm < 4; iterm++) {
+//					int[] pos = {dcindex + 1,iterm + 1};
+//					double value = 0d;
+//					switch (iterm) {
+//					case 0:
+//						value = (1-Parameters.likelihoodOfDCFailure[dcindex])*(1-Parameters.likelihoodOfFailure[dcindex])*(1-Parameters.likelihoodOfStragglerOfDC[dcindex]);
+//						break;
+//					case 1:
+//						value = (1-Parameters.likelihoodOfDCFailure[dcindex])*(1-Parameters.likelihoodOfFailure[dcindex])*Parameters.likelihoodOfStragglerOfDC[dcindex];
+//						break;
+//					case 2:
+//						value = (1-Parameters.likelihoodOfDCFailure[dcindex])*Parameters.likelihoodOfFailure[dcindex];
+//						break;
+//					case 3:
+//						value = Parameters.likelihoodOfDCFailure[dcindex];
+//						break;
+//					default:
+//						break;
+//					}
+//					probArray.set(pos,value);
+//				}
+//			}
+//			
+//			//data datapos 
+//			double[] Totaldatasize = new double[numberOfTask];
+//			double[][] datasize = new double[numberOfTask][Parameters.ubOfData];
+//			
+//			int[] pos = new int[2];
+//			for (int tindex = 0; tindex < numberOfTask; tindex++) {
+//				Task task = ReadyTasks.get(tindex);
+//				pos[0] = 1;
+//				pos[1] = tindex + 1;
+//				data.set(pos, task.numberOfData);
+//				Totaldatasize[tindex] = 0d;
+//				for(int dataindex = 0; dataindex < task.numberOfData; dataindex++) {
+//					pos[0] = tindex + 1;
+//					pos[1] = dataindex + 1;
+//					datapos.set(pos, task.positionOfData[dataindex]);
+//					task.positionOfDataID[dataindex] = task.positionOfData[dataindex] + DCbase;
+//					datasize[tindex][dataindex] = task.sizeOfData[dataindex];
+//					Totaldatasize[tindex] += task.sizeOfData[dataindex];
+//				}
+//				ReadyTasks.set(tindex, task);
+//			}
+//			
+//			//bandwidth allDuraArray
+//			for (int tindex = 0; tindex < numberOfTask; tindex++) {
+//				Task task = ReadyTasks.get(tindex);
+//				for (int dcindex = 0; dcindex < Parameters.numberOfDC; dcindex++) {
+//					int xindex = tindex*Parameters.numberOfDC + dcindex;
+//					pos[0] = 1;
+//					pos[1] = tindex + 1;
+//					int datanumber = data.getInt(pos);
+//					double[] datasizeOfTask = datasize[tindex];
+//					double TotaldatasizeOfTask = Totaldatasize[tindex];
+//					for(int dataindex = 0; dataindex < datanumber; dataindex++) {
+//						pos[0] = tindex + 1;
+//						pos[1] = dataindex + 1;
+//						if (datapos.getInt(pos) == dcindex) {
+//							TotaldatasizeOfTask -= datasizeOfTask[dataindex];
+//							datasizeOfTask[dataindex] = 0;
+//						}
+//					}
+//					for(int dataindex = 0; dataindex < datanumber; dataindex++) {
+//						pos[0] = xindex + 1;
+//						pos[1] = dataindex + 1;
+//						bandwidth.set(pos, Parameters.bwBaselineOfDC[dcindex]*datasizeOfTask[dataindex]/TotaldatasizeOfTask);
+//					}
+//					for (int iterm = 0; iterm < 4; iterm++) {
+//						pos[0] = xindex + 1;
+//						pos[1] = iterm + 1;
+//						double value = 0d;
+//						switch (iterm) {
+//						case 0:
+//							value = task.getMi()/Parameters.MIPSbaselineOfDC[dcindex]
+//									+ TotaldatasizeOfTask/Parameters.bwBaselineOfDC[dcindex]
+//									+ 2*task.getIo()/Parameters.ioBaselineOfDC[dcindex];
+//							break;
+//						case 1:
+//							value = task.getMi()/(Parameters.MIPSbaselineOfDC[dcindex]*Parameters.stragglerPerformanceCoefficientOfDC[dcindex])
+//									+ TotaldatasizeOfTask/(Parameters.bwBaselineOfDC[dcindex]*Parameters.stragglerPerformanceCoefficientOfDC[dcindex])
+//									+ 2*task.getIo()/(Parameters.ioBaselineOfDC[dcindex]*Parameters.stragglerPerformanceCoefficientOfDC[dcindex]);
+//							break;
+//						case 2:
+//							value = (Parameters.runtimeFactorInCaseOfFailure[dcindex] + 1)
+//									* task.getMi()/Parameters.MIPSbaselineOfDC[dcindex]
+//									+ TotaldatasizeOfTask/Parameters.bwBaselineOfDC[dcindex]
+//									+ 2*task.getIo()/Parameters.ioBaselineOfDC[dcindex];
+//							break;
+//						case 3:
+//							value = 2
+//									* task.getMi()/Parameters.MIPSbaselineOfDC[dcindex]
+//									+ TotaldatasizeOfTask/Parameters.bwBaselineOfDC[dcindex]
+//									+ 2*task.getIo()/Parameters.ioBaselineOfDC[dcindex];
+//							break;
+//						default:
+//							break;
+//						}
+//						allDuraArray.set(pos,value);
+//					}
+//				}
+//				
+//			}
+//			
+//			//SlotArray UpArray DownArray
+//			
+//			for(int dcindex = 0; dcindex < Parameters.numberOfDC; dcindex++) {
+//				pos[0] = 1;
+//				pos[1] = dcindex + 1;
+//				SlotArray.set(pos, idleTaskSlotsOfDC.get(dcindex + DCbase).size());
+//				UpArray.set(pos, getUplinkOfDC().get(dcindex + DCbase));
+//				DownArray.set(pos, getDownlinkOfDC().get(dcindex + DCbase));
+//			}
+//			
+//			
+//			
+//			
+//			
+//			result = taskassign.command(2,tasknum,dcnum,probArray,allDuraArray,data,datapos,bandwidth,SlotArray,UpArray,DownArray,iteration_bound);
+//			x = (MWNumericArray)result[0];
+//			xd = x.getDoubleData();
+//			flag = (MWNumericArray)result[1];
+//			flagi = flag.getInt();
+//		}catch(Exception e) {
+//			System.out.println("Exception: "+e.toString());
+//		}finally {
+//			MWNumericArray.disposeArray(tasknum);
+//			MWNumericArray.disposeArray(dcnum);
+//			MWNumericArray.disposeArray(probArray);
+//			MWNumericArray.disposeArray(allDuraArray);
+//			MWNumericArray.disposeArray(data);
+//			MWNumericArray.disposeArray(datapos);
+//			MWNumericArray.disposeArray(bandwidth);
+//			MWNumericArray.disposeArray(SlotArray);
+//			MWNumericArray.disposeArray(UpArray);
+//			MWNumericArray.disposeArray(DownArray);
+//			MWNumericArray.disposeArray(iteration_bound);
+//			MWNumericArray.disposeArray(x);
+//			MWNumericArray.disposeArray(flag);
+//			if(taskassign != null)
+//				taskassign.dispose();
+//		}
 		
 		
 		if (flagi > 0) {
@@ -357,7 +529,7 @@ public abstract class AbstractWorkflowScheduler extends DatacenterBroker
 			for (int tindex = 0; tindex < numberOfTask; tindex++) {
 				Task task = ReadyTasks.get(tindex);
 				for (int dcindex = 0; dcindex < Parameters.numberOfDC; dcindex++) {
-					if (xd[(tindex-1)*Parameters.numberOfDC + dcindex] == 1) {
+					if (xb[tindex*Parameters.numberOfDC + dcindex] == 1) {
 						Vm vm = idleTaskSlotsOfDC.get(dcindex + DCbase).remove();
 						if (tasks.containsKey(task.getCloudletId())) {
 							Task speculativeTask = new Task(task);
@@ -513,17 +685,23 @@ public abstract class AbstractWorkflowScheduler extends DatacenterBroker
 			if(originalTask.numberOfData > 0) {
 				for(int dataindex = 0; dataindex < originalTask.numberOfData; dataindex++ ) {
 					Totaldown += originalTask.requiredBandwidth[dataindex];
-					sendNow(originalTask.positionOfDataID[dataindex], CloudSimTags.UPLINK_RETURN,originalTask.requiredBandwidth[dataindex]);
-					double upbandwidth = getUplinkOfDC().get(originalTask.positionOfDataID[dataindex]) + originalTask.requiredBandwidth[dataindex];
-					getUplinkOfDC().put(originalTask.positionOfDataID[dataindex], upbandwidth);
+					if (originalTask.requiredBandwidth[dataindex] > 0) {
+						sendNow(originalTask.positionOfDataID[dataindex], CloudSimTags.UPLINK_RETURN,originalTask.requiredBandwidth[dataindex]);
+						double upbandwidth = getUplinkOfDC().get(originalTask.positionOfDataID[dataindex]) + originalTask.requiredBandwidth[dataindex];
+						getUplinkOfDC().put(originalTask.positionOfDataID[dataindex], upbandwidth);
+					}
+					
 				}
-				sendNow(originalTask.getAssignmentDCId(), CloudSimTags.DOWNLINK_RETURN, Totaldown);
-				double downbandwidth = getDownlinkOfDC().get(originalTask.getAssignmentDCId()) + Totaldown;
-				getDownlinkOfDC().put(originalTask.getAssignmentDCId(), downbandwidth);
+				if (Totaldown > 0) {
+					sendNow(originalTask.getAssignmentDCId(), CloudSimTags.DOWNLINK_RETURN, Totaldown);
+					double downbandwidth = getDownlinkOfDC().get(originalTask.getAssignmentDCId()) + Totaldown;
+					getDownlinkOfDC().put(originalTask.getAssignmentDCId(), downbandwidth);
+				}
+				
 			}
 			//tasks.remove(originalTask.getCloudletId());
 			//taskSucceeded(originalTask, originalVm);
-			if (speculativeTasks.size() != 0) {
+			if (speculativeTaskOfTask.size() != 0) {
 				Iterator<Task> it = speculativeTaskOfTask.iterator();
 				while(it.hasNext()) {
 					Task speculativeTask = it.next();
@@ -534,13 +712,19 @@ public abstract class AbstractWorkflowScheduler extends DatacenterBroker
 					if(originalTask.numberOfData > 0) {
 						for(int dataindex = 0; dataindex < originalTask.numberOfData; dataindex++ ) {
 							Totaldown += speculativeTask.requiredBandwidth[dataindex];
-							sendNow(speculativeTask.positionOfDataID[dataindex], CloudSimTags.UPLINK_RETURN,speculativeTask.requiredBandwidth[dataindex]);
-							double upbandwidth = getUplinkOfDC().get(speculativeTask.positionOfDataID[dataindex]) + speculativeTask.requiredBandwidth[dataindex];
-							getUplinkOfDC().put(speculativeTask.positionOfDataID[dataindex], upbandwidth);
+							if (speculativeTask.requiredBandwidth[dataindex] > 0) {
+								sendNow(speculativeTask.positionOfDataID[dataindex], CloudSimTags.UPLINK_RETURN,speculativeTask.requiredBandwidth[dataindex]);
+								double upbandwidth = getUplinkOfDC().get(speculativeTask.positionOfDataID[dataindex]) + speculativeTask.requiredBandwidth[dataindex];
+								getUplinkOfDC().put(speculativeTask.positionOfDataID[dataindex], upbandwidth);
+							}
+							
 						}
-						sendNow(speculativeTask.getAssignmentDCId(), CloudSimTags.DOWNLINK_RETURN, Totaldown);
-						double downbandwidth = getDownlinkOfDC().get(speculativeTask.getAssignmentDCId()) + Totaldown;
-						getDownlinkOfDC().put(speculativeTask.getAssignmentDCId(), downbandwidth);
+						if(Totaldown > 0) {
+							sendNow(speculativeTask.getAssignmentDCId(), CloudSimTags.DOWNLINK_RETURN, Totaldown);
+							double downbandwidth = getDownlinkOfDC().get(speculativeTask.getAssignmentDCId()) + Totaldown;
+							getDownlinkOfDC().put(speculativeTask.getAssignmentDCId(), downbandwidth);
+						}
+						
 					}
 					
 					
@@ -589,13 +773,19 @@ public abstract class AbstractWorkflowScheduler extends DatacenterBroker
 						if(speculativeTask.numberOfData > 0) {
 							for(int dataindex = 0; dataindex < speculativeTask.numberOfData; dataindex++ ) {
 								Totaldown += speculativeTask.requiredBandwidth[dataindex];
-								sendNow(speculativeTask.positionOfDataID[dataindex], CloudSimTags.UPLINK_RETURN,speculativeTask.requiredBandwidth[dataindex]);
-								double upbandwidth = getUplinkOfDC().get(speculativeTask.positionOfDataID[dataindex]) + speculativeTask.requiredBandwidth[dataindex];
-								getUplinkOfDC().put(speculativeTask.positionOfDataID[dataindex], upbandwidth);
+								if (speculativeTask.requiredBandwidth[dataindex] > 0) {
+									sendNow(speculativeTask.positionOfDataID[dataindex], CloudSimTags.UPLINK_RETURN,speculativeTask.requiredBandwidth[dataindex]);
+									double upbandwidth = getUplinkOfDC().get(speculativeTask.positionOfDataID[dataindex]) + speculativeTask.requiredBandwidth[dataindex];
+									getUplinkOfDC().put(speculativeTask.positionOfDataID[dataindex], upbandwidth);
+								}
+								
 							}
-							sendNow(speculativeTask.getAssignmentDCId(), CloudSimTags.DOWNLINK_RETURN, Totaldown);
-							double downbandwidth = getDownlinkOfDC().get(speculativeTask.getAssignmentDCId()) + Totaldown;
-							getDownlinkOfDC().put(speculativeTask.getAssignmentDCId(), downbandwidth);
+							if(Totaldown > 0) {
+								sendNow(speculativeTask.getAssignmentDCId(), CloudSimTags.DOWNLINK_RETURN, Totaldown);
+								double downbandwidth = getDownlinkOfDC().get(speculativeTask.getAssignmentDCId()) + Totaldown;
+								getDownlinkOfDC().put(speculativeTask.getAssignmentDCId(), downbandwidth);
+							}
+							
 						}
 					}
 				}
@@ -613,21 +803,24 @@ public abstract class AbstractWorkflowScheduler extends DatacenterBroker
 				if(originalTask.numberOfData > 0) {
 					for(int dataindex = 0; dataindex < originalTask.numberOfData; dataindex++ ) {
 						Totaldown += originalTask.requiredBandwidth[dataindex];
-						sendNow(originalTask.positionOfDataID[dataindex], CloudSimTags.UPLINK_RETURN,originalTask.requiredBandwidth[dataindex]);
-						double upbandwidth = getUplinkOfDC().get(originalTask.positionOfDataID[dataindex]) + originalTask.requiredBandwidth[dataindex];
-						getUplinkOfDC().put(originalTask.positionOfDataID[dataindex], upbandwidth);
+						if (originalTask.requiredBandwidth[dataindex] > 0) {
+							sendNow(originalTask.positionOfDataID[dataindex], CloudSimTags.UPLINK_RETURN,originalTask.requiredBandwidth[dataindex]);
+							double upbandwidth = getUplinkOfDC().get(originalTask.positionOfDataID[dataindex]) + originalTask.requiredBandwidth[dataindex];
+							getUplinkOfDC().put(originalTask.positionOfDataID[dataindex], upbandwidth);
+						}
+						
 					}
-					sendNow(originalTask.getAssignmentDCId(), CloudSimTags.DOWNLINK_RETURN, Totaldown);
-					double downbandwidth = getDownlinkOfDC().get(originalTask.getAssignmentDCId()) + Totaldown;
-					getDownlinkOfDC().put(originalTask.getAssignmentDCId(), downbandwidth);
+					if(Totaldown > 0) {
+						sendNow(originalTask.getAssignmentDCId(), CloudSimTags.DOWNLINK_RETURN, Totaldown);
+						double downbandwidth = getDownlinkOfDC().get(originalTask.getAssignmentDCId()) + Totaldown;
+						getDownlinkOfDC().put(originalTask.getAssignmentDCId(), downbandwidth);
+					}
 				}
 				if (speculativeTaskOfTask.size() != 0) {
 					Task speculativeTask = speculativeTaskOfTask.remove();
-					if (speculativeTaskOfTask.size() == 0) {
-						speculativeTask.setSpeculativeCopy(false);
-					} else {
-						speculativeTask.setSpeculativeCopy(true);
-					}
+					
+					speculativeTask.setSpeculativeCopy(false);
+					
 					tasks.put(speculativeTask.getCloudletId(), speculativeTask);
 					speculativeTasks.put(speculativeTask.getCloudletId(), speculativeTaskOfTask);
 				} else {
@@ -652,7 +845,14 @@ public abstract class AbstractWorkflowScheduler extends DatacenterBroker
 					+ ": All Tasks executed. Finishing...");
 			terminate();
 			clearDatacenters();
+			try {
+				proxy.exit();
+			} catch (MatlabInvocationException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
 			finishExecution();
+			
 		}
 	}
 

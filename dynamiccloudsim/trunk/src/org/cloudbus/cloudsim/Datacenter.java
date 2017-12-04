@@ -356,7 +356,7 @@ public class Datacenter extends SimEntity {
 //			}
 			
 		}
-		if (ack == task.numberOfData) {
+		if (ack == task.numberOfTransferData[task.assignmentDCindex]) {
 			
 			if (CloudletTransferFailReq.get(task.getCloudletId()).size()!=0) {
 				// return the up bandwidth for each successful transfer request
@@ -376,6 +376,9 @@ public class Datacenter extends SimEntity {
 				}
 				try {
 					task.setCloudletStatus(Cloudlet.FAILED);
+					CloudletTransferRequest.remove(task.getCloudletId());
+					CloudletTransferSuccessReq.remove(task.getCloudletId());
+					CloudletTransferFailReq.remove(task.getCloudletId());
 					sendNow(task.getUserId(), CloudSimTags.CLOUDLET_RETURN, task);
 				} catch (Exception e) {
 					e.printStackTrace();
@@ -422,7 +425,7 @@ public class Datacenter extends SimEntity {
 				data[1] = successUpr.requestedUpbandwidth;
 				data[2] = 0;
 				sendNow(task.getUserId(), CloudSimTags.BANDWIDTH_MINUS,data);
-				task.requiredBandwidth[sindex] = successUpr.requestedUpbandwidth;
+				task.requiredBandwidth[successUpr.dataindex] = successUpr.requestedUpbandwidth;
 				Totaldown += successUpr.requestedUpbandwidth;
 			}
 			
@@ -1163,6 +1166,9 @@ public class Datacenter extends SimEntity {
 				while (vm.getCloudletScheduler().isFinishedCloudlets()) {
 					Cloudlet cl = vm.getCloudletScheduler().getNextFinishedCloudlet();
 					if (cl != null) {
+						CloudletTransferRequest.remove(cl.getCloudletId());
+						CloudletTransferSuccessReq.remove(cl.getCloudletId());
+						CloudletTransferFailReq.remove(cl.getCloudletId());
 						sendNow(cl.getUserId(), CloudSimTags.CLOUDLET_RETURN, cl);
 					}
 				}

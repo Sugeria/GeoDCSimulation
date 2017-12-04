@@ -146,6 +146,7 @@ public class DaxFileReader extends LogFileReader {
 					task.sizeOfData = sizeOfData;
 					task.requiredBandwidth = new double[numberofData];
 					task.positionOfDataID = new int[numberofData];
+					task.numberOfTransferData = new int[Parameters.numberOfDC];
 				}
 				
 				taskIdToTask.put((long)cloudletId, task);

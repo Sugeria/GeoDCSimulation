@@ -27,7 +27,8 @@
 	<classpathentry kind="lib" path="dynamiccloudsim/trunk/lib/pegasus-4.4.0cvs.jar"/>
 	<classpathentry kind="lib" path="dynamiccloudsim/trunk/lib/xercesImpl-2.11.0.jar"/>
 	<classpathentry kind="lib" path="C:/Program Files/MATLAB/R2017b/toolbox/javabuilder/jar/javabuilder.jar"/>
-	<classpathentry kind="lib" path="C:/Users/han/git/GeoDCSimulation/dynamiccloudsim/trunk/lib/javabuilder.jar"/>
-	<classpathentry kind="lib" path="C:/Users/han/git/GeoDCSimulation/dynamiccloudsim/trunk/lib/taskassign.jar"/>
+	<classpathentry kind="lib" path="C:/Users/wtt/eclipse-workspace/DynamicSim/dynamiccloudsim/trunk/lib/taskassign.jar"/>
+	<classpathentry kind="lib" path="C:/Users/wtt/eclipse-workspace/DynamicSim/dynamiccloudsim/trunk/lib/matlabcontrol-4.0.0.jar"/>
+	<classpathentry kind="lib" path="C:/Users/wtt/eclipse-workspace/DynamicSim/dynamiccloudsim/trunk/lib/jmi.jar"/>
 	<classpathentry kind="output" path="dynamiccloudsim/bin"/>
 </classpath>
