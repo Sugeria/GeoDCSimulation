@@ -345,10 +345,10 @@ public class Parameters {
 	
 	
 	//upperbound of datasize
-	public static long ubOfDataSize = 2048 * 1024 * 1024; // 2G
+	public static long ubOfDataSize = 2048L * 1024L * 1024L; // 2G
 	
 	//lowerbound of datasize
-	public static long lbOfDataSize = 128 * 1024; // 128K
+	public static long lbOfDataSize = 128L * 1024L; // 128K
 	
 	
 	// upperbound of inputdata
@@ -437,8 +437,9 @@ public class Parameters {
 		
 		for (int dcindex = 0; dcindex < numberOfDC; dcindex++) {
 			double[] machineDis = getMachineDis(dcindex);
+			result[dcindex] = 0;
 			for (int typeindex = 0; typeindex < machineType; typeindex++) {
-				result[typeindex] = machineDis[typeindex]*iopsPerPeOfMachineType[typeindex];
+				result[dcindex] += machineDis[typeindex]*(double)iopsPerPeOfMachineType[typeindex];
 			}
 		}
 		return result;
@@ -449,8 +450,9 @@ public class Parameters {
 		
 		for (int dcindex = 0; dcindex < numberOfDC; dcindex++) {
 			double[] machineDis = getMachineDis(dcindex);
+			result[dcindex] = 0;
 			for (int typeindex = 0; typeindex < machineType; typeindex++) {
-				result[typeindex] = machineDis[typeindex]*bwpsPerPeOfMachineType[typeindex];
+				result[dcindex] += machineDis[typeindex]*(double)bwpsPerPeOfMachineType[typeindex];
 			}
 		}
 		return result;
@@ -458,12 +460,12 @@ public class Parameters {
 
 	public static double[] getMachineDis(int dcindex) {
 		double[] result = new double[machineType] ;
-		int sum = 0;
+		double sum = 0;
 		for (int typeindex = 0; typeindex < machineType; typeindex++) {
-			sum += nOpteronOfMachineTypeOfDC[dcindex][typeindex];
+			sum += (double)nOpteronOfMachineTypeOfDC[dcindex][typeindex];
 		}
 		for (int typeindex = 0; typeindex < machineType; typeindex++) {
-			result[typeindex] = nOpteronOfMachineTypeOfDC[dcindex][typeindex]/sum;
+			result[typeindex] = (double)nOpteronOfMachineTypeOfDC[dcindex][typeindex]/sum;
 		}
 		return result;
 	}
@@ -476,8 +478,9 @@ public class Parameters {
 		
 		for (int dcindex = 0; dcindex < numberOfDC; dcindex++) {
 			double[] machineDis = getMachineDis(dcindex);
+			result[dcindex] = 0;
 			for (int typeindex = 0; typeindex < machineType; typeindex++) {
-				result[typeindex] = machineDis[typeindex]*mipsPerCoreOpteronOfMachineType[typeindex];
+				result[dcindex] += machineDis[typeindex]*(double)mipsPerCoreOpteronOfMachineType[typeindex];
 			}
 		}
 		return result;

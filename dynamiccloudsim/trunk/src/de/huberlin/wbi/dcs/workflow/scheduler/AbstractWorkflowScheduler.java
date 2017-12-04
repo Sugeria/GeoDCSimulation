@@ -28,6 +28,7 @@ import de.huberlin.wbi.dcs.examples.Parameters;
 import de.huberlin.wbi.dcs.workflow.DataDependency;
 import de.huberlin.wbi.dcs.workflow.Task;
 import de.huberlin.wbi.dcs.workflow.Workflow;
+import taskassign.TaskAssign;
 
 
 public abstract class AbstractWorkflowScheduler extends DatacenterBroker
@@ -153,7 +154,7 @@ public abstract class AbstractWorkflowScheduler extends DatacenterBroker
 	}
 
 	protected void submitTasks() {
-		Queue<Vm> taskSlotsKeptIdle = new LinkedList<>();
+		// Queue<Vm> taskSlotsKeptIdle = new LinkedList<>();
 		Queue<Task> taskSubmitted = new LinkedList<>();
 		// compute the task assignment among datacenters for ready tasks
 		
@@ -212,7 +213,7 @@ public abstract class AbstractWorkflowScheduler extends DatacenterBroker
 			//probArray
 			for (int dcindex = 0; dcindex < Parameters.numberOfDC; dcindex++) {
 				for (int iterm = 0; iterm < 4; iterm++) {
-					int[] pos = {dcindex,iterm};
+					int[] pos = {dcindex + 1,iterm + 1};
 					double value = 0d;
 					switch (iterm) {
 					case 0:
@@ -242,12 +243,12 @@ public abstract class AbstractWorkflowScheduler extends DatacenterBroker
 			for (int tindex = 0; tindex < numberOfTask; tindex++) {
 				Task task = ReadyTasks.get(tindex);
 				pos[0] = 1;
-				pos[1] = tindex;
+				pos[1] = tindex + 1;
 				data.set(pos, task.numberOfData);
 				Totaldatasize[tindex] = 0d;
 				for(int dataindex = 0; dataindex < task.numberOfData; dataindex++) {
-					pos[0] = tindex;
-					pos[1] = dataindex;
+					pos[0] = tindex + 1;
+					pos[1] = dataindex + 1;
 					datapos.set(pos, task.positionOfData[dataindex]);
 					task.positionOfDataID[dataindex] = task.positionOfData[dataindex] + DCbase;
 					datasize[tindex][dataindex] = task.sizeOfData[dataindex];
@@ -260,28 +261,28 @@ public abstract class AbstractWorkflowScheduler extends DatacenterBroker
 			for (int tindex = 0; tindex < numberOfTask; tindex++) {
 				Task task = ReadyTasks.get(tindex);
 				for (int dcindex = 0; dcindex < Parameters.numberOfDC; dcindex++) {
-					int xindex = (tindex - 1)*Parameters.numberOfDC + dcindex;
+					int xindex = tindex*Parameters.numberOfDC + dcindex;
 					pos[0] = 1;
-					pos[1] = tindex;
+					pos[1] = tindex + 1;
 					int datanumber = data.getInt(pos);
 					double[] datasizeOfTask = datasize[tindex];
 					double TotaldatasizeOfTask = Totaldatasize[tindex];
 					for(int dataindex = 0; dataindex < datanumber; dataindex++) {
-						pos[0] = tindex;
-						pos[1] = dataindex;
+						pos[0] = tindex + 1;
+						pos[1] = dataindex + 1;
 						if (datapos.getInt(pos) == dcindex) {
 							TotaldatasizeOfTask -= datasizeOfTask[dataindex];
 							datasizeOfTask[dataindex] = 0;
 						}
 					}
 					for(int dataindex = 0; dataindex < datanumber; dataindex++) {
-						pos[0] = xindex;
-						pos[1] = dataindex;
+						pos[0] = xindex + 1;
+						pos[1] = dataindex + 1;
 						bandwidth.set(pos, Parameters.bwBaselineOfDC[dcindex]*datasizeOfTask[dataindex]/TotaldatasizeOfTask);
 					}
 					for (int iterm = 0; iterm < 4; iterm++) {
-						pos[0] = xindex;
-						pos[1] = iterm;
+						pos[0] = xindex + 1;
+						pos[1] = iterm + 1;
 						double value = 0d;
 						switch (iterm) {
 						case 0:
@@ -319,13 +320,13 @@ public abstract class AbstractWorkflowScheduler extends DatacenterBroker
 			
 			for(int dcindex = 0; dcindex < Parameters.numberOfDC; dcindex++) {
 				pos[0] = 1;
-				pos[1] = dcindex;
+				pos[1] = dcindex + 1;
 				SlotArray.set(pos, idleTaskSlotsOfDC.get(dcindex + DCbase).size());
 				UpArray.set(pos, getUplinkOfDC().get(dcindex + DCbase));
 				DownArray.set(pos, getDownlinkOfDC().get(dcindex + DCbase));
 			}
 			
-			result = taskassign.command(11, tasknum,dcnum,probArray,allDuraArray,data,datapos,bandwidth,SlotArray,UpArray,DownArray,iteration_bound);
+			result = taskassign.command(2,tasknum,dcnum,probArray,allDuraArray,data,datapos,bandwidth,SlotArray,UpArray,DownArray,iteration_bound);
 			x = (MWNumericArray)result[0];
 			xd = x.getDoubleData();
 			flag = (MWNumericArray)result[1];

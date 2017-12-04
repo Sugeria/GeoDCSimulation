@@ -125,8 +125,8 @@ public class DaxFileReader extends LogFileReader {
 					inputSize = 0;
 					
 					for (int dataindex = 0; dataindex < numberofData; dataindex++) {
-						positionOfData[dataindex] = (int)(Math.random()%Parameters.numberOfDC);
-						sizeOfData[dataindex] = (int)(Math.random()%(Parameters.ubOfDataSize - Parameters.lbOfDataSize + 1) + Parameters.lbOfDataSize);
+						positionOfData[dataindex] = (int)((Math.random()*Parameters.numberOfDC) % Parameters.numberOfDC);
+						sizeOfData[dataindex] = (int)(Math.random()*(Parameters.ubOfDataSize - Parameters.lbOfDataSize ) + Parameters.lbOfDataSize);
 						inputSize += sizeOfData[dataindex];
 					}
 				}
@@ -145,6 +145,7 @@ public class DaxFileReader extends LogFileReader {
 					task.positionOfData = positionOfData;
 					task.sizeOfData = sizeOfData;
 					task.requiredBandwidth = new double[numberofData];
+					task.positionOfDataID = new int[numberofData];
 				}
 				
 				taskIdToTask.put((long)cloudletId, task);

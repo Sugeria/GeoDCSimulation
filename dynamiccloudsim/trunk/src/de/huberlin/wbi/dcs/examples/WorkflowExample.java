@@ -132,32 +132,32 @@ public class WorkflowExample {
 		switch (Parameters.experiment) {
 		case MONTAGE_TRACE_1:
 			return new MontageTraceFileReader().parseLogFile(scheduler.getId(),
-					"examples/montage.m17.1.trace", true, true, ".*jpg");
+					"dynamiccloudsim/examples/montage.m17.1.trace", true, true, ".*jpg");
 		case MONTAGE_TRACE_12:
 			return new MontageTraceFileReader().parseLogFile(scheduler.getId(),
-					"examples/montage.m17.12.trace", true, true, ".*jpg");
+					"dynamiccloudsim/examples/montage.m17.12.trace", true, true, ".*jpg");
 		case ALIGNMENT_TRACE:
 			return new AlignmentTraceFileReader().parseLogFile(
-					scheduler.getId(), "examples/alignment.caco.geo.chr22.trace2", true,
+					scheduler.getId(), "dynamiccloudsim/examples/alignment.caco.geo.chr22.trace2", true,
 					true, null);
 		case MONTAGE_25:
 			return new DaxFileReader().parseLogFile(scheduler.getId(),
-					"examples/Montage_25.xml", true, true, null);
+					"dynamiccloudsim/examples/Montage_25.xml", true, true, null);
 		case MONTAGE_1000:
 			return new DaxFileReader().parseLogFile(scheduler.getId(),
-					"examples/Montage_1000.xml", true, true, null);
+					"dynamiccloudsim/examples/Montage_1000.xml", true, true, null);
 		case CYBERSHAKE_1000:
 			return new DaxFileReader().parseLogFile(scheduler.getId(),
-					"examples/CyberShake_1000.xml", true, true, null);
+					"dynamiccloudsim/examples/CyberShake_1000.xml", true, true, null);
 		case EPIGENOMICS_997:
 			return new DaxFileReader().parseLogFile(scheduler.getId(),
-					"examples/Epigenomics_997.xml", true, true, null);
+					"dynamiccloudsim/examples/Epigenomics_997.xml", true, true, null);
 		case CUNEIFORM_VARIANT_CALL:
 			return new CuneiformLogFileReader().parseLogFile(scheduler.getId(),
-					"examples/i1_s11756_r7_greedyQueue.log", true, true, null);
+					"dynamiccloudsim/examples/i1_s11756_r7_greedyQueue.log", true, true, null);
 		case HETEROGENEOUS_TEST_WORKFLOW:
 			return new CuneiformLogFileReader().parseLogFile(scheduler.getId(),
-					"examples/heterogeneous_test_workflow.log", true, true, null);
+					"dynamiccloudsim/examples/heterogeneous_test_workflow.log", true, true, null);
 		}
 		return null;
 	}
@@ -172,9 +172,10 @@ public class WorkflowExample {
 
 	
 	public void createMulDatacenters(int numberOfDC) {
-		StringBuilder sb = new StringBuilder("Datacenter_");
+		
 		Parameters Para = new Parameters();
 		for (int dcindex = 0;dcindex < numberOfDC; dcindex++) {
+			StringBuilder sb = new StringBuilder("Datacenter_");
 			StringBuilder dcname = sb;
 			dcname.append(String.valueOf(dcindex));
 			Para.setLikelihoodOfStraggler(Parameters.likelihoodOfStragglerOfDC[dcindex]);
@@ -214,12 +215,12 @@ public class WorkflowExample {
 					Parameters.nOpteronOfMachineTypeOfDC[dcindex]
 					);
 			Datacenter dc = createDatacenter(dcname.toString());
-			dc.setDownlink(Parameters.downlinkOfDC[numberOfDC]);
-			dc.setUplink(Parameters.uplinkOfDC[numberOfDC]);
+			dc.setDownlink(Parameters.downlinkOfDC[dcindex]);
+			dc.setUplink(Parameters.uplinkOfDC[dcindex]);
 			DatacenterCharacteristics dcc = dc.getCharacteristics();
-			dcc.setLikelihoodOfFailure(Parameters.likelihoodOfFailure[numberOfDC]);
-			dcc.setRuntimeFactorIncaseOfFailure(Parameters.runtimeFactorInCaseOfFailure[numberOfDC]);
-			dcc.setLikelihoodOfDCFailure(Parameters.likelihoodOfDCFailure[numberOfDC]);
+			dcc.setLikelihoodOfFailure(Parameters.likelihoodOfFailure[dcindex]);
+			dcc.setRuntimeFactorIncaseOfFailure(Parameters.runtimeFactorInCaseOfFailure[dcindex]);
+			dcc.setLikelihoodOfDCFailure(Parameters.likelihoodOfDCFailure[dcindex]);
 			// CPU Dynamics
 			dcc.cpuBaselineChangesPerHour = Parameters.cpuBaselineChangesPerHourOfDC[dcindex];
 			dcc.cpuDynamicsDistribution = Parameters.cpuDynamicsDistributionOfDC[dcindex];
@@ -361,7 +362,7 @@ public class WorkflowExample {
 						parameters.cpuHeterogeneityPopulation);
 				long mips = 0;
 				while (mips <= 0) {
-					mips = (long) (long) (dist.sample() * Parameters.mipsPerCoreOpteronOfMachineType[typeindex]);
+					mips = (long) (dist.sample() * Parameters.mipsPerCoreOpteronOfMachineType[typeindex]);
 				}
 				if (numGen.nextDouble() < parameters.likelihoodOfStraggler) {
 					bwps *= parameters.stragglerPerformanceCoefficient;
@@ -452,6 +453,7 @@ public class WorkflowExample {
 						dynamicModel, "output/run_" + run + "_vm_" + vmnum + ".csv",
 						Parameters.taskSlotsPerVm,dcindex);
 				list.add(vm[vmnum]);
+				vmnum++;
 			}
 		}
 

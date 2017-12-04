@@ -45,7 +45,7 @@ public class DynamicVm extends Vm {
 		super(id, userId, -1, numberOfPes, ram, -1, storage, vmm, cloudletScheduler);
 		setNumberOfCusPerPe(numberOfCusPerPe);
 		setDynamicModel(dynamicModel);
-		super.DCindex = DCindex;
+		super.DCindex = dcindex;
 		setCoefficients(
 				Parameters.cpuNoiseDistributionOfDC[dcindex],
 				Parameters.cpuNoiseCVOfDC[dcindex],
