@@ -916,16 +916,16 @@ public class Datacenter extends SimEntity {
 				// If ack is not required, this method don't send back a result.
 				// Hence, this might cause CloudSim to be hanged since waiting
 				// for this Cloudlet back.
-				if (ack) {
-					double[] data = new double[3];
-					data[0] = getId();
-					data[1] = 0;
-					data[2] = 0;
-
-					// unique tag = operation tag
-					int tag = CloudSimTags.BANDWIDTH_MINUS;
-					sendNow(cl.getUserId(), tag, data);
-				}
+//				if (ack) {
+//					double[] data = new double[3];
+//					data[0] = getId();
+//					data[1] = 0;
+//					data[2] = 0;
+//
+//					// unique tag = operation tag
+//					int tag = CloudSimTags.BANDWIDTH_MINUS;
+//					sendNow(cl.getUserId(), tag, data);
+//				}
 
 				sendNow(cl.getUserId(), CloudSimTags.CLOUDLET_RETURN, cl);
 
@@ -934,7 +934,8 @@ public class Datacenter extends SimEntity {
 			
 			
 			int numberOfData = cl.numberOfData;
-			if (numberOfData > 0) {
+			boolean noneedtransfer = false;
+			if (numberOfData > 0 && cl.numberOfTransferData[cl.assignmentDCindex] > 0) {
 				if (!CloudletTransferRequest.containsKey(cl.getCloudletId())) {
 					CloudletTransferRequest.put(cl.getCloudletId(),0);
 					CloudletTransferSuccessReq.put(cl.getCloudletId(), new ArrayList<>());
@@ -950,21 +951,30 @@ public class Datacenter extends SimEntity {
 						datasizeOfTask[dataindex] = 0;
 					}
 				}
-				for (int dataindex = 0; dataindex < numberOfData; dataindex++) {
-					double requiredbandwidth = characteristics.bwBaseline * datasizeOfTask[dataindex] / TotaldatasizeOfTask;
-					if (requiredbandwidth > 0) {
-						downlink = downlink - requiredbandwidth;
-						if ((downlink) > 0) {
-							if (cl instanceof Task) {
-								Task task = (Task)cl;
-								UplinkRequest upr = new UplinkRequest(task,requiredbandwidth,dataindex);
-								sendNow(cl.positionOfDataID[dataindex], CloudSimTags.CLOUDLET_TRANSFER,upr);
+				
+				if ((downlink-TotaldatasizeOfTask) >= 0) {
+				
+					for (int dataindex = 0; dataindex < numberOfData; dataindex++) {
+						double requiredbandwidth = (double)characteristics.bwBaseline * datasizeOfTask[dataindex] / TotaldatasizeOfTask;
+						if (requiredbandwidth > 0) {
+							downlink = downlink - requiredbandwidth;
+							if ((downlink) > 0) {
+								if (cl instanceof Task) {
+									Task task = (Task)cl;
+									UplinkRequest upr = new UplinkRequest(task,requiredbandwidth,dataindex);
+									sendNow(cl.positionOfDataID[dataindex], CloudSimTags.CLOUDLET_TRANSFER,upr);
+								}
+								
 							}
-							
 						}
 					}
+				} else {
+					noneedtransfer = true;
 				}
 			} else {
+				noneedtransfer = true;
+			}
+			if (noneedtransfer == true) {
 				// process this Cloudlet to this CloudResource
 				cl.setResourceParameter(getId(), getCharacteristics().getCostPerSecond(), getCharacteristics()
 						.getCostPerBw());
@@ -986,20 +996,21 @@ public class Datacenter extends SimEntity {
 					send(getId(), estimatedFinishTime, CloudSimTags.VM_DATACENTER_EVENT);
 				}
 
-				if (ack) {
-					double[] data = new double[3];
-					data[0] = getId();
-					data[1] = 0;
-					data[2] = 0;
-
-					// unique tag = operation tag
-					int tag = CloudSimTags.BANDWIDTH_MINUS;
-					sendNow(cl.getUserId(), tag, data);
-					
-					
-				}
+//				if (ack) {
+//					double[] data = new double[3];
+//					data[0] = getId();
+//					data[1] = 0;
+//					data[2] = 0;
+//
+//					// unique tag = operation tag
+//					int tag = CloudSimTags.BANDWIDTH_MINUS;
+//					sendNow(cl.getUserId(), tag, data);
+//					
+//					
+//				}
 				checkCloudletCompletion();
 			}
+			
 			
 
 			

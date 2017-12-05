@@ -50,7 +50,7 @@ public class Parameters {
 	public static Experiment experiment = Experiment.MONTAGE_25;
 
 	public static boolean outputDatacenterEvents = true;
-	public static boolean outputWorkflowGraph = false;
+	public static boolean outputWorkflowGraph = true;
 	public static boolean outputVmPerformanceLogs = false;
 
 	// public enum LogParser
@@ -371,10 +371,10 @@ public class Parameters {
 	public static int ram = (int) (1.7 * 1024);
 	
 	// uplink of datacenter
-	public static double[] uplinkOfDC = {2000,1000};
+	public static double[] uplinkOfDC = {10000,10000};
 	
 	// downlink of datacenter
-	public static double[] downlinkOfDC = {3000,2000};
+	public static double[] downlinkOfDC = {10000,10000};
 	
 	// the probability for a task to end in failure instead of success once it's
 	// execution time has passed

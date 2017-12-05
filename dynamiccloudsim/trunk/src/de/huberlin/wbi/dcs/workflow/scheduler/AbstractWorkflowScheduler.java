@@ -18,25 +18,21 @@ import org.cloudbus.cloudsim.core.CloudSim;
 import org.cloudbus.cloudsim.core.CloudSimTags;
 import org.cloudbus.cloudsim.core.SimEvent;
 
-import com.mathworks.toolbox.javabuilder.MWClassID;
-import com.mathworks.toolbox.javabuilder.MWComplexity;
-import com.mathworks.toolbox.javabuilder.MWNumericArray;
 
-import EDU.oswego.cs.dl.util.concurrent.FJTask.Par;
 import de.huberlin.wbi.dcs.DynamicHost;
 import de.huberlin.wbi.dcs.DynamicVm;
 import de.huberlin.wbi.dcs.examples.Parameters;
 import de.huberlin.wbi.dcs.workflow.DataDependency;
 import de.huberlin.wbi.dcs.workflow.Task;
 import de.huberlin.wbi.dcs.workflow.Workflow;
-import matlabcontrol.MatlabConnectionException;
+
 import matlabcontrol.MatlabInvocationException;
 import matlabcontrol.MatlabProxy;
 import matlabcontrol.MatlabProxyFactory;
-import matlabcontrol.MatlabProxyFactoryOptions;
+
 import matlabcontrol.extensions.MatlabNumericArray;
 import matlabcontrol.extensions.MatlabTypeConverter;
-import taskassign.TaskAssign;
+// import taskassign.TaskAssign;
 
 
 public abstract class AbstractWorkflowScheduler extends DatacenterBroker
@@ -314,8 +310,8 @@ public abstract class AbstractWorkflowScheduler extends DatacenterBroker
 			proxy.setVariable("data", data);
 			
 			
-			proxy.eval("[x,flag] = command(tasknum,dcnum,probArray,allDuraArray,data,datapos,bandwidth,SlotArray,UpArray,DownArray,iteration_bound);");
-			
+		//	proxy.eval("[x,flag] = command(tasknum,dcnum,probArray,allDuraArray,data,datapos,bandwidth,SlotArray,UpArray,DownArray,iteration_bound);");
+			proxy.eval("[x,flag] = commandwithnocopy(tasknum,dcnum,probArray,allDuraArray,data,datapos,bandwidth,SlotArray,UpArray,DownArray,iteration_bound);");
 			
 			xb = (double[])proxy.getVariable("x");
 			flagi = (int)((double[])proxy.getVariable("flag"))[0];
@@ -855,11 +851,6 @@ public abstract class AbstractWorkflowScheduler extends DatacenterBroker
 			
 		}
 	}
-
-
-
-
-
 
 
 
