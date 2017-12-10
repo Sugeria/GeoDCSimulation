@@ -56,6 +56,17 @@ public abstract class SimEntity implements Cloneable {
 		state = RUNNABLE;
 		CloudSim.addEntity(this);
 	}
+	
+	protected void deleteEventInDefferedQueue() {
+		// TODO Auto-generated method stub
+		
+	}
+	
+	protected void deleteEventInFutureQueue() {
+		// TODO Auto-generated method stub
+		
+	}
+	
 
 	/**
 	 * Get the name of this entity.
@@ -402,12 +413,12 @@ public abstract class SimEntity implements Cloneable {
 	public void run() {
 		SimEvent ev = evbuf != null ? evbuf : getNextEvent();
 
+		if (state != RUNNABLE) {
+			ev = null;
+			return ;
+		}
 		while (ev != null) {
 			processEvent(ev);
-			if (state != RUNNABLE) {
-				break;
-			}
-
 			ev = getNextEvent();
 		}
 
@@ -677,6 +688,11 @@ public abstract class SimEntity implements Cloneable {
 			return NetworkTopology.getDelay(src, dst);
 		}
 		return 0.0;
+	}
+
+	public void setIsFail(boolean b) {
+		// TODO Auto-generated method stub
+		
 	}
 
 }

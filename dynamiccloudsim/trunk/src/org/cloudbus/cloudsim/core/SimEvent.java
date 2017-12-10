@@ -108,9 +108,15 @@ public class SimEvent implements Cloneable, Comparable<SimEvent> {
 		type.add("SEND");
 		type.add("HOLD_DONE");
 		type.add("CREATE");
+		String srcterm = null;
+		if (entSrc == -1) {
+			srcterm = "CloudSim";
+		}else {
+			srcterm = CloudSim.getEntity(entSrc).getName();
+		}
 		String msg = className + ": -->Event Type = " + type.get(etype)
 				+ ";Event tag = " + CloudSimTags.TagText(tag) + "; source = "
-				+ CloudSim.getEntity(entSrc).getName() + "; destination = "
+				+ srcterm + "; destination = "
 				+ CloudSim.getEntity(entDst).getName() + "; Time= " + this.time
 				+ "; endwaiting time = " + this.endWaitingTime;
 		if (data != null) {

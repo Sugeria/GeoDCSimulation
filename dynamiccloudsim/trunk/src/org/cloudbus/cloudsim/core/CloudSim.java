@@ -750,6 +750,10 @@ public class CloudSim {
 					throw new IllegalArgumentException("Null entity holding.");
 				} else {
 					entities.get(src).setState(SimEntity.RUNNABLE);
+					// only refer to the isFail in datacenter
+					SimEvent ev = new SimEvent(SimEvent.SEND, clock + 0, -1,entities.get(src).getId(),CloudSimTags.DC_RESUME,null);
+					ev.CustomtoString("CloudSim(future queue event added)\n");
+					future.addEvent(ev);
 				}
 				break;
 

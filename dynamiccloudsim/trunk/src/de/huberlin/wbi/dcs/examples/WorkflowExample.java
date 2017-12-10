@@ -221,6 +221,8 @@ public class WorkflowExample {
 			dcc.setLikelihoodOfFailure(Parameters.likelihoodOfFailure[dcindex]);
 			dcc.setRuntimeFactorIncaseOfFailure(Parameters.runtimeFactorInCaseOfFailure[dcindex]);
 			dcc.setLikelihoodOfDCFailure(Parameters.likelihoodOfDCFailure[dcindex]);
+			dcc.ubOfDCFailureDuration = Parameters.ubOfDCFailureDuration[dcindex];
+			dcc.lbOfDCFailureDuration = Parameters.lbOfDCFailureDuration[dcindex];
 			// CPU Dynamics
 			dcc.cpuBaselineChangesPerHour = Parameters.cpuBaselineChangesPerHourOfDC[dcindex];
 			dcc.cpuDynamicsDistribution = Parameters.cpuDynamicsDistributionOfDC[dcindex];

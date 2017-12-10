@@ -254,4 +254,9 @@ public abstract class CloudletScheduler {
 		return currentMipsShare;
 	}
 
+	public void failVmProcessing(double currentTime, List<Double> mipsShare) {
+		// TODO Auto-generated method stub
+		
+	}
+
 }

@@ -105,6 +105,8 @@ public class DatacenterCharacteristics {
 	private double likelihoodOfFailure;
 	private double runtimeFactorIncaseOfFailure;
 	private double likelihoodOfDCFailure;
+	public double ubOfDCFailureDuration;
+	public double lbOfDCFailureDuration;
 
 	private int numberOfVM;
 	

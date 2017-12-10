@@ -88,6 +88,8 @@ public class DatacenterBroker extends SimEntity {
 	private Map<Integer, Double> likelihoodOfStragglerOfDC;
 	private Map<Integer, Double> stragglerPerformanceCoefficientOfDC;
 	
+	protected Map<Integer, Boolean> healthyStateOfDC;
+	
 	public int DCbase;
 
 	/**
@@ -126,6 +128,8 @@ public class DatacenterBroker extends SimEntity {
 		numberOfVMOfDC = new HashMap<>();
 		likelihoodOfStragglerOfDC = new HashMap<>();
 		stragglerPerformanceCoefficientOfDC = new HashMap<>();
+		
+		healthyStateOfDC = new HashMap<>();
 	}
 
 	/**
@@ -206,7 +210,16 @@ public class DatacenterBroker extends SimEntity {
 			case CloudSimTags.UPDATE_TASK_USED_BANDWIDTH:
 				updateTaskUsedBandwidth(ev);
 				break;
-				
+			case CloudSimTags.DC_FAIL:
+				double[] data = (double[])ev.getData();
+				int failedDCId = (int)data[0];
+				healthyStateOfDC.put(failedDCId, false);
+				sendNow(failedDCId, CloudSimTags.DC_PAUSE,data[1]);
+				break;
+			case CloudSimTags.DC_RESUME:
+				int resumeDCId = (int)ev.getData();
+				healthyStateOfDC.put(resumeDCId,true);
+				break;
 			// other unknown tags are processed by this method
 			default:
 				processOtherEvent(ev);
@@ -301,7 +314,7 @@ public class DatacenterBroker extends SimEntity {
 		getNumberOfVMOfDC().put(characteristics.getId(), characteristics.getNumberOfVM());
 		getLikelihoodOfStragglerOfDC().put(characteristics.getId(), characteristics.getLikelihoodOfStraggler());
 		getStragglerPerformanceCoefficient().put(characteristics.getId(), characteristics.getStragglerPerformanceCoefficient());
-		
+		healthyStateOfDC.put(characteristics.getId(), true);
 		
 		if (getDatacenterCharacteristicsList().size() == getDatacenterIdsList().size()) {
 			setDatacenterRequestedIdsList(new ArrayList<Integer>());

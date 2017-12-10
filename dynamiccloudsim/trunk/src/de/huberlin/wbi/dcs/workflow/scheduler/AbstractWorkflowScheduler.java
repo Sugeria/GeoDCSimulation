@@ -289,7 +289,11 @@ public abstract class AbstractWorkflowScheduler extends DatacenterBroker
 		//SlotArray UpArray DownArray
 		
 		for(int dcindex = 0; dcindex < Parameters.numberOfDC; dcindex++) {
-			SlotArray[0][dcindex] = idleTaskSlotsOfDC.get(dcindex + DCbase).size();
+			if(healthyStateOfDC.get(dcindex + DCbase) == true) {
+				SlotArray[0][dcindex] = idleTaskSlotsOfDC.get(dcindex + DCbase).size();
+			}else {
+				SlotArray[0][dcindex] = 0;
+			}
 			UpArray[0][dcindex] = getUplinkOfDC().get(dcindex + DCbase);
 			DownArray[0][dcindex] = getDownlinkOfDC().get(dcindex + DCbase);
 		}

@@ -382,7 +382,10 @@ public class Parameters {
 	public static double[] runtimeFactorInCaseOfFailure = {20d,20d};
 	
 	// the probability for a datacenter failure
-	public static double[] likelihoodOfDCFailure = {0.0001,0.0001};
+	public static double[] likelihoodOfDCFailure = {0.2,0.0001};
+	
+	public static double[] ubOfDCFailureDuration = {50d,50d};
+	public static double[] lbOfDCFailureDuration = {5d,5d};
 
 	// the coefficient of variation for information that is typically not
 	// available in real-world scenarios

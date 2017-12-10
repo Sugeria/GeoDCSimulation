@@ -59,6 +59,37 @@ public class CloudletSchedulerGreedyDivided extends CloudletSchedulerTimeShared 
 	
 	
 
+	@Override
+	public void failVmProcessing(double currentTime, List<Double> mipsShare) {
+		setCurrentMipsShare(mipsShare);
+		computeAvailableResources(mipsShare);
+
+		super.failVmProcessing(currentTime,mipsShare);
+		for (ResCloudlet rcl : getCloudletExecList()) {
+			int taskSlot = cloudletIdToTaskSlot.get(rcl.getCloudletId());
+			occupiedTaskSlots.remove(taskSlot);
+			mips.set(taskSlot, 0d);
+			iops.set(taskSlot, 0d);
+			bwps.set(taskSlot, 0d);
+			cloudletFinish(rcl);
+			if (rcl.getCloudlet() instanceof Task) {
+				Task task = (Task) rcl.getCloudlet();
+				try {
+					task.setCloudletStatus(Cloudlet.FAILED);
+				} catch (Exception e) {
+					e.printStackTrace();
+				}
+			}
+		}
+		getCloudletExecList().removeAll(getCloudletExecList());
+		if (getCloudletExecList().size() == 0) {
+			setPreviousTime(currentTime);
+			computeAvailableResources(mipsShare);
+			return ;
+		}
+		
+	}
+
 	// Cloudlets utilize Resources in greedy fashion (take as many resources as
 	// possible)
 	// Other Cloudlets have to take what's left
