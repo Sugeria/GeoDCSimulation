@@ -361,7 +361,7 @@ public class Cloudlet {
 		status = CREATED;
 		this.cloudletId = cloudletId;
 		numberOfPes = pesNumber;
-		execStartTime = 0.0;
+		execStartTime = -1.0;
 		finishTime = -1.0;    // meaning this Cloudlet hasn't finished yet
 		classType = 0;
 		netToS = 0;
@@ -816,11 +816,18 @@ public class Cloudlet {
 	 * @pre clockTime >= 0.0
 	 * @post $none
 	 */
+	
+	
 	public void setExecStartTime(final double clockTime) {
 		execStartTime = clockTime;
 		if (record) {
 			write("Sets the execution start time to " + num.format(clockTime));
 		}
+	}
+	
+	
+	public void setFinishTime(double clockTime) {
+		finishTime = clockTime;
 	}
 
 	/**

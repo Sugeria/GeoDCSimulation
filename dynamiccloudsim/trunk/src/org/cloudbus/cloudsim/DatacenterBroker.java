@@ -22,6 +22,7 @@ import org.cloudbus.cloudsim.core.SimEvent;
 import org.cloudbus.cloudsim.lists.CloudletList;
 import org.cloudbus.cloudsim.lists.VmList;
 import org.griphyn.vdl.toolkit.UpdateVDC;
+import org.workflowsim.WorkflowSimTags;
 
 import com.sun.org.apache.bcel.internal.generic.I2F;
 import com.sun.org.apache.bcel.internal.generic.RETURN;
@@ -88,7 +89,7 @@ public class DatacenterBroker extends SimEntity {
 	private Map<Integer, Double> likelihoodOfStragglerOfDC;
 	private Map<Integer, Double> stragglerPerformanceCoefficientOfDC;
 	
-	protected Map<Integer, Boolean> healthyStateOfDC;
+	public Map<Integer, Boolean> healthyStateOfDC;
 	
 	public int DCbase;
 
@@ -198,6 +199,18 @@ public class DatacenterBroker extends SimEntity {
 			case CloudSimTags.END_OF_SIMULATION:
 				shutdownEntity();
 				break;
+			
+			case WorkflowSimTags.CLOUDLET_CHECK:
+                processCloudletReturn(ev);
+                break;
+                
+			case CloudSimTags.CLOUDLET_SUBMIT:
+                processCloudletSubmit(ev);
+                break;
+                
+            case WorkflowSimTags.CLOUDLET_UPDATE:
+                processCloudletUpdate(ev);
+                break;
 				
 			case CloudSimTags.BANDWIDTH_ADD:
 				processBandwidthAdd(ev);
@@ -228,6 +241,16 @@ public class DatacenterBroker extends SimEntity {
 	}
 	
 	
+
+	protected void processCloudletUpdate(SimEvent ev) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	protected void processCloudletSubmit(SimEvent ev) {
+		// TODO Auto-generated method stub
+		
+	}
 
 	protected void updateTaskUsedBandwidth(SimEvent ev) {
 		

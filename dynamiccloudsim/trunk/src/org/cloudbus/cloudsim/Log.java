@@ -50,6 +50,17 @@ public class Log {
 		}
 	}
 
+	public static void singleprint(String message) {
+		if (!isDisabled()) {
+			try {
+				getOutput().write(message.getBytes());
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+			singleAddtoFile(message);
+		}
+	}
+	
 	/**
 	 * Prints the message passed as a non-String object.
 	 * 
@@ -69,6 +80,12 @@ public class Log {
 	public static void printLine(String message) {
 		if (!isDisabled()) {
 			print(message + LINE_SEPARATOR);
+		}
+	}
+	
+	public static void singleprintLine(String message) {
+		if (!isDisabled()) {
+			singleprint(message + LINE_SEPARATOR);
 		}
 	}
 
@@ -167,6 +184,27 @@ public class Log {
 	 */
 	public static void enable() {
 		setDisabled(false);
+	}
+	
+	public static void singleAddtoFile(String msg) {
+		try {
+			java.util.Date d = new java.util.Date();
+			if (file_name == "") {
+				file_name = "c:/log/cloudSim_Log" + d.getTime() + ".txt";
+			}
+			File file = new File(file_name);
+			// if file doesnt exists, then create it
+			if (!file.exists()) {
+
+				file.createNewFile();
+			}
+			FileWriter fw = new FileWriter(file.getAbsoluteFile(), true);
+			String text = msg;
+			fw.write(text);
+			fw.close();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
 	}
 	
 	public static void AddtoFile(String msg) {

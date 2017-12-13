@@ -1,12 +1,12 @@
 package de.huberlin.wbi.dcs.examples;
 
+import java.io.File;
+import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Random;
-
-import javax.jws.soap.SOAPBinding.ParameterStyle;
 
 import org.cloudbus.cloudsim.Datacenter;
 import org.cloudbus.cloudsim.DatacenterCharacteristics;
@@ -15,17 +15,18 @@ import org.cloudbus.cloudsim.Storage;
 import org.cloudbus.cloudsim.Vm;
 import org.cloudbus.cloudsim.core.CloudSim;
 import org.cloudbus.cloudsim.distributions.ContinuousDistribution;
+import org.workflowsim.Job;
+import org.workflowsim.WorkflowEngine;
+import org.workflowsim.WorkflowPlanner;
+import org.workflowsim.utils.ClusteringParameters;
+import org.workflowsim.utils.OverheadParameters;
+import org.workflowsim.utils.ReplicaCatalog;
 
-import com.sun.org.apache.xalan.internal.xsltc.runtime.Parameter;
-
-import EDU.oswego.cs.dl.util.concurrent.FJTask.Par;
-import de.huberlin.wbi.cuneiform.core.semanticmodel.Param;
 import de.huberlin.wbi.dcs.CloudletSchedulerGreedyDivided;
 import de.huberlin.wbi.dcs.DynamicHost;
 import de.huberlin.wbi.dcs.DynamicModel;
 import de.huberlin.wbi.dcs.DynamicVm;
 import de.huberlin.wbi.dcs.VmAllocationPolicyRandom;
-import de.huberlin.wbi.dcs.examples.Parameters.Distribution;
 import de.huberlin.wbi.dcs.workflow.Task;
 import de.huberlin.wbi.dcs.workflow.Workflow;
 import de.huberlin.wbi.dcs.workflow.io.AlignmentTraceFileReader;
@@ -52,45 +53,98 @@ public class WorkflowExample {
 				if (!Parameters.outputDatacenterEvents) {
 					Log.disable();
 				}
+				/**
+	             * Should change this based on real physical path
+	             */
+	            String daxPath = "C:/Users/han/git/WorkflowSim-1.0/config/dax/Montage_1000.xml";
+	            File daxFile = new File(daxPath);
+	            if (!daxFile.exists()) {
+	                Log.printLine("Warning: Please replace daxPath with the physical path in your working environment!");
+	                return;
+	            }
+	            /**
+	             * Since we are using MINMIN scheduling algorithm, the planning
+	             * algorithm should be INVALID such that the planner would not
+	             * override the result of the scheduler
+	             */
+	            Parameters.SchedulingAlgorithm sch_method = Parameters.SchedulingAlgorithm.MIN;
+	            Parameters.PlanningAlgorithm pln_method = Parameters.PlanningAlgorithm.INVALID;
+	            ReplicaCatalog.FileSystem file_system = ReplicaCatalog.FileSystem.SHARED;
+
+	            /**
+	             * No overheads
+	             */
+	            OverheadParameters op = new OverheadParameters(0, null, null, null, null, 0);
+
+	            /**
+	             * No Clustering
+	             */
+	            ClusteringParameters.ClusteringMethod method = ClusteringParameters.ClusteringMethod.HORIZONTAL;
+	            ClusteringParameters cp = new ClusteringParameters(0, 20, method, null);
+
+	            /**
+	             * Initialize static parameters
+	             */
+	            Parameters.init(Parameters.nVms, daxPath, null,
+	                    null, op, cp, sch_method, pln_method,
+	                    null, 0);
+	            ReplicaCatalog.init(file_system);
+				
+				
+				
 				// Initialize the CloudSim package
 				int num_user = 1; // number of grid users
 				Calendar calendar = Calendar.getInstance();
 				boolean trace_flag = false; // mean trace events
 				CloudSim.init(num_user, calendar, trace_flag);
 
+				
+				
+				/**
+	             * Create a WorkflowPlanner with one schedulers.
+	             */
+	            WorkflowPlanner wfPlanner = new WorkflowPlanner("planner_0", 1);
+	            /**
+	             * Create a WorkflowEngine.
+	             */
+	            WorkflowEngine wfEngine = wfPlanner.getWorkflowEngine();
+	            
 				// ex.createDatacenter("Datacenter");
-				ex.createMulDatacenters(Parameters.numberOfDC);
-				AbstractWorkflowScheduler scheduler = ex.createScheduler(i);
-				ex.createVms(i, scheduler);
-				Workflow workflow = buildWorkflow(scheduler);
-				ex.submitWorkflow(workflow, scheduler);
+				List<Datacenter> dcList = ex.createMulDatacenters(Parameters.numberOfDC);
+//				AbstractWorkflowScheduler scheduler = ex.createScheduler(i);
+				List<Vm> vmlist = createVMList(wfEngine.getSchedulerId(0), i);
 
+				wfEngine.submitVmList(vmlist, 0);
+//				ex.createVms(i, scheduler);
+//				Workflow workflow = buildWorkflow(scheduler);
+//				ex.submitWorkflow(workflow, scheduler);
+				
+				
+				for(int dcindex = 0; dcindex < Parameters.numberOfDC; dcindex++) {
+					Datacenter datacenter = dcList.get(dcindex);
+					wfEngine.bindSchedulerDatacenter(datacenter.getId(),0);
+				}
+				
+				
 				// Start the simulation
 				CloudSim.startSimulation();
+	            List<Job> outputList0 = wfEngine.getJobsReceivedList();
 				CloudSim.stopSimulation();
-
-				totalRuntime += scheduler.getRuntime();
-				Log.printLine(scheduler.getRuntime() / 60);
+				Parameters.printJobList(outputList0);
+				totalRuntime += wfEngine.getScheduler(0).getRuntime();
+				Log.printLine(wfEngine.getScheduler(0).getRuntime() / 60);
 			}
 
 			Log.printLine("Average runtime in minutes: " + totalRuntime
 					/ Parameters.numberOfRuns / 60);
 			Log.printLine("Total Workload: " + Task.getTotalMi() + "mi "
 					+ Task.getTotalIo() + "io " + Task.getTotalBw() + "bw");
-			Log.printLine("Total VM Performance: " + DynamicHost.getTotalMi()
-					+ "mips " + DynamicHost.getTotalIo() + "iops "
-					+ DynamicHost.getTotalBw() + "bwps");
-			Log.printLine("minimum minutes (quotient): " + Task.getTotalMi()
-					/ DynamicHost.getTotalMi() / 60 + " " + Task.getTotalIo()
-					/ DynamicHost.getTotalIo() / 60 + " " + Task.getTotalBw()
-					/ DynamicHost.getTotalBw() / 60);
 		} catch (Exception e) {
 			e.printStackTrace();
 			Log.printLine("The simulation has been terminated due to an unexpected error");
 		}
 
 	}
-	
 	
 	
 
@@ -171,8 +225,8 @@ public class WorkflowExample {
 	}
 
 	
-	public void createMulDatacenters(int numberOfDC) {
-		
+	public List<Datacenter> createMulDatacenters(int numberOfDC) {
+		LinkedList<Datacenter> dcList = new LinkedList<>();
 		Parameters Para = new Parameters();
 		for (int dcindex = 0;dcindex < numberOfDC; dcindex++) {
 			StringBuilder sb = new StringBuilder("Datacenter_");
@@ -301,7 +355,9 @@ public class WorkflowExample {
 			dcc.MIPSbaseline = Parameters.MIPSbaselineOfDC[dcindex];
 			dcc.bwBaseline = Parameters.bwBaselineOfDC[dcindex];
 			dcc.ioBaseline = Parameters.ioBaselineOfDC[dcindex];
+			dcList.add(dc);
 		}
+		return dcList;
 	}
 	
 	
@@ -403,7 +459,7 @@ public class WorkflowExample {
 		return datacenter;
 	}
 
-	public List<Vm> createVMList(int userId, int run) {
+	public static List<Vm> createVMList(int userId, int run) {
 
 		// Creates a container to store VMs. This list is passed to the broker
 		// later

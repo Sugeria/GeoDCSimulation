@@ -428,6 +428,20 @@ public class CloudSimTags {
 			return "DC_PAUSE";
 		case 58:
 			return "DC_RESUME";
+		case 1002:
+			return "VM_STATUS_READY";
+		case 1003:
+			return "VM_STATUS_BUSY";
+		case 1004:
+			return "VM_STATUS_IDLE";
+		case 1000:
+			return "START_SIMULATION";
+		case 1001:
+			return "JOB_SUBMIT";
+		case 1005:
+			return "CLOUDLET_UPDATE";
+		case 1006:
+			return "CLOUDLET_CHECK";
 		default:
 			return "Invalid tag value";
 		}
