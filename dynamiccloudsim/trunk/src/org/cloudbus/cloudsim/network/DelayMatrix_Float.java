@@ -22,6 +22,8 @@ public class DelayMatrix_Float {
 	 * matrix holding delay information between any two nodes
 	 */
 	protected float[][] mDelayMatrix = null;
+	
+	protected int[] mDegreeList = null;
 
 	/**
 	 * number of nodes in the distance-aware-topology
@@ -48,6 +50,7 @@ public class DelayMatrix_Float {
 
 		// now its time to calculate all possible connection-delays
 		calculateShortestPath();
+		createDegreeList(graph);
 	}
 
 	/**
@@ -62,6 +65,13 @@ public class DelayMatrix_Float {
 		}
 
 		return mDelayMatrix[srcID][destID];
+	}
+	
+	public int getDegree(int nodeID) {
+		if (nodeID > mTotalNodeNum) {
+			throw new ArrayIndexOutOfBoundsException("nodeID is higher than highest stored node-ID!");
+		}
+		return mDegreeList[nodeID];
 	}
 
 	/**
@@ -98,6 +108,27 @@ public class DelayMatrix_Float {
 				// according to aproximity of symmetry to all kommunication-paths
 				mDelayMatrix[edge.getDestNodeID()][edge.getSrcNodeID()] = edge.getLinkDelay();
 			}
+
+		}
+	}
+	
+	private void createDegreeList(TopologicalGraph graph) {
+		// number of nodes inside the network
+		mTotalNodeNum = graph.getNumberOfNodes();
+
+		mDegreeList = new int[mTotalNodeNum];
+		
+		// cleanup the complete distance-matrix with "0"s
+		for (int row = 0; row < mTotalNodeNum; ++row) {
+			mDegreeList[row] = Integer.MAX_VALUE;
+		}
+		Iterator<TopologicalNode> itr = graph.getNodeIterator();
+
+		TopologicalNode node;
+		while (itr.hasNext()) {
+			node = itr.next();
+
+			mDegreeList[node.getNodeID()] = node.indegree + node.outdegree;
 
 		}
 	}

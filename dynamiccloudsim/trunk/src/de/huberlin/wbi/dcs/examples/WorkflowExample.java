@@ -238,34 +238,34 @@ public class WorkflowExample {
 			Para.setDCHeterogeneity(
 					Parameters.cpuHeterogeneityDistributionOfDC[dcindex],
 					Parameters.cpuHeterogeneityCVOfDC[dcindex],
-					Parameters.cpuHeterogeneityAlphaOfDC[dcindex],
-					Parameters.cpuHeterogeneityBetaOfDC[dcindex],
-					Parameters.cpuHeterogeneityShapeOfDC[dcindex],
-					Parameters.cpuHeterogeneityLocationOfDC[dcindex],
-					Parameters.cpuHeterogeneityShiftOfDC[dcindex],
-					Parameters.cpuHeterogeneityMinOfDC[dcindex],
-					Parameters.cpuHeterogeneityMaxOfDC[dcindex],
-					Parameters.cpuHeterogeneityPopulationOfDC[dcindex],
+//					Parameters.cpuHeterogeneityAlphaOfDC[dcindex],
+//					Parameters.cpuHeterogeneityBetaOfDC[dcindex],
+//					Parameters.cpuHeterogeneityShapeOfDC[dcindex],
+//					Parameters.cpuHeterogeneityLocationOfDC[dcindex],
+//					Parameters.cpuHeterogeneityShiftOfDC[dcindex],
+//					Parameters.cpuHeterogeneityMinOfDC[dcindex],
+//					Parameters.cpuHeterogeneityMaxOfDC[dcindex],
+//					Parameters.cpuHeterogeneityPopulationOfDC[dcindex],
 					Parameters.ioHeterogeneityDistributionOfDC[dcindex],
 					Parameters.ioHeterogeneityCVOfDC[dcindex],
-					Parameters.ioHeterogeneityAlphaOfDC[dcindex],
-					Parameters.ioHeterogeneityBetaOfDC[dcindex],
-					Parameters.ioHeterogeneityShapeOfDC[dcindex],
-					Parameters.ioHeterogeneityLocationOfDC[dcindex],
-					Parameters.ioHeterogeneityShiftOfDC[dcindex],
-					Parameters.ioHeterogeneityMinOfDC[dcindex],
-					Parameters.ioHeterogeneityMaxOfDC[dcindex],
-					Parameters.ioHeterogeneityPopulationOfDC[dcindex],
+//					Parameters.ioHeterogeneityAlphaOfDC[dcindex],
+//					Parameters.ioHeterogeneityBetaOfDC[dcindex],
+//					Parameters.ioHeterogeneityShapeOfDC[dcindex],
+//					Parameters.ioHeterogeneityLocationOfDC[dcindex],
+//					Parameters.ioHeterogeneityShiftOfDC[dcindex],
+//					Parameters.ioHeterogeneityMinOfDC[dcindex],
+//					Parameters.ioHeterogeneityMaxOfDC[dcindex],
+//					Parameters.ioHeterogeneityPopulationOfDC[dcindex],
 					Parameters.bwHeterogeneityDistributionOfDC[dcindex],
 					Parameters.bwHeterogeneityCVOfDC[dcindex],
-					Parameters.bwHeterogeneityAlphaOfDC[dcindex],
-					Parameters.bwHeterogeneityBetaOfDC[dcindex],
-					Parameters.bwHeterogeneityShapeOfDC[dcindex],
-					Parameters.bwHeterogeneityLocationOfDC[dcindex],
-					Parameters.bwHeterogeneityShiftOfDC[dcindex],
-					Parameters.bwHeterogeneityMinOfDC[dcindex],
-					Parameters.bwHeterogeneityMaxOfDC[dcindex],
-					Parameters.bwHeterogeneityPopulationOfDC[dcindex],
+//					Parameters.bwHeterogeneityAlphaOfDC[dcindex],
+//					Parameters.bwHeterogeneityBetaOfDC[dcindex],
+//					Parameters.bwHeterogeneityShapeOfDC[dcindex],
+//					Parameters.bwHeterogeneityLocationOfDC[dcindex],
+//					Parameters.bwHeterogeneityShiftOfDC[dcindex],
+//					Parameters.bwHeterogeneityMinOfDC[dcindex],
+//					Parameters.bwHeterogeneityMaxOfDC[dcindex],
+//					Parameters.bwHeterogeneityPopulationOfDC[dcindex],
 					Parameters.nOpteronOfMachineTypeOfDC[dcindex]
 					);
 			Datacenter dc = createDatacenter(dcname.toString());
@@ -275,82 +275,82 @@ public class WorkflowExample {
 			dcc.setLikelihoodOfFailure(Parameters.likelihoodOfFailure[dcindex]);
 			dcc.setRuntimeFactorIncaseOfFailure(Parameters.runtimeFactorInCaseOfFailure[dcindex]);
 			dcc.setLikelihoodOfDCFailure(Parameters.likelihoodOfDCFailure[dcindex]);
-			dcc.ubOfDCFailureDuration = Parameters.ubOfDCFailureDuration[dcindex];
-			dcc.lbOfDCFailureDuration = Parameters.lbOfDCFailureDuration[dcindex];
+//			dcc.ubOfDCFailureDuration = Parameters.ubOfDCFailureDuration[dcindex];
+//			dcc.lbOfDCFailureDuration = Parameters.lbOfDCFailureDuration[dcindex];
 			// CPU Dynamics
 			dcc.cpuBaselineChangesPerHour = Parameters.cpuBaselineChangesPerHourOfDC[dcindex];
 			dcc.cpuDynamicsDistribution = Parameters.cpuDynamicsDistributionOfDC[dcindex];
 			dcc.cpuDynamicsCV = Parameters.cpuDynamicsCVOfDC[dcindex];
-			dcc.cpuDynamicsAlpha = Parameters.cpuDynamicsAlphaOfDC[dcindex];
-			dcc.cpuDynamicsBeta = Parameters.cpuDynamicsBetaOfDC[dcindex];
-			dcc.cpuDynamicsShape = Parameters.cpuDynamicsShapeOfDC[dcindex];
-			dcc.cpuDynamicsLocation = Parameters.cpuDynamicsLocationOfDC[dcindex];
-			dcc.cpuDynamicsShift = Parameters.cpuDynamicsShiftOfDC[dcindex];
-			dcc.cpuDynamicsMin = Parameters.cpuDynamicsMinOfDC[dcindex];
-			dcc.cpuDynamicsMax = Parameters.cpuDynamicsMaxOfDC[dcindex];
-			dcc.cpuDynamicsPopulation = Parameters.cpuDynamicsPopulationOfDC[dcindex];
+//			dcc.cpuDynamicsAlpha = Parameters.cpuDynamicsAlphaOfDC[dcindex];
+//			dcc.cpuDynamicsBeta = Parameters.cpuDynamicsBetaOfDC[dcindex];
+//			dcc.cpuDynamicsShape = Parameters.cpuDynamicsShapeOfDC[dcindex];
+//			dcc.cpuDynamicsLocation = Parameters.cpuDynamicsLocationOfDC[dcindex];
+//			dcc.cpuDynamicsShift = Parameters.cpuDynamicsShiftOfDC[dcindex];
+//			dcc.cpuDynamicsMin = Parameters.cpuDynamicsMinOfDC[dcindex];
+//			dcc.cpuDynamicsMax = Parameters.cpuDynamicsMaxOfDC[dcindex];
+//			dcc.cpuDynamicsPopulation = Parameters.cpuDynamicsPopulationOfDC[dcindex];
 
 			// IO Dynamics
 			dcc.ioBaselineChangesPerHour = Parameters.ioBaselineChangesPerHourOfDC[dcindex];
 			dcc.ioDynamicsDistribution = Parameters.ioDynamicsDistributionOfDC[dcindex];
 			dcc.ioDynamicsCV = Parameters.ioDynamicsCVOfDC[dcindex];
-			dcc.ioDynamicsAlpha = Parameters.ioDynamicsAlphaOfDC[dcindex];
-			dcc.ioDynamicsBeta = Parameters.ioDynamicsBetaOfDC[dcindex];
-			dcc.ioDynamicsShape = Parameters.ioDynamicsShapeOfDC[dcindex];
-			dcc.ioDynamicsLocation = Parameters.ioDynamicsLocationOfDC[dcindex];
-			dcc.ioDynamicsShift = Parameters.ioDynamicsShiftOfDC[dcindex];
-			dcc.ioDynamicsMin = Parameters.ioDynamicsMinOfDC[dcindex];
-			dcc.ioDynamicsMax = Parameters.ioDynamicsMaxOfDC[dcindex];
-			dcc.ioDynamicsPopulation = Parameters.ioDynamicsPopulationOfDC[dcindex];
+//			dcc.ioDynamicsAlpha = Parameters.ioDynamicsAlphaOfDC[dcindex];
+//			dcc.ioDynamicsBeta = Parameters.ioDynamicsBetaOfDC[dcindex];
+//			dcc.ioDynamicsShape = Parameters.ioDynamicsShapeOfDC[dcindex];
+//			dcc.ioDynamicsLocation = Parameters.ioDynamicsLocationOfDC[dcindex];
+//			dcc.ioDynamicsShift = Parameters.ioDynamicsShiftOfDC[dcindex];
+//			dcc.ioDynamicsMin = Parameters.ioDynamicsMinOfDC[dcindex];
+//			dcc.ioDynamicsMax = Parameters.ioDynamicsMaxOfDC[dcindex];
+//			dcc.ioDynamicsPopulation = Parameters.ioDynamicsPopulationOfDC[dcindex];
 
 			// BW Dynamics
 			dcc.bwBaselineChangesPerHour = Parameters.bwBaselineChangesPerHourOfDC[dcindex];
 			dcc.bwDynamicsDistribution = Parameters.bwDynamicsDistributionOfDC[dcindex];
 			dcc.bwDynamicsCV = Parameters.bwDynamicsCVOfDC[dcindex];
-			dcc.bwDynamicsAlpha = Parameters.bwDynamicsAlphaOfDC[dcindex];
-			dcc.bwDynamicsBeta = Parameters.bwDynamicsBetaOfDC[dcindex];
-			dcc.bwDynamicsShape = Parameters.bwDynamicsShapeOfDC[dcindex];
-			dcc.bwDynamicsLocation = Parameters.bwDynamicsLocationOfDC[dcindex];
-			dcc.bwDynamicsShift = Parameters.bwDynamicsShiftOfDC[dcindex];
-			dcc.bwDynamicsMin = Parameters.bwDynamicsMinOfDC[dcindex];
-			dcc.bwDynamicsMax = Parameters.bwDynamicsMaxOfDC[dcindex];
-			dcc.bwDynamicsPopulation = Parameters.bwDynamicsPopulationOfDC[dcindex];
+//			dcc.bwDynamicsAlpha = Parameters.bwDynamicsAlphaOfDC[dcindex];
+//			dcc.bwDynamicsBeta = Parameters.bwDynamicsBetaOfDC[dcindex];
+//			dcc.bwDynamicsShape = Parameters.bwDynamicsShapeOfDC[dcindex];
+//			dcc.bwDynamicsLocation = Parameters.bwDynamicsLocationOfDC[dcindex];
+//			dcc.bwDynamicsShift = Parameters.bwDynamicsShiftOfDC[dcindex];
+//			dcc.bwDynamicsMin = Parameters.bwDynamicsMinOfDC[dcindex];
+//			dcc.bwDynamicsMax = Parameters.bwDynamicsMaxOfDC[dcindex];
+//			dcc.bwDynamicsPopulation = Parameters.bwDynamicsPopulationOfDC[dcindex];
 
 			// CPU noise
 			dcc.cpuNoiseDistribution = Parameters.cpuNoiseDistributionOfDC[dcindex];
 			dcc.cpuNoiseCV = Parameters.cpuNoiseCVOfDC[dcindex];
-			dcc.cpuNoiseAlpha = Parameters.cpuNoiseAlphaOfDC[dcindex];
-			dcc.cpuNoiseBeta = Parameters.cpuNoiseBetaOfDC[dcindex];
-			dcc.cpuNoiseShape = Parameters.cpuNoiseShapeOfDC[dcindex];
-			dcc.cpuNoiseLocation = Parameters.cpuNoiseLocationOfDC[dcindex];
-			dcc.cpuNoiseShift = Parameters.cpuNoiseShiftOfDC[dcindex];
-			dcc.cpuNoiseMin = Parameters.cpuNoiseMinOfDC[dcindex];
-			dcc.cpuNoiseMax = Parameters.cpuNoiseMaxOfDC[dcindex];
-			dcc.cpuNoisePopulation = Parameters.cpuNoisePopulationOfDC[dcindex];
+//			dcc.cpuNoiseAlpha = Parameters.cpuNoiseAlphaOfDC[dcindex];
+//			dcc.cpuNoiseBeta = Parameters.cpuNoiseBetaOfDC[dcindex];
+//			dcc.cpuNoiseShape = Parameters.cpuNoiseShapeOfDC[dcindex];
+//			dcc.cpuNoiseLocation = Parameters.cpuNoiseLocationOfDC[dcindex];
+//			dcc.cpuNoiseShift = Parameters.cpuNoiseShiftOfDC[dcindex];
+//			dcc.cpuNoiseMin = Parameters.cpuNoiseMinOfDC[dcindex];
+//			dcc.cpuNoiseMax = Parameters.cpuNoiseMaxOfDC[dcindex];
+//			dcc.cpuNoisePopulation = Parameters.cpuNoisePopulationOfDC[dcindex];
 
 			// IO noise
 			dcc.ioNoiseDistribution = Parameters.ioNoiseDistributionOfDC[dcindex];
 			dcc.ioNoiseCV = Parameters.ioNoiseCVOfDC[dcindex];
-			dcc.ioNoiseAlpha = Parameters.ioNoiseAlphaOfDC[dcindex];
-			dcc.ioNoiseBeta = Parameters.ioNoiseBetaOfDC[dcindex];
-			dcc.ioNoiseShape = Parameters.ioNoiseShapeOfDC[dcindex];
-			dcc.ioNoiseLocation = Parameters.ioNoiseLocationOfDC[dcindex];
-			dcc.ioNoiseShift = Parameters.ioNoiseShiftOfDC[dcindex];
-			dcc.ioNoiseMin = Parameters.ioNoiseMinOfDC[dcindex];
-			dcc.ioNoiseMax = Parameters.ioNoiseMaxOfDC[dcindex];
-			dcc.ioNoisePopulation = Parameters.ioNoisePopulationOfDC[dcindex];
+//			dcc.ioNoiseAlpha = Parameters.ioNoiseAlphaOfDC[dcindex];
+//			dcc.ioNoiseBeta = Parameters.ioNoiseBetaOfDC[dcindex];
+//			dcc.ioNoiseShape = Parameters.ioNoiseShapeOfDC[dcindex];
+//			dcc.ioNoiseLocation = Parameters.ioNoiseLocationOfDC[dcindex];
+//			dcc.ioNoiseShift = Parameters.ioNoiseShiftOfDC[dcindex];
+//			dcc.ioNoiseMin = Parameters.ioNoiseMinOfDC[dcindex];
+//			dcc.ioNoiseMax = Parameters.ioNoiseMaxOfDC[dcindex];
+//			dcc.ioNoisePopulation = Parameters.ioNoisePopulationOfDC[dcindex];
 
 			// BW noise
 			dcc.bwNoiseDistribution = Parameters.bwNoiseDistributionOfDC[dcindex];
 			dcc.bwNoiseCV = Parameters.bwNoiseCVOfDC[dcindex];
-			dcc.bwNoiseAlpha = Parameters.bwNoiseAlphaOfDC[dcindex];
-			dcc.bwNoiseBeta = Parameters.bwNoiseBetaOfDC[dcindex];
-			dcc.bwNoiseShape = Parameters.bwNoiseShapeOfDC[dcindex];
-			dcc.bwNoiseLocation = Parameters.bwNoiseLocationOfDC[dcindex];
-			dcc.bwNoiseShift = Parameters.bwNoiseShiftOfDC[dcindex];
-			dcc.bwNoiseMin = Parameters.bwNoiseMinOfDC[dcindex];
-			dcc.bwNoiseMax = Parameters.bwNoiseMaxOfDC[dcindex];
-			dcc.bwNoisePopulation = Parameters.bwNoisePopulationOfDC[dcindex];
+//			dcc.bwNoiseAlpha = Parameters.bwNoiseAlphaOfDC[dcindex];
+//			dcc.bwNoiseBeta = Parameters.bwNoiseBetaOfDC[dcindex];
+//			dcc.bwNoiseShape = Parameters.bwNoiseShapeOfDC[dcindex];
+//			dcc.bwNoiseLocation = Parameters.bwNoiseLocationOfDC[dcindex];
+//			dcc.bwNoiseShift = Parameters.bwNoiseShiftOfDC[dcindex];
+//			dcc.bwNoiseMin = Parameters.bwNoiseMinOfDC[dcindex];
+//			dcc.bwNoiseMax = Parameters.bwNoiseMaxOfDC[dcindex];
+//			dcc.bwNoisePopulation = Parameters.bwNoisePopulationOfDC[dcindex];
 			
 			dcc.MIPSbaseline = Parameters.MIPSbaselineOfDC[dcindex];
 			dcc.bwBaseline = Parameters.bwBaselineOfDC[dcindex];
@@ -477,34 +477,34 @@ public class WorkflowExample {
 				DynamicModel dynamicModel = new DynamicModel(
 						Parameters.cpuDynamicsDistributionOfDC[dcindex],
 						Parameters.cpuDynamicsCVOfDC[dcindex],
-						Parameters.cpuDynamicsAlphaOfDC[dcindex],
-						Parameters.cpuDynamicsBetaOfDC[dcindex],
-						Parameters.cpuDynamicsShapeOfDC[dcindex],
-						Parameters.cpuDynamicsLocationOfDC[dcindex],
-						Parameters.cpuDynamicsShiftOfDC[dcindex],
-						Parameters.cpuDynamicsMinOfDC[dcindex],
-						Parameters.cpuDynamicsMaxOfDC[dcindex],
-						Parameters.cpuDynamicsPopulationOfDC[dcindex],
+						Parameters.cpuDynamicsAlphaOfDC[0],
+						Parameters.cpuDynamicsBetaOfDC[0],
+						Parameters.cpuDynamicsShapeOfDC[0],
+						Parameters.cpuDynamicsLocationOfDC[0],
+						Parameters.cpuDynamicsShiftOfDC[0],
+						Parameters.cpuDynamicsMinOfDC[0],
+						Parameters.cpuDynamicsMaxOfDC[0],
+						Parameters.cpuDynamicsPopulationOfDC[0],
 						Parameters.ioDynamicsDistributionOfDC[dcindex],
 						Parameters.ioDynamicsCVOfDC[dcindex],
-						Parameters.ioDynamicsAlphaOfDC[dcindex],
-						Parameters.ioDynamicsBetaOfDC[dcindex],
-						Parameters.ioDynamicsShapeOfDC[dcindex],
-						Parameters.ioDynamicsLocationOfDC[dcindex],
-						Parameters.ioDynamicsShiftOfDC[dcindex],
-						Parameters.ioDynamicsMinOfDC[dcindex],
-						Parameters.ioDynamicsMaxOfDC[dcindex],
-						Parameters.ioDynamicsPopulationOfDC[dcindex],
+						Parameters.ioDynamicsAlphaOfDC[0],
+						Parameters.ioDynamicsBetaOfDC[0],
+						Parameters.ioDynamicsShapeOfDC[0],
+						Parameters.ioDynamicsLocationOfDC[0],
+						Parameters.ioDynamicsShiftOfDC[0],
+						Parameters.ioDynamicsMinOfDC[0],
+						Parameters.ioDynamicsMaxOfDC[0],
+						Parameters.ioDynamicsPopulationOfDC[0],
 						Parameters.bwDynamicsDistributionOfDC[dcindex],
 						Parameters.bwDynamicsCVOfDC[dcindex],
-						Parameters.bwDynamicsAlphaOfDC[dcindex],
-						Parameters.bwDynamicsBetaOfDC[dcindex],
-						Parameters.bwDynamicsShapeOfDC[dcindex],
-						Parameters.bwDynamicsLocationOfDC[dcindex],
-						Parameters.bwDynamicsShiftOfDC[dcindex],
-						Parameters.bwDynamicsMinOfDC[dcindex],
-						Parameters.bwDynamicsMaxOfDC[dcindex],
-						Parameters.bwDynamicsPopulationOfDC[dcindex]
+						Parameters.bwDynamicsAlphaOfDC[0],
+						Parameters.bwDynamicsBetaOfDC[0],
+						Parameters.bwDynamicsShapeOfDC[0],
+						Parameters.bwDynamicsLocationOfDC[0],
+						Parameters.bwDynamicsShiftOfDC[0],
+						Parameters.bwDynamicsMinOfDC[0],
+						Parameters.bwDynamicsMaxOfDC[0],
+						Parameters.bwDynamicsPopulationOfDC[0]
 						);
 				vm[vmnum] = new DynamicVm(vmnum, userId, Parameters.numberOfCusPerPe, Parameters.numberOfPes,
 						Parameters.ram, storage, vmm, new CloudletSchedulerGreedyDivided(),

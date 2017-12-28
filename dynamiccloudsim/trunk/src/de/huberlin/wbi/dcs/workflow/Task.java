@@ -57,6 +57,7 @@ public class Task extends HeterogeneousCloudlet implements Comparable<Task> {
      * The type of a task. 
      */
     private String type;
+    
 
     /**
      * The finish time of a task (Because cloudlet does not allow WorkflowSim to
@@ -66,6 +67,9 @@ public class Task extends HeterogeneousCloudlet implements Comparable<Task> {
     
     public int jobId;
 	
+    public int submitDCIndex;
+    
+    public int workflowId;
 	
 	public Task(
 			final String name,
@@ -80,7 +84,8 @@ public class Task extends HeterogeneousCloudlet implements Comparable<Task> {
 			final long cloudletOutputSize,
 			final UtilizationModel utilizationModelCpu,
 			final UtilizationModel utilizationModelRam,
-			final UtilizationModel utilizationModelBw) {
+			final UtilizationModel utilizationModelBw,
+			final int submitDCIndex) {
 		super(
 				cloudletId,
 				miLength,
@@ -105,6 +110,7 @@ public class Task extends HeterogeneousCloudlet implements Comparable<Task> {
         this.fileList = new ArrayList<>();
         this.impact = 0.0;
         this.taskFinishTime = -1.0;
+        this.submitDCIndex = submitDCIndex;
 		
 	}
 	
@@ -122,7 +128,8 @@ public class Task extends HeterogeneousCloudlet implements Comparable<Task> {
 				task.getCloudletOutputSize(),
 				task.getUtilizationModelCpu(),
 				task.getUtilizationModelRam(),
-				task.getUtilizationModelBw());
+				task.getUtilizationModelBw(),
+				task.submitDCIndex);
 	}
 	
 	/**

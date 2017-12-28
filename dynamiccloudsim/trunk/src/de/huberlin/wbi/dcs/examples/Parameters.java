@@ -1,8 +1,15 @@
 package de.huberlin.wbi.dcs.examples;
 
+import java.io.IOException;
 import java.text.DecimalFormat;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
+import java.util.zip.Inflater;
+
+import javax.imageio.stream.IIOByteBuffer;
 
 import org.cloudbus.cloudsim.Cloudlet;
 import org.cloudbus.cloudsim.Log;
@@ -15,13 +22,20 @@ import org.cloudbus.cloudsim.distributions.ParetoDistr;
 import org.cloudbus.cloudsim.distributions.UniformDistr;
 import org.cloudbus.cloudsim.distributions.WeibullDistr;
 import org.cloudbus.cloudsim.distributions.ZipfDistr;
+import org.cloudbus.cloudsim.network.DelayMatrix_Float;
+import org.cloudbus.cloudsim.network.GraphReaderBrite;
+import org.cloudbus.cloudsim.network.TopologicalGraph;
 import org.workflowsim.Job;
 import org.workflowsim.utils.ClusteringParameters;
 import org.workflowsim.utils.OverheadParameters;
-import org.workflowsim.utils.Parameters.ClassType;
+
+import com.ctc.wstx.dtd.StarModel;
+import com.mathworks.toolbox.javabuilder.*;
+import com.sun.org.apache.bcel.internal.generic.TypedInstruction;
 
 import de.huberlin.wbi.dcs.distributions.NormalDistribution;
 import de.huberlin.wbi.dcs.workflow.Task;
+import taskassign.TaskAssign;
 
 public class Parameters {
 	
@@ -33,7 +47,7 @@ public class Parameters {
     public enum SchedulingAlgorithm {
 
         MAXMIN, MINMIN, MCT, DATA, 
-        STATIC, FCFS, ROUNDROBIN, INVALID,MIN
+        STATIC, FCFS, ROUNDROBIN, INVALID,MIN, MINRATE
     }
     
     /**
@@ -204,6 +218,9 @@ public class Parameters {
         reduceMethod = rMethod;
         deadline = dl;
         maxDepth = 0;
+        generateWorkflow();
+        setInfoAmongDC();
+        createInfoOfDC();
     }
     
     /**
@@ -238,6 +255,9 @@ public class Parameters {
         reduceMethod = rMethod;
         deadline = dl;
         maxDepth = 0;
+        generateWorkflow();
+        setInfoAmongDC();
+        createInfoOfDC();
     }
 
     /**
@@ -427,11 +447,98 @@ public class Parameters {
         return daxPaths;
     }
 	
+    
+    public static String[] workflowCandidate = {
+    		"C:/Users/han/git/GeoDCSimulation/dynamiccloudsim/config/dax/CyberShake_50.xml",
+    		"C:/Users/han/git/GeoDCSimulation/dynamiccloudsim/config/dax/CyberShake_100.xml",
+    		"C:/Users/han/git/GeoDCSimulation/dynamiccloudsim/config/dax/Epigenomics_24.xml",
+    		"C:/Users/han/git/GeoDCSimulation/dynamiccloudsim/config/dax/Epigenomics_46.xml",
+    		"C:/Users/han/git/GeoDCSimulation/dynamiccloudsim/config/dax/Epigenomics_100.xml",
+    		"C:/Users/han/git/GeoDCSimulation/dynamiccloudsim/config/dax/Inspiral_30.xml",
+    		"C:/Users/han/git/GeoDCSimulation/dynamiccloudsim/config/dax/Inspiral_50.xml",
+    		"C:/Users/han/git/GeoDCSimulation/dynamiccloudsim/config/dax/Inspiral_100.xml",
+    		"C:/Users/han/git/GeoDCSimulation/dynamiccloudsim/config/dax/Montage_25.xml",
+    		"C:/Users/han/git/GeoDCSimulation/dynamiccloudsim/config/dax/Montage_50.xml",
+    		"C:/Users/han/git/GeoDCSimulation/dynamiccloudsim/config/dax/Montage_100.xml",
+    		"C:/Users/han/git/GeoDCSimulation/dynamiccloudsim/config/dax/Sipht_30.xml",
+    		"C:/Users/han/git/GeoDCSimulation/dynamiccloudsim/config/dax/Sipht_60.xml",
+    		"C:/Users/han/git/GeoDCSimulation/dynamiccloudsim/config/dax/Sipht_100.xml",
+    		"C:/Users/han/git/GeoDCSimulation/dynamiccloudsim/config/dax/CyberShake_1000.xml",
+    		"C:/Users/han/git/GeoDCSimulation/dynamiccloudsim/config/dax/Epigenomics_997.xml",
+    		"C:/Users/han/git/GeoDCSimulation/dynamiccloudsim/config/dax/Inspiral_1000.xml",
+    		"C:/Users/han/git/GeoDCSimulation/dynamiccloudsim/config/dax/Montage_1000.xml",
+    		"C:/Users/han/git/GeoDCSimulation/dynamiccloudsim/config/dax/Sipht_1000.xml"
+    };
+    
+    
+    
 	
-	
-	
+	// workflow
+    // default 5 workflows each minutes
+    public static double lambda = 0.083;
+    // default 3 days workflow
+    // defend time exceed INT.MAX_VALUE
+    public static double seconds = 3d * 24 * 60 * 60;
+    
+    public static Map<Double, List<String>> workflowArrival;
+    
+    private static void generateWorkflow() {
+    	TaskAssign taskassign = null;
+		MWNumericArray lambda_para = null;
+		MWNumericArray time_para = null;
+		MWNumericArray result = null;
+		workflowArrival = new HashMap<>();
+		int[] x = null;
+		try {
+			taskassign = new TaskAssign();
+			int[] dims = {1,1};
+			int[] pos = {1,1};
+			lambda_para = MWNumericArray.newInstance(dims, MWClassID.DOUBLE,MWComplexity.REAL);
+			lambda_para.set(pos, lambda);
+			time_para = MWNumericArray.newInstance(dims, MWClassID.DOUBLE, MWComplexity.REAL);
+			time_para.set(pos, seconds);
+			result = (MWNumericArray)taskassign.Poissonseries(1,lambda_para,time_para);
+			x = result.getIntData();
+			int secondtime = x.length;
+			for(int timeindex = 1; timeindex < secondtime ; timeindex++) {
+				if(x[timeindex] == 0) {
+					continue;
+				}else {
+					List<String> workflowFileName = new ArrayList<>();
+					for (int workflowindex = 0; workflowindex < x[timeindex]; workflowindex++) {
+						// generate workflows from candidate
+						double workflowSizeProb = Math.random();
+						if(workflowSizeProb < 0.89) {
+							// 0-13
+							int candidateIndex = (int)(Math.random() * 13);
+							workflowFileName.add(workflowCandidate[candidateIndex]);
+						}else if(workflowSizeProb < 0.11) {
+							// 14-18
+							int candidateIndex = (int)(Math.random() * 4 + 14);
+							workflowFileName.add(workflowCandidate[candidateIndex]);
+						}
+					}
+					workflowArrival.put((double)timeindex, workflowFileName);
+					
+				}
+			}
+		} catch (MWException e) {
+			e.printStackTrace();
+		}finally {
+			MWNumericArray.disposeArray(taskassign);
+			MWNumericArray.disposeArray(lambda_para);
+			MWNumericArray.disposeArray(time_para);
+			MWNumericArray.disposeArray(result);
+			if(taskassign != null) {
+				taskassign.dispose();
+			}
+		}
+		
+	}
 	
 
+    public static double r = 0.2d;
+    
 	public static boolean considerDataLocality = false;
 	
 	// datacenter params
@@ -559,74 +666,392 @@ public class Parameters {
 	public int bwHeterogeneityPopulation = 0;
 	
 	
+	
+	
+	
 	public void setDCHeterogeneity(
 			Distribution cpuHeterogeneityDistribution,
 			double cpuHeterogeneityCV,
-			int cpuHeterogeneityAlpha,
-			double cpuHeterogeneityBeta,
-			double cpuHeterogeneityShape,
-			double cpuHeterogeneityLocation,
-			double cpuHeterogeneityShift,
-			double cpuHeterogeneityMin,
-			double cpuHeterogeneityMax,
-			int cpuHeterogeneityPopulation,
+//			int cpuHeterogeneityAlpha,
+//			double cpuHeterogeneityBeta,
+//			double cpuHeterogeneityShape,
+//			double cpuHeterogeneityLocation,
+//			double cpuHeterogeneityShift,
+//			double cpuHeterogeneityMin,
+//			double cpuHeterogeneityMax,
+//			int cpuHeterogeneityPopulation,
 			Distribution ioHeterogeneityDistribution,
 			double ioHeterogeneityCV,
-			int ioHeterogeneityAlpha,
-			double ioHeterogeneityBeta,
-			double ioHeterogeneityShape,
-			double ioHeterogeneityLocation,
-			double ioHeterogeneityShift,
-			double ioHeterogeneityMin,
-			double ioHeterogeneityMax,
-			int ioHeterogeneityPopulation,
+//			int ioHeterogeneityAlpha,
+//			double ioHeterogeneityBeta,
+//			double ioHeterogeneityShape,
+//			double ioHeterogeneityLocation,
+//			double ioHeterogeneityShift,
+//			double ioHeterogeneityMin,
+//			double ioHeterogeneityMax,
+//			int ioHeterogeneityPopulation,
 			Distribution bwHeterogeneityDistribution,
 			double bwHeterogeneityCV,
-			int bwHeterogeneityAlpha,
-			double bwHeterogeneityBeta,
-			double bwHeterogeneityShape,
-			double bwHeterogeneityLocation,
-			double bwHeterogeneityShift,
-			double bwHeterogeneityMin,
-			double bwHeterogeneityMax,
-			int bwHeterogeneityPopulation,
+//			int bwHeterogeneityAlpha,
+//			double bwHeterogeneityBeta,
+//			double bwHeterogeneityShape,
+//			double bwHeterogeneityLocation,
+//			double bwHeterogeneityShift,
+//			double bwHeterogeneityMin,
+//			double bwHeterogeneityMax,
+//			int bwHeterogeneityPopulation,
 			int[] nOpteronOfMachineType
 			) {
 		this.cpuHeterogeneityDistribution = cpuHeterogeneityDistribution;
 		this.cpuHeterogeneityCV = cpuHeterogeneityCV;
-		this.cpuHeterogeneityAlpha = cpuHeterogeneityAlpha;
-		this.cpuHeterogeneityBeta = cpuHeterogeneityBeta;
-		this.cpuHeterogeneityShape = cpuHeterogeneityShape;
-		this.cpuHeterogeneityLocation = cpuHeterogeneityLocation;
-		this.cpuHeterogeneityShift = cpuHeterogeneityShift;
-		this.cpuHeterogeneityMin = cpuHeterogeneityMin;
-		this.cpuHeterogeneityMax = cpuHeterogeneityMax;
-		this.cpuHeterogeneityPopulation = cpuHeterogeneityPopulation;
+//		this.cpuHeterogeneityAlpha = cpuHeterogeneityAlpha;
+//		this.cpuHeterogeneityBeta = cpuHeterogeneityBeta;
+//		this.cpuHeterogeneityShape = cpuHeterogeneityShape;
+//		this.cpuHeterogeneityLocation = cpuHeterogeneityLocation;
+//		this.cpuHeterogeneityShift = cpuHeterogeneityShift;
+//		this.cpuHeterogeneityMin = cpuHeterogeneityMin;
+//		this.cpuHeterogeneityMax = cpuHeterogeneityMax;
+//		this.cpuHeterogeneityPopulation = cpuHeterogeneityPopulation;
 		
 		this.ioHeterogeneityDistribution = ioHeterogeneityDistribution;
 		this.ioHeterogeneityCV = ioHeterogeneityCV;
-		this.ioHeterogeneityAlpha = ioHeterogeneityAlpha;
-		this.ioHeterogeneityBeta = ioHeterogeneityBeta;
-		this.ioHeterogeneityShape = ioHeterogeneityShape;
-		this.ioHeterogeneityLocation = ioHeterogeneityLocation;
-		this.ioHeterogeneityShift = ioHeterogeneityShift;
-		this.ioHeterogeneityMin = ioHeterogeneityMin;
-		this.ioHeterogeneityMax = ioHeterogeneityMax;
-		this.ioHeterogeneityPopulation = ioHeterogeneityPopulation;
+//		this.ioHeterogeneityAlpha = ioHeterogeneityAlpha;
+//		this.ioHeterogeneityBeta = ioHeterogeneityBeta;
+//		this.ioHeterogeneityShape = ioHeterogeneityShape;
+//		this.ioHeterogeneityLocation = ioHeterogeneityLocation;
+//		this.ioHeterogeneityShift = ioHeterogeneityShift;
+//		this.ioHeterogeneityMin = ioHeterogeneityMin;
+//		this.ioHeterogeneityMax = ioHeterogeneityMax;
+//		this.ioHeterogeneityPopulation = ioHeterogeneityPopulation;
 		
 		this.bwHeterogeneityDistribution = bwHeterogeneityDistribution;
 		this.bwHeterogeneityCV = bwHeterogeneityCV;
-		this.bwHeterogeneityAlpha = bwHeterogeneityAlpha;
-		this.bwHeterogeneityBeta = bwHeterogeneityBeta;
-		this.bwHeterogeneityShape = bwHeterogeneityShape;
-		this.bwHeterogeneityLocation = bwHeterogeneityLocation;
-		this.bwHeterogeneityShift = bwHeterogeneityShift;
-		this.bwHeterogeneityMin = bwHeterogeneityMin;
-		this.bwHeterogeneityMax = bwHeterogeneityMax;
-		this.bwHeterogeneityPopulation = bwHeterogeneityPopulation;
-		
+//		this.bwHeterogeneityAlpha = bwHeterogeneityAlpha;
+//		this.bwHeterogeneityBeta = bwHeterogeneityBeta;
+//		this.bwHeterogeneityShape = bwHeterogeneityShape;
+//		this.bwHeterogeneityLocation = bwHeterogeneityLocation;
+//		this.bwHeterogeneityShift = bwHeterogeneityShift;
+//		this.bwHeterogeneityMin = bwHeterogeneityMin;
+//		this.bwHeterogeneityMax = bwHeterogeneityMax;
+//		this.bwHeterogeneityPopulation = bwHeterogeneityPopulation;
+
 		this.nOpteronOfMachineType = nOpteronOfMachineType;
 	}
+	
+	
+
+
+	// Delay among DC
+	public static float[][] delayAmongDCIndex;
+	public static int[] degreeNumberOfDC;
+	
+	// use the brite file to generate the delay among DCs
+	private static void setInfoAmongDC(){
+		delayAmongDCIndex = new float[Parameters.numberOfDC][Parameters.numberOfDC];
+		GraphReaderBrite brite = new GraphReaderBrite();
+		TopologicalGraph topograph = null;
+		try {
+			topograph = brite.readGraphFile("topo.brite");
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		degreeNumberOfDC = new int[numberOfDC];
+		DelayMatrix_Float delayMatrix = new DelayMatrix_Float(topograph, true);
+		for(int dci = 0; dci < Parameters.numberOfDC; dci++) {
+			for(int dcj = 0; dcj < Parameters.numberOfDC; dcj++) {
+				delayAmongDCIndex[dci][dcj] = delayMatrix.getDelay(dci,dcj);
+			}
+			degreeNumberOfDC[dci] = delayMatrix.getDegree(dci);
+		}
+		
+		
+	}
+	
+	// create DC parameters
+	
+	// 0.05 Large
+	// 0.2 Medium
+	// 0.75 Small
+	
+	private static void createInfoOfDC() {
+		
+		nOpteronOfMachineTypeOfDC = new int[numberOfDC][machineType];
+		cpuHeterogeneityDistributionOfDC = new Distribution[numberOfDC];
+		cpuHeterogeneityCVOfDC = new double[numberOfDC];
+		ioHeterogeneityDistributionOfDC = new Distribution[numberOfDC];
+		ioHeterogeneityCVOfDC = new double[numberOfDC];
+		bwHeterogeneityDistributionOfDC = new Distribution[numberOfDC];
+		bwHeterogeneityCVOfDC = new double[numberOfDC];
+		cpuDynamicsDistributionOfDC = new Distribution[numberOfDC];
+		cpuDynamicsCVOfDC = new double[numberOfDC];
+		cpuBaselineChangesPerHourOfDC = new double[numberOfDC];
+		ioDynamicsDistributionOfDC = new Distribution[numberOfDC];
+		ioDynamicsCVOfDC = new double[numberOfDC];
+		ioBaselineChangesPerHourOfDC = new double[numberOfDC];
+		bwDynamicsDistributionOfDC = new Distribution[numberOfDC];
+		bwDynamicsCVOfDC = new double[numberOfDC];
+		bwBaselineChangesPerHourOfDC = new double[numberOfDC];
+		cpuNoiseDistributionOfDC = new Distribution[numberOfDC];
+		cpuNoiseCVOfDC = new double[numberOfDC];
+		ioNoiseDistributionOfDC = new Distribution[numberOfDC];
+		ioNoiseCVOfDC = new double[numberOfDC];
+		bwNoiseDistributionOfDC = new Distribution[numberOfDC];
+		bwNoiseCVOfDC = new double[numberOfDC];
+		likelihoodOfStragglerOfDC = new double[numberOfDC];
+		stragglerPerformanceCoefficientOfDC = new double[numberOfDC];
+		likelihoodOfFailure = new double[numberOfDC];
+		runtimeFactorInCaseOfFailure = new double[numberOfDC];
+		likelihoodOfDCFailure = new double[numberOfDC];
+		uplinkOfDC = new double[numberOfDC];
+		downlinkOfDC = new double[numberOfDC];
+		numberOfVMperDC = new int[numberOfDC];
+		// degree rank
+		MWNumericArray degreelist_para = null;
+		MWNumericArray B_out = null;
+		MWNumericArray I_out = null;
+		TaskAssign taskAssign = null;
+		Object[] result = null;
+		int[] B = null;
+		int[] I = null;
+		
+		try {
+			taskAssign = new TaskAssign();
+			int[] dim = {1,numberOfDC};
+			int[] pos =  new int[2];
+			pos[0] = 1;
+			degreelist_para = MWNumericArray.newInstance(dim, MWClassID.INT32, MWComplexity.REAL);
+			for(int dcindex = 0; dcindex < numberOfDC; dcindex++) {
+				pos[1] = dcindex + 1;
+				degreelist_para.set(pos, degreeNumberOfDC[dcindex]);
+			}
+			
+			result = taskAssign.degree_rank(degreelist_para);
+			B_out = (MWNumericArray)result[0];
+			B = B_out.getIntData();
+			I_out = (MWNumericArray)result[1];
+			I = I_out.getIntData();
+			
+		} catch (MWException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}finally {
+			MWNumericArray.disposeArray(degreelist_para);
+			MWNumericArray.disposeArray(B_out);
+			MWNumericArray.disposeArray(I_out);
+			MWNumericArray.disposeArray(result);
+			if(taskAssign != null) {
+				taskAssign.dispose();
+			}
+		}
+		
+		
+		int Large_part = (int)(numberOfDC * 0.05);
+		int Medium_part = (int)(numberOfDC * 0.2) + Large_part;
+		int dcindex = 0;
+		for(int dccounter = 0; dccounter < numberOfDC; dccounter++) {
+			dcindex = I[dccounter];
+			if(dccounter < Large_part) {
+				//Large DC
+				int Type = (int)(Math.random()*machineType);
+				for(int typeindex = 0; typeindex < machineType; typeindex++) {
+					if(Type == typeindex) {
+						nOpteronOfMachineTypeOfDC[dcindex][typeindex] = (int)(Math.random()*1500 + 1500);
+						numberOfVMperDC[dcindex] = nOpteronOfMachineTypeOfDC[dcindex][typeindex];
+					}else {
+						nOpteronOfMachineTypeOfDC[dcindex][typeindex] = 0;
+					}
+				}
+				cpuHeterogeneityDistributionOfDC[dcindex] = Distribution.NORMAL;
+				// 0.3 0.4 0.6
+				cpuHeterogeneityCVOfDC[dcindex] = Math.random()*(0.3);
+				ioHeterogeneityDistributionOfDC[dcindex] = Distribution.NORMAL;
+				// 0.15 0.20 0.3
+				ioHeterogeneityCVOfDC[dcindex] = Math.random()*0.15;
+				bwHeterogeneityDistributionOfDC[dcindex] = Distribution.NORMAL;
+				// 0.2 0.25 0.4
+				bwHeterogeneityCVOfDC[dcindex] = Math.random()*0.2;
+				cpuDynamicsDistributionOfDC[dcindex] = Distribution.NORMAL;
+				// 0.054 0.06 0.09
+				cpuDynamicsCVOfDC[dcindex] = Math.random()*0.054;
+				// 0.5 0.6 0.9
+				cpuBaselineChangesPerHourOfDC[dcindex] = Math.random()*0.5;
+				ioDynamicsDistributionOfDC[dcindex] = Distribution.NORMAL;
+				// 0.033 0.053 0.073
+				ioDynamicsCVOfDC[dcindex] = Math.random()*0.033;
+				// 0.5 0.6 0.7
+				ioBaselineChangesPerHourOfDC[dcindex] = Math.random()*0.5;
+				bwDynamicsDistributionOfDC[dcindex] = Distribution.NORMAL;
+				// 0.04 0.06 0.09
+				bwDynamicsCVOfDC[dcindex] = Math.random()*0.04;
+				// 0.5 0.7 0.8
+				bwBaselineChangesPerHourOfDC[dcindex] = Math.random()*0.5;
+				cpuNoiseDistributionOfDC[dcindex] = Distribution.NORMAL;
+				// 0.028 0.04 0.08
+				cpuNoiseCVOfDC[dcindex] = Math.random()*0.028;
+				ioNoiseDistributionOfDC[dcindex] = Distribution.NORMAL;
+				// 0.007 0.009 0.012
+				ioNoiseCVOfDC[dcindex] = Math.random()*0.007;
+				bwNoiseDistributionOfDC[dcindex] = Distribution.NORMAL;
+				// 0.01 0.03 0.06
+				bwNoiseCVOfDC[dcindex] = Math.random()*0.01;
+				
+				// 0.015 0.020 0.025
+				likelihoodOfStragglerOfDC[dcindex] = Math.random()*0.015;
+				// 0.5 0.3 0.1;
+				stragglerPerformanceCoefficientOfDC[dcindex] = Math.random()*0.5;
+				
+				// 0.002 0.008 0.011
+				likelihoodOfFailure[dcindex] = Math.random()*0.002;
+				// 10d 13d 20d
+				runtimeFactorInCaseOfFailure[dcindex] = Math.random()*10d;
+				
+				// 0.0001 0.0002 0.0004
+				likelihoodOfDCFailure[dcindex] = Math.random()*0.0001;
+				
+				// 0.55 0.60 0.85
+				uplinkOfDC[dcindex] = Math.random()*nOpteronOfMachineTypeOfDC[dcindex][Type]*200*1024*0.55;
+				downlinkOfDC[dcindex] = Math.random()*nOpteronOfMachineTypeOfDC[dcindex][Type]*200*1024*0.55;
+				
+				
+			}else if(dccounter < Medium_part) {
+				//Medium DC
+				int Type = (int)(Math.random()*machineType);
+				for(int typeindex = 0; typeindex < machineType; typeindex++) {
+					if(Type == typeindex) {
+						nOpteronOfMachineTypeOfDC[dcindex][typeindex] = (int)(Math.random()*1000 + 500);
+						numberOfVMperDC[dcindex] = nOpteronOfMachineTypeOfDC[dcindex][typeindex];
+					}else {
+						nOpteronOfMachineTypeOfDC[dcindex][typeindex] = 0;
+					}
+				}
+				cpuHeterogeneityDistributionOfDC[dcindex] = Distribution.NORMAL;
+				// 0.3 0.4 0.6
+				cpuHeterogeneityCVOfDC[dcindex] = Math.random()*(0.4-0.3)+0.3;
+				ioHeterogeneityDistributionOfDC[dcindex] = Distribution.NORMAL;
+				// 0.15 0.20 0.3
+				ioHeterogeneityCVOfDC[dcindex] = Math.random()*(0.20-0.15)+0.15;
+				bwHeterogeneityDistributionOfDC[dcindex] = Distribution.NORMAL;
+				// 0.2 0.25 0.4
+				bwHeterogeneityCVOfDC[dcindex] = Math.random()*(0.25-0.2)+0.2;
+				cpuDynamicsDistributionOfDC[dcindex] = Distribution.NORMAL;
+				// 0.054 0.06 0.09
+				cpuDynamicsCVOfDC[dcindex] = Math.random()*(0.06-0.054)+0.054;
+				// 0.5 0.6 0.9
+				cpuBaselineChangesPerHourOfDC[dcindex] = Math.random()*(0.6-0.5)+0.5;
+				ioDynamicsDistributionOfDC[dcindex] = Distribution.NORMAL;
+				// 0.033 0.053 0.073
+				ioDynamicsCVOfDC[dcindex] = Math.random()*(0.053-0.033)+0.033;
+				// 0.5 0.6 0.7
+				ioBaselineChangesPerHourOfDC[dcindex] = Math.random()*(0.6-0.5)+0.5;
+				bwDynamicsDistributionOfDC[dcindex] = Distribution.NORMAL;
+				// 0.04 0.06 0.09
+				bwDynamicsCVOfDC[dcindex] = Math.random()*(0.06-0.04)+0.04;
+				// 0.5 0.7 0.8
+				bwBaselineChangesPerHourOfDC[dcindex] = Math.random()*(0.7-0.5)+0.5;
+				cpuNoiseDistributionOfDC[dcindex] = Distribution.NORMAL;
+				// 0.028 0.04 0.08
+				cpuNoiseCVOfDC[dcindex] = Math.random()*(0.04-0.028)+0.028;
+				ioNoiseDistributionOfDC[dcindex] = Distribution.NORMAL;
+				// 0.007 0.009 0.012
+				ioNoiseCVOfDC[dcindex] = Math.random()*(0.009-0.007)+0.007;
+				bwNoiseDistributionOfDC[dcindex] = Distribution.NORMAL;
+				// 0.01 0.03 0.06
+				bwNoiseCVOfDC[dcindex] = Math.random()*(0.03-0.01)+0.01;
+				
+				// 0.015 0.020 0.025
+				likelihoodOfStragglerOfDC[dcindex] = Math.random()*(0.020-0.015)+0.015;
+				// 0.5 0.3 0.1;
+				stragglerPerformanceCoefficientOfDC[dcindex] = Math.random()*(0.5-0.3)+0.3;
+				
+				// 0.002 0.008 0.011
+				likelihoodOfFailure[dcindex] = Math.random()*(0.008-0.002)+0.002;
+				// 10d 13d 20d
+				runtimeFactorInCaseOfFailure[dcindex] = Math.random()*(13d-10d)+10d;
+				
+				// 0.0001 0.0002 0.0004
+				likelihoodOfDCFailure[dcindex] = Math.random()*(0.0002-0.0001)+0.0001;
+				
+				// 0.55 0.60 0.85
+				uplinkOfDC[dcindex] = Math.random()*nOpteronOfMachineTypeOfDC[dcindex][Type]*200*1024*(0.60-0.55)+
+						nOpteronOfMachineTypeOfDC[dcindex][Type]*200*1024*0.55;
+				downlinkOfDC[dcindex] = Math.random()*nOpteronOfMachineTypeOfDC[dcindex][Type]*200*1024*(0.60-0.55)+
+						nOpteronOfMachineTypeOfDC[dcindex][Type]*200*1024*0.55;
+				
+				
+			}else {
+				//Small DC
+				int Type = (int)(Math.random()*machineType);
+				for(int typeindex = 0; typeindex < machineType; typeindex++) {
+					if(Type == typeindex) {
+						nOpteronOfMachineTypeOfDC[dcindex][typeindex] = (int)(Math.random()*500 + 50);
+						numberOfVMperDC[dcindex] = nOpteronOfMachineTypeOfDC[dcindex][typeindex];
+					}else {
+						nOpteronOfMachineTypeOfDC[dcindex][typeindex] = 0;
+					}
+				}
+				cpuHeterogeneityDistributionOfDC[dcindex] = Distribution.NORMAL;
+				// 0.3 0.4 0.6
+				cpuHeterogeneityCVOfDC[dcindex] = Math.random()*(0.6-0.4)+0.4;
+				ioHeterogeneityDistributionOfDC[dcindex] = Distribution.NORMAL;
+				// 0.15 0.20 0.3
+				ioHeterogeneityCVOfDC[dcindex] = Math.random()*(0.30-0.2)+0.2;
+				bwHeterogeneityDistributionOfDC[dcindex] = Distribution.NORMAL;
+				// 0.2 0.25 0.4
+				bwHeterogeneityCVOfDC[dcindex] = Math.random()*(0.4-0.25)+0.25;
+				cpuDynamicsDistributionOfDC[dcindex] = Distribution.NORMAL;
+				// 0.054 0.06 0.09
+				cpuDynamicsCVOfDC[dcindex] = Math.random()*(0.09-0.06)+0.06;
+				// 0.5 0.6 0.9
+				cpuBaselineChangesPerHourOfDC[dcindex] = Math.random()*(0.9-0.6)+0.6;
+				ioDynamicsDistributionOfDC[dcindex] = Distribution.NORMAL;
+				// 0.033 0.053 0.073
+				ioDynamicsCVOfDC[dcindex] = Math.random()*(0.073-0.053)+0.053;
+				// 0.5 0.6 0.7
+				ioBaselineChangesPerHourOfDC[dcindex] = Math.random()*(0.7-0.6)+0.6;
+				bwDynamicsDistributionOfDC[dcindex] = Distribution.NORMAL;
+				// 0.04 0.06 0.09
+				bwDynamicsCVOfDC[dcindex] = Math.random()*(0.09-0.06)+0.06;
+				// 0.5 0.7 0.8
+				bwBaselineChangesPerHourOfDC[dcindex] = Math.random()*(0.8-0.7)+0.7;
+				cpuNoiseDistributionOfDC[dcindex] = Distribution.NORMAL;
+				// 0.028 0.04 0.08
+				cpuNoiseCVOfDC[dcindex] = Math.random()*(0.08-0.04)+0.04;
+				ioNoiseDistributionOfDC[dcindex] = Distribution.NORMAL;
+				// 0.007 0.009 0.012
+				ioNoiseCVOfDC[dcindex] = Math.random()*(0.012-0.009)+0.009;
+				bwNoiseDistributionOfDC[dcindex] = Distribution.NORMAL;
+				// 0.01 0.03 0.06
+				bwNoiseCVOfDC[dcindex] = Math.random()*(0.06-0.03)+0.03;
+				
+				// 0.015 0.020 0.025
+				likelihoodOfStragglerOfDC[dcindex] = Math.random()*(0.025-0.020)+0.020;
+				// 0.5 0.3 0.1;
+				stragglerPerformanceCoefficientOfDC[dcindex] = Math.random()*(0.3-0.1)+0.1;
+				
+				// 0.002 0.008 0.011
+				likelihoodOfFailure[dcindex] = Math.random()*(0.011-0.008)+0.008;
+				// 10d 13d 20d
+				runtimeFactorInCaseOfFailure[dcindex] = Math.random()*(20d-13d)+13d;
+				
+				// 0.0001 0.0002 0.0004
+				likelihoodOfDCFailure[dcindex] = Math.random()*(0.0004-0.0002)+0.0002;
+				
+				// 0.55 0.60 0.85
+				uplinkOfDC[dcindex] = Math.random()*nOpteronOfMachineTypeOfDC[dcindex][Type]*200*1024*(0.85-0.60)+
+						nOpteronOfMachineTypeOfDC[dcindex][Type]*200*1024*0.60;
+				downlinkOfDC[dcindex] = Math.random()*nOpteronOfMachineTypeOfDC[dcindex][Type]*200*1024*(0.85-0.60)+
+						nOpteronOfMachineTypeOfDC[dcindex][Type]*200*1024*0.60;
+				
+			}
+		}
+		
+	}
+	
+	
+	
+	
+	
 
 	// CPU Dynamics
 	public static double[] cpuBaselineChangesPerHourOfDC = {0.5,0.5};
@@ -714,6 +1139,10 @@ public class Parameters {
 		this.likelihoodOfStraggler = likelihoodOfStraggler;
 	}
 	
+	
+
+	
+
 	public double getLikelihoodOfStraggler() {
 		return likelihoodOfStraggler;
 	}
@@ -730,7 +1159,7 @@ public class Parameters {
 	
 	
 	// datacenter number
-	public static int numberOfDC = 2;
+	public static int numberOfDC = 1000;
 	
 	
 	// number of machineType in each datacenter
@@ -759,14 +1188,14 @@ public class Parameters {
 	
 	
 	//upperbound of datasize
-	public static long ubOfDataSize = 2048L * 1024L * 1024L; // 2G
+	public static long ubOfDataSize = 128L * 1024L * 1024L; // 128M
 	
 	//lowerbound of datasize
 	public static long lbOfDataSize = 128L * 1024L; // 128K
 	
 	
 	// upperbound of inputdata
-	public static int ubOfData = 10;
+	public static int ubOfData = 1;
 	
 	//iteration_bound
 	public static int boundOfIter = 50;

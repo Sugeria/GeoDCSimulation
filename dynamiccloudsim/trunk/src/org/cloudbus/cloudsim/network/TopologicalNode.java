@@ -33,6 +33,10 @@ public class TopologicalNode {
 	private int worldX = 0;
 
 	private int worldY = 0;
+	
+	public int indegree = 0;
+	
+	public int outdegree = 0;
 
 	/**
 	 * constructs an new node

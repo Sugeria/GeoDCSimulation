@@ -16,12 +16,15 @@
 package org.workflowsim;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.cloudbus.cloudsim.Cloudlet;
 import org.cloudbus.cloudsim.UtilizationModel;
 import org.cloudbus.cloudsim.UtilizationModelFull;
 
+import de.huberlin.wbi.dcs.examples.Parameters;
 import de.huberlin.wbi.dcs.workflow.Task;
 
 /**
@@ -42,7 +45,36 @@ public class Job extends Task {
     private List<Task> taskList;
     private long length;
     public List<Task> successTaskList;
+    
+    // when create the job the two value need be initial
+    public Map<Integer, Double> currentGreateRate;
+    public Map<Integer, Integer> currentGreatePosition;
+    
+    public List<Integer> failedAssignTaskIndexInGreateAssign;
 
+    
+    // required information when scheduled
+    public double[] muParaOfTaskInDC;
+	public double[] sigmaParaOfTaskInDC;
+	public int[] uselessDCforTask;
+	public double[][] probArray;
+	public int[] data;
+	public double[][] datapos;
+	public double[][] bandwidth;
+	public double[][] bandwidth_dataDelayOfTaskInDC;
+	public double[][] bandwidth_dataDelay_co;
+
+	public double[][] allRateMuArray;
+	public double[][] allRateSigmaArray;
+	public int uselessConstraintsNum;
+    
+	public double[] TotalTransferDataSize;
+	public double[][] transferDataSize;
+	
+	public double[] greatX;
+    
+    
+    
     /**
      * Allocates a new Job object. The job length should be greater than or
      * equal to 1.
@@ -57,14 +89,31 @@ public class Job extends Task {
     public Job(int userId,
             int jobId,
             long jobLength) {
-        super("Job" + Integer.toString(jobId),"null",userId,jobId,1,0,0,1,0,0,new UtilizationModelFull(),new UtilizationModelFull(),new UtilizationModelFull());
+        super("Job" + Integer.toString(jobId),"null",userId,jobId,1,0,0,1,0,0,new UtilizationModelFull(),new UtilizationModelFull(),new UtilizationModelFull(),0);
         this.taskList = new ArrayList<>();
         this.length = jobLength;
         // when job retry remember to record the execution time and the already successful tasks
         this.successTaskList = new ArrayList<>();
+        currentGreateRate = new HashMap<>();
+        currentGreatePosition = new HashMap<>();
+        failedAssignTaskIndexInGreateAssign = new ArrayList<>();
     }
 
 
+    public double getJobUtility() {
+    	double utility = 0d;
+    	for(int tindex = 0; tindex < taskList.size(); tindex++) {
+    		Task task  = taskList.get(tindex);
+    		double rate = currentGreateRate.get(task.getCloudletId());
+    		int pos = currentGreatePosition.get(task.getCloudletId());
+    		double task_workload = task.getMi()+task.getIo()+task.TotalTransferDataSize[pos];
+    		utility += task_workload/rate;
+    	}
+    	return utility;
+    }
+    
+    
+    
 	/**
      * Gets the list of tasks in this job
      *

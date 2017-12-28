@@ -8,7 +8,7 @@
 
 package org.cloudbus.cloudsim.core;
 
-
+import org.omg.CORBA.PUBLIC_MEMBER;
 
 /**
  * Contains various static command tags that indicate a type of action that
@@ -295,6 +295,10 @@ public class CloudSimTags {
 	public static final int DC_PAUSE = BASE + 57;
 	
 	public static final int DC_RESUME = BASE + 58;
+	
+	public static final int WORKFLOW_INFO = BASE + 59;
+	
+	public static final int WORKFLOW_ARRIVAL = BASE + 60;
 
 	public static String TagText(int tagValue) {
 		switch (tagValue) {
@@ -428,6 +432,10 @@ public class CloudSimTags {
 			return "DC_PAUSE";
 		case 58:
 			return "DC_RESUME";
+		case 59:
+			return "WORKFLOW_INFO";
+		case 60:
+			return "WORKFLOW_ARRIVAL";
 		case 1002:
 			return "VM_STATUS_READY";
 		case 1003:

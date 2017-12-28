@@ -18,7 +18,10 @@ package org.workflowsim.scheduling;
 import java.util.ArrayList;
 import java.util.List;
 import org.cloudbus.cloudsim.Cloudlet;
+import org.cloudbus.cloudsim.DatacenterBroker;
 import org.cloudbus.cloudsim.Vm;
+
+import taskassign.TaskAssign;
 
 /**
  * The base scheduler has implemented the basic features. Every other scheduling method
@@ -44,6 +47,13 @@ public abstract class BaseSchedulingAlgorithm implements SchedulingAlgorithmInte
     private List< Cloudlet> scheduledList;
 
     private List<Cloudlet> randkedList;
+    
+    public int DCbase = 0;
+    
+    public DatacenterBroker workflowScheduler = null;
+    
+    public TaskAssign taskAssign;
+    
     /**
      * Initialize a BaseSchedulingAlgorithm
      */

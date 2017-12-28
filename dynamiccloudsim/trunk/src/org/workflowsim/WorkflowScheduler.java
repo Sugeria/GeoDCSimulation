@@ -22,6 +22,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Queue;
 
+import org.apache.commons.jexl2.Expression;
+import org.apache.commons.jexl2.JexlContext;
+import org.apache.commons.jexl2.JexlEngine;
+import org.apache.commons.jexl2.MapContext;
 import org.cloudbus.cloudsim.Cloudlet;
 import org.cloudbus.cloudsim.DatacenterBroker;
 import org.cloudbus.cloudsim.DatacenterCharacteristics;
@@ -37,6 +41,7 @@ import org.workflowsim.scheduling.FCFSSchedulingAlgorithm;
 import org.workflowsim.scheduling.MCTSchedulingAlgorithm;
 import org.workflowsim.scheduling.MaxMinSchedulingAlgorithm;
 import org.workflowsim.scheduling.MinMinSchedulingAlgorithm;
+import org.workflowsim.scheduling.MinRateSchedulingAlgorithm;
 import org.workflowsim.scheduling.MinSchedulingAlgorithm;
 import org.workflowsim.scheduling.RoundRobinSchedulingAlgorithm;
 import org.workflowsim.scheduling.StaticSchedulingAlgorithm;
@@ -51,6 +56,7 @@ import matlabcontrol.MatlabProxy;
 import matlabcontrol.MatlabProxyFactory;
 import matlabcontrol.extensions.MatlabNumericArray;
 import matlabcontrol.extensions.MatlabTypeConverter;
+import taskassign.TaskAssign;
 
 /**
  * WorkflowScheduler represents a algorithm acting on behalf of a user. It hides
@@ -211,6 +217,9 @@ public class WorkflowScheduler extends DatacenterBroker {
             case MIN:
             	algorithm = new MinSchedulingAlgorithm();
             	break;
+            case MINRATE:
+            	algorithm = new MinRateSchedulingAlgorithm();
+            	break;
             default:
                 algorithm = new StaticSchedulingAlgorithm();
                 break;
@@ -229,11 +238,16 @@ public class WorkflowScheduler extends DatacenterBroker {
     @Override
     protected void processCloudletUpdate(SimEvent ev) {
 
+    	TaskAssign taskAssign = null;
         BaseSchedulingAlgorithm scheduler = getScheduler(Parameters.getSchedulingAlgorithm());
+        scheduler.DCbase = DCbase;
+        scheduler.workflowScheduler = this;
         scheduler.setCloudletList(getCloudletList());
         scheduler.setVmList(getVmsCreatedList());
 
+        taskAssign = new TaskAssign();
         try {
+        	scheduler.taskAssign = taskAssign;
             scheduler.run();
         } catch (Exception e) {
             Log.printLine("Error in configuring scheduler_method");
@@ -341,10 +355,45 @@ public class WorkflowScheduler extends DatacenterBroker {
 				CloudSimTags.CLOUDLET_SUBMIT_ACK, task);
 	}
     
+    protected int submitTasksViaServiceRate() {
+    	
+    	// Queue<Vm> taskSlotsKeptIdle = new LinkedList<>();
+		Queue<Task> taskSubmitted = new LinkedList<>();
+		// compute the task assignment among datacenters for ready tasks
+		
+		Integer numberOfTask = getTaskQueue().size();
+		
+		int tasknum = numberOfTask;
+		int dcnum = Parameters.numberOfDC;
+		int iteration_bound = Parameters.boundOfIter;
+		double[][] probArray = new double[Parameters.numberOfDC][4];
+		double[][] allDuraArray = new double[numberOfTask*Parameters.numberOfDC][4];
+		int[] data = new int[numberOfTask];
+		double[][] datapos = new double[numberOfTask][Parameters.ubOfData];
+		double[][] bandwidth = new double[numberOfTask*Parameters.numberOfDC][Parameters.ubOfData];
+		double[][] SlotArray = new double[1][Parameters.numberOfDC];
+		double[][] UpArray = new double[1][Parameters.numberOfDC];
+		double[][] DownArray = new double[1][Parameters.numberOfDC];
+
+    	// obtain the expectation for all the tasks in each datacenter
+		// using matlab JavaBuild
+		
+    	
+    }
     
-    
-    
-    
+    // convert the string to exeline
+    public static Object convertToCode(String jexlExp,Map<String,Object> map){    
+        JexlEngine jexl=new JexlEngine();    
+        Expression e = jexl.createExpression(jexlExp);    
+        JexlContext jc = new MapContext();    
+        for(String key:map.keySet()){    
+            jc.set(key, map.get(key));    
+        }    
+        if(null==e.evaluate(jc)){    
+            return "";    
+        }    
+        return e.evaluate(jc);    
+    }    
     
     
 	protected int submitTasks() {
@@ -426,7 +475,7 @@ public class WorkflowScheduler extends DatacenterBroker {
 					}else {
 						numberOfTransferData++;
 					}
-				}
+				} 
 				if(datanumber > 0) {
 					task.numberOfTransferData[dcindex] = numberOfTransferData;
 				}

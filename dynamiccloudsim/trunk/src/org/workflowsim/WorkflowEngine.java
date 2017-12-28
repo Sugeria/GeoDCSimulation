@@ -28,7 +28,8 @@ import org.cloudbus.cloudsim.core.SimEntity;
 import org.cloudbus.cloudsim.core.SimEvent;
 import org.workflowsim.reclustering.ReclusteringEngine;
 
-import de.huberlin.wbi.cuneiform.core.semanticmodel.Param;
+import com.sun.org.apache.xalan.internal.xsltc.DOM;
+
 import de.huberlin.wbi.dcs.examples.Parameters;
 import matlabcontrol.MatlabInvocationException;
 
@@ -66,6 +67,11 @@ public final class WorkflowEngine extends SimEntity {
     private List<Integer> schedulerId;
     private List<WorkflowScheduler> scheduler;
 
+    public Map<Integer, Integer> jobSizeOfWorkflow;
+    public Map<Integer, Integer> successJobSizeOfWorkflow;
+    public Map<Integer, Double> startTimeOfWorkflow;
+    public Map<Integer, Double> finishTimeOfWorkflow;
+    public Map<Integer, Double> executionTimeOfWorkflow;
     /**
      * Created a new WorkflowEngine object.
      *
@@ -90,7 +96,11 @@ public final class WorkflowEngine extends SimEntity {
 
         setSchedulers(new ArrayList<>());
         setSchedulerIds(new ArrayList<>());
-
+        jobSizeOfWorkflow = new HashMap<>();
+        successJobSizeOfWorkflow = new HashMap<>();
+        startTimeOfWorkflow = new HashMap<>();
+        finishTimeOfWorkflow = new HashMap<>();
+        executionTimeOfWorkflow = new HashMap<>();
         for (int i = 0; i < schedulers; i++) {
             WorkflowScheduler wfs = new WorkflowScheduler(name + "_Scheduler_" + i,
             		Parameters.taskSlotsPerVm);
@@ -164,13 +174,26 @@ public final class WorkflowEngine extends SimEntity {
             case WorkflowSimTags.JOB_SUBMIT:
                 processJobSubmit(ev);
                 break;
+            case CloudSimTags.WORKFLOW_INFO:
+            	processWorkflowInfo(ev);
+            	break;
             default:
                 processOtherEvent(ev);
                 break;
         }
     }
 
-    /**
+    private void processWorkflowInfo(SimEvent ev) {
+		Map<Integer, Integer> jobSizeInfo = (HashMap<Integer, Integer>)ev.getData();
+		this.jobSizeOfWorkflow.putAll(jobSizeInfo);
+		for(Integer key : jobSizeInfo.keySet()) {
+			this.successJobSizeOfWorkflow.put(key, 0);
+			this.startTimeOfWorkflow.put(key, Double.MAX_VALUE);
+			this.finishTimeOfWorkflow.put(key, Double.MIN_VALUE);
+		}
+	}
+
+	/**
      * Process a request for the characteristics of a PowerDatacenter.
      *
      * @param ev a SimEvent object
@@ -207,7 +230,7 @@ public final class WorkflowEngine extends SimEntity {
      */
     protected void processJobSubmit(SimEvent ev) {
         List<? extends Cloudlet> list = (List) ev.getData();
-        setJobsList(list);
+        getJobsList().addAll(list);
     }
 
     /**
@@ -228,6 +251,27 @@ public final class WorkflowEngine extends SimEntity {
 
         getJobsReceivedList().add(job);
         jobsSubmitted--;
+        int attributedWorkflowId = job.workflowId;
+        int jobAck = successJobSizeOfWorkflow.get(attributedWorkflowId);
+        jobAck++;
+        successJobSizeOfWorkflow.put(attributedWorkflowId, jobAck);
+        if (jobAck == jobSizeOfWorkflow.get(attributedWorkflowId)) {
+        	if(job.getExecStartTime() < startTimeOfWorkflow.get(attributedWorkflowId)) {
+        		startTimeOfWorkflow.put(attributedWorkflowId, job.getExecStartTime());
+        	}
+        	if(job.getFinishTime() > finishTimeOfWorkflow.get(attributedWorkflowId)) {
+        		finishTimeOfWorkflow.put(attributedWorkflowId, job.getFinishTime());
+        	}
+        	double exeDura = finishTimeOfWorkflow.get(attributedWorkflowId) - startTimeOfWorkflow.get(attributedWorkflowId);
+        	executionTimeOfWorkflow.put(attributedWorkflowId, exeDura);
+        }else {
+        	if(job.getExecStartTime() < startTimeOfWorkflow.get(attributedWorkflowId)) {
+        		startTimeOfWorkflow.put(attributedWorkflowId, job.getExecStartTime());
+        	}
+        	if(job.getFinishTime() > finishTimeOfWorkflow.get(attributedWorkflowId)) {
+        		finishTimeOfWorkflow.put(attributedWorkflowId, job.getFinishTime());
+        	}
+        }
         boolean isAllDCFail = true;
         for(int dcindex = 0; dcindex < Parameters.numberOfDC; dcindex++) {
         	if(getScheduler(0).healthyStateOfDC.get(getScheduler(0).DCbase + dcindex) == true) {
@@ -235,6 +279,11 @@ public final class WorkflowEngine extends SimEntity {
         		break;
         	}
         }
+        // already judge whether the future has workflow
+        
+        
+        
+        
         if (getJobsList().isEmpty() && jobsSubmitted == 0 && isAllDCFail == false) {
             //send msg to all the schedulers
             for (int i = 0; i < getSchedulerIds().size(); i++) {
