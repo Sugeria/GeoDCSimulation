@@ -45,6 +45,9 @@ public class Job extends Task {
     private List<Task> taskList;
     private long length;
     public List<Task> successTaskList;
+    public List<Task> scheduledTaskList;
+    public List<Task> unscheduledTaskList;
+    public List<Task> schedulingTaskList;
     
     // when create the job the two value need be initial
     public Map<Integer, Double> currentGreateRate;
@@ -66,6 +69,7 @@ public class Job extends Task {
 
 	public double[][] allRateMuArray;
 	public double[][] allRateSigmaArray;
+	public Map<Integer, HashMap<Integer, Double>> objParaOfTaskInDC;
 	public int uselessConstraintsNum;
     
 	public double[] TotalTransferDataSize;
@@ -94,6 +98,9 @@ public class Job extends Task {
         this.length = jobLength;
         // when job retry remember to record the execution time and the already successful tasks
         this.successTaskList = new ArrayList<>();
+        this.scheduledTaskList = new ArrayList<>();
+        this.unscheduledTaskList = new ArrayList<>();
+        this.schedulingTaskList = new ArrayList<>();
         currentGreateRate = new HashMap<>();
         currentGreatePosition = new HashMap<>();
         failedAssignTaskIndexInGreateAssign = new ArrayList<>();

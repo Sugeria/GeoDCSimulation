@@ -35,7 +35,7 @@ import com.sun.org.apache.bcel.internal.generic.TypedInstruction;
 
 import de.huberlin.wbi.dcs.distributions.NormalDistribution;
 import de.huberlin.wbi.dcs.workflow.Task;
-import taskassign.TaskAssign;
+import taskAssign.TaskAssign;
 
 public class Parameters {
 	
@@ -486,7 +486,7 @@ public class Parameters {
     	TaskAssign taskassign = null;
 		MWNumericArray lambda_para = null;
 		MWNumericArray time_para = null;
-		MWNumericArray result = null;
+		Object[] result = null;
 		workflowArrival = new HashMap<>();
 		int[] x = null;
 		try {
@@ -497,8 +497,8 @@ public class Parameters {
 			lambda_para.set(pos, lambda);
 			time_para = MWNumericArray.newInstance(dims, MWClassID.DOUBLE, MWComplexity.REAL);
 			time_para.set(pos, seconds);
-			result = (MWNumericArray)taskassign.Poissonseries(1,lambda_para,time_para);
-			x = result.getIntData();
+			result = taskassign.Poisson_series(1,lambda_para,time_para);
+			x = ((MWNumericArray)result[0]).getIntData();
 			int secondtime = x.length;
 			for(int timeindex = 1; timeindex < secondtime ; timeindex++) {
 				if(x[timeindex] == 0) {
@@ -538,6 +538,8 @@ public class Parameters {
 	
 
     public static double r = 0.2d;
+    
+    public static double epsilon = 0.4d;
     
 	public static boolean considerDataLocality = false;
 	
@@ -826,7 +828,7 @@ public class Parameters {
 				degreelist_para.set(pos, degreeNumberOfDC[dcindex]);
 			}
 			
-			result = taskAssign.degree_rank(degreelist_para);
+			result = taskAssign.degree_rank(2,degreelist_para);
 			B_out = (MWNumericArray)result[0];
 			B = B_out.getIntData();
 			I_out = (MWNumericArray)result[1];

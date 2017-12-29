@@ -25,7 +25,6 @@ import ilog.concert.IloNumVar;
 import ilog.concert.IloNumVarType;
 import ilog.concert.IloRange;
 import ilog.cplex.IloCplex;
-import taskassign.TaskAssign;
 
 public class MinRateSchedulingAlgorithm extends BaseSchedulingAlgorithm{
 	
@@ -53,9 +52,10 @@ public class MinRateSchedulingAlgorithm extends BaseSchedulingAlgorithm{
         	Job job = (Job)getCloudletList().get(jobindex);
         	int jobId = job.getCloudletId();
         	DCpdfOftasksInJob.put(jobId, new HashMap<>());
-        	List<Task> tasklist = job.getTaskList();
+        	List<Task> tasklist = job.unscheduledTaskList;
         	int numberOfTask = tasklist.size();
-        	int vnum = 1 + tasklist.size()*Parameters.numberOfDC;
+        	int vnumplusone = 1 + tasklist.size()*Parameters.numberOfDC;
+        	int vnum = tasklist.size()*Parameters.numberOfDC;
         	double[] muParaOfTaskInDC = new double[vnum];
         	double[] sigmaParaOfTaskInDC = new double[vnum];
         	// 
@@ -118,11 +118,11 @@ public class MinRateSchedulingAlgorithm extends BaseSchedulingAlgorithm{
 				IloNumVar[] var = null;
 				
 				// up low datatype
-				double[] xlb = new double[vnum];
-				double[] xub = new double[vnum];
-				IloNumVarType[] xTypes = new IloNumVarType[vnum];
-				for(int vindex = 0; vindex < vnum; vindex++) {
-					if(vindex == (vnum - 1)) {
+				double[] xlb = new double[vnumplusone];
+				double[] xub = new double[vnumplusone];
+				IloNumVarType[] xTypes = new IloNumVarType[vnumplusone];
+				for(int vindex = 0; vindex < vnumplusone; vindex++) {
+					if(vindex == (vnumplusone - 1)) {
 						xlb[vindex] = 0.0d;
 						xub[vindex] = Double.MAX_VALUE;
 						xTypes[vindex] = IloNumVarType.Float;
@@ -131,12 +131,12 @@ public class MinRateSchedulingAlgorithm extends BaseSchedulingAlgorithm{
 					xub[vindex] = 1.0;
 					xTypes[vindex] = IloNumVarType.Int;
 				}
-				var = cplex.numVarArray(vnum, xlb, xub,xTypes);
+				var = cplex.numVarArray(vnumplusone, xlb, xub,xTypes);
 				
 				// objective Function
-				double[] objvals = new double[vnum];
+				double[] objvals = new double[vnumplusone];
 				for(int vindex = 0; vindex < vnum; vindex++) {
-					if(vindex == (vnum-1)) {
+					if(vindex == (vnum)) {
 						objvals[vindex] = 1;
 					}
 					objvals[vindex] = 0;
@@ -338,6 +338,7 @@ public class MinRateSchedulingAlgorithm extends BaseSchedulingAlgorithm{
 				job.allRateMuArray = allRateMuArray;
 				job.allRateSigmaArray = allRateSigmaArray;
 				job.uselessConstraintsNum = uselessConstraintsNum;
+				job.objParaOfTaskInDC = objParaOfTaskInDC;
 			    
 				job.TotalTransferDataSize = TotalTransferDataSize;
 				job.transferDataSize = transferDataSize;
@@ -456,34 +457,49 @@ public class MinRateSchedulingAlgorithm extends BaseSchedulingAlgorithm{
 				}
 				
 				if(cplex.solve()) {
-					double[] x = cplex.getValues(var);
+					double[] x = new double[vnum];
+					double[] vresult = cplex.getValues(var);
+					for(int vindex = 0; vindex < vnum; vindex++) {
+						x[vindex] = vresult[vindex];
+					}
 					
 					double[] slack = cplex.getSlacks(rng);
 					System.out.println("Solution status = " + cplex.getStatus());
 					
 					//verify x
+					double[] tempSlotArray = new double[Parameters.numberOfDC];
+					double[] tempUpArray = new double[Parameters.numberOfDC];
+					double[] tempDownArray = new double[Parameters.numberOfDC];
+					
+					for(int dcindex = 0; dcindex < Parameters.numberOfDC; dcindex++) {
+						tempSlotArray[dcindex] = SlotArray[0][dcindex];
+						tempUpArray[dcindex] = UpArray[0][dcindex];
+						tempDownArray[dcindex] = DownArray[0][dcindex];
+					}
 					
 					for(int tindex = 0; tindex < numberOfTask; tindex++) {
 						boolean success = false;
 						for(int dcindex = 0; dcindex < Parameters.numberOfDC; dcindex++) {
+							
 							int xindex = tindex * Parameters.numberOfDC + dcindex;
 							if(x[xindex] > 0 && success == false) {
+								
 								boolean resourceEnough = true;
 								// machines
-								if((SlotArray[0][dcindex]-1)<0) {
+								if((tempSlotArray[dcindex]-1)<0) {
 									resourceEnough = false;
 								}
 								
 								// downlink
-								if(TotalTransferDataSize[xindex]>0) {
-									if((DownArray[0][dcindex]-Parameters.bwBaselineOfDC[dcindex])<0) {
+								if(TotalTransferDataSize[xindex]>0 && resourceEnough == true) {
+									if((tempDownArray[dcindex]-Parameters.bwBaselineOfDC[dcindex])<0) {
 										resourceEnough = false;
 									}
 								}
 								
 								// uplink
 								Map<Integer, Double> bwOfSrcPos = new HashMap<>();
-								if(TotalTransferDataSize[xindex]>0) {
+								if(TotalTransferDataSize[xindex]>0 && resourceEnough == true) {
 									for(int dataindex = 0; dataindex < Parameters.ubOfData; dataindex++) {
 										double neededBw = transferDataSize[xindex][dataindex];
 										int srcPos = (int) datapos[tindex][dataindex];
@@ -495,7 +511,7 @@ public class MinRateSchedulingAlgorithm extends BaseSchedulingAlgorithm{
 										}
 									}
 									for(int pos : bwOfSrcPos.keySet()) {
-										if((UpArray[0][pos]-bwOfSrcPos.get(pos))<0) {
+										if((tempUpArray[pos]-bwOfSrcPos.get(pos))<0) {
 											resourceEnough = false;
 											break;
 										}
@@ -503,12 +519,16 @@ public class MinRateSchedulingAlgorithm extends BaseSchedulingAlgorithm{
 								}
 								
 								if(resourceEnough == true) {
+									tempSlotArray[dcindex] -= 1;
+									tempDownArray[dcindex] -= Parameters.bwBaselineOfDC[dcindex];
+									for(int pos : bwOfSrcPos.keySet()) {
+										tempUpArray[pos] -= bwOfSrcPos.get(pos);
+									}
 									success = true;
 									x[xindex] = 1;
 								}else {
 									x[xindex] = 0;
 								}
-								
 							}else {
 								x[xindex] = 0;
 							}
@@ -553,6 +573,15 @@ public class MinRateSchedulingAlgorithm extends BaseSchedulingAlgorithm{
 					
 					Map<Integer,List<Map.Entry<Integer, Double>>> sortedListOfTask = new HashMap<>();
 					double[] x = new double[vnum];
+					double[] tempSlotArray = new double[Parameters.numberOfDC];
+					double[] tempUpArray = new double[Parameters.numberOfDC];
+					double[] tempDownArray = new double[Parameters.numberOfDC];
+					for(int dcindex = 0; dcindex < Parameters.numberOfDC; dcindex++) {
+						tempSlotArray[dcindex] = SlotArray[0][dcindex];
+						tempUpArray[dcindex] = UpArray[0][dcindex];
+						tempDownArray[dcindex] = DownArray[0][dcindex];
+					}
+					
 					for(int tindex = 0; tindex < numberOfTask; tindex++) {
 						Task task = tasklist.get(tindex);
 						int taskId = task.getCloudletId();
@@ -570,6 +599,8 @@ public class MinRateSchedulingAlgorithm extends BaseSchedulingAlgorithm{
 							}
 							
 						});
+						
+						
 						boolean success = true;
 						int successDC = -1;
 						for(Map.Entry<Integer, Double> iterm:sortedListOfTask.get(taskId)) {
@@ -581,7 +612,7 @@ public class MinRateSchedulingAlgorithm extends BaseSchedulingAlgorithm{
 								// verify that the resource is enough
 								
 								// machines
-								if((SlotArray[0][dcindex]-1)<0) {
+								if((tempSlotArray[dcindex]-1)<0) {
 									success = false;
 									continue;
 								}
@@ -615,6 +646,11 @@ public class MinRateSchedulingAlgorithm extends BaseSchedulingAlgorithm{
 									}
 								}
 								if(success == true) {
+									tempSlotArray[dcindex] -= 1;
+									tempDownArray[dcindex] -= Parameters.bwBaselineOfDC[dcindex];
+									for(int pos : bwOfSrcPos.keySet()) {
+										tempUpArray[pos] -= bwOfSrcPos.get(pos);
+									}
 									successDC = dcindex;
 									break;
 								}

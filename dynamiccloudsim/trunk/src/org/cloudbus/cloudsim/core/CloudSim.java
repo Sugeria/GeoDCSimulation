@@ -438,7 +438,7 @@ public class CloudSim {
 			entitiesByName.put(e.getName(), e);
 		}
 	}
-
+	
 	/**
 	 * Internal method used to add a new entity to the simulation when the simulation is running. It
 	 * should <b>not</b> be called from user simulations.
@@ -505,6 +505,10 @@ public class CloudSim {
 		}
 
 		return queue_empty;
+	}
+	
+	public static int futureSize() {
+		return future.size();
 	}
 
 	/**

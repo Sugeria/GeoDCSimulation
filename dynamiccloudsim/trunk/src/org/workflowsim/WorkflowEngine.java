@@ -23,6 +23,7 @@ import java.util.Map;
 import org.cloudbus.cloudsim.Cloudlet;
 import org.cloudbus.cloudsim.Log;
 import org.cloudbus.cloudsim.Vm;
+import org.cloudbus.cloudsim.core.CloudSim;
 import org.cloudbus.cloudsim.core.CloudSimTags;
 import org.cloudbus.cloudsim.core.SimEntity;
 import org.cloudbus.cloudsim.core.SimEvent;
@@ -247,6 +248,7 @@ public final class WorkflowEngine extends SimEntity {
             // Reclusteringengine will add retry job to jobList
             int newId = getJobsList().size() + getJobsSubmittedList().size();
             getJobsList().addAll(ReclusteringEngine.process(job, newId));
+            return ;
         }
 
         getJobsReceivedList().add(job);
@@ -284,7 +286,7 @@ public final class WorkflowEngine extends SimEntity {
         
         
         
-        if (getJobsList().isEmpty() && jobsSubmitted == 0 && isAllDCFail == false) {
+        if (getJobsList().isEmpty() && jobsSubmitted == 0 && isAllDCFail == false && CloudSim.futureSize() == 0) {
             //send msg to all the schedulers
             for (int i = 0; i < getSchedulerIds().size(); i++) {
             	getScheduler(i).clearDatacenters();

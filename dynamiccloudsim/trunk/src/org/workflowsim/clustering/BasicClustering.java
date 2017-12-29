@@ -256,6 +256,7 @@ public class BasicClustering implements ClusteringInterface {
             job.setDepth(depth);
             job.setPriority(priority);
             job.workflowId = taskList.get(0).workflowId;
+            job.unscheduledTaskList.addAll(job.getTaskList());
             idIndex++;
             getJobList().add(job);
             return job;

@@ -291,7 +291,7 @@ public final class ClusteringEngine extends SimEntity {
                      * minimum runtime but inputs all input data at the beginning of
                      * the workflow execution
                      */
-                    processDatastaging();
+                    //processDatastaging();
                     jobSizeOfWorkflow.put(key, getJobList().size());
                     sendNow(this.workflowEngineId, WorkflowSimTags.JOB_SUBMIT, getJobList());
                 }
