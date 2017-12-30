@@ -573,7 +573,7 @@ public class Parameters {
 	public static Experiment experiment = Experiment.MONTAGE_25;
 
 	public static boolean outputDatacenterEvents = true;
-	public static boolean outputWorkflowGraph = true;
+	public static boolean outputWorkflowGraph = false;
 	public static boolean outputVmPerformanceLogs = false;
 
 	// public enum LogParser
