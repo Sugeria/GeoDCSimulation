@@ -16,7 +16,10 @@
 package org.workflowsim;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+
 import org.cloudbus.cloudsim.Log;
 import org.cloudbus.cloudsim.core.CloudSimTags;
 import org.cloudbus.cloudsim.core.SimEntity;
@@ -48,6 +51,8 @@ public final class ClusteringEngine extends SimEntity {
      * The task list
      */
     protected List<Task> taskList;
+    
+    public HashMap<Integer, List<Task>> taskListOfWorkflow;
     /**
      * The job list
      */
@@ -77,6 +82,8 @@ public final class ClusteringEngine extends SimEntity {
      */
     private final WorkflowEngine workflowEngine;
 
+    
+    public Map<Integer, Integer> jobSizeOfWorkflow;
     /**
      * Created a new ClusteringEngine object.
      *
@@ -93,10 +100,11 @@ public final class ClusteringEngine extends SimEntity {
         setTaskList(new ArrayList<>());
         setTaskSubmittedList(new ArrayList<>());
         setTaskReceivedList(new ArrayList<>());
-
+        this.taskListOfWorkflow = new HashMap<>();
         cloudletsSubmitted = 0;
         this.workflowEngine = new WorkflowEngine(name + "_Engine_0", schedulers);
         this.workflowEngineId = this.workflowEngine.getId();
+        this.jobSizeOfWorkflow = new HashMap<>();
     }
 
     /**
@@ -264,21 +272,30 @@ public final class ClusteringEngine extends SimEntity {
             case WorkflowSimTags.START_SIMULATION:
                 break;
             case WorkflowSimTags.JOB_SUBMIT:
-                List list = (List) ev.getData();
-                setTaskList(list);
+                HashMap<Integer, List<Task>> workflowlist = (HashMap<Integer, List<Task>>) ev.getData();
+                
+                taskListOfWorkflow = workflowlist;
                 /**
                  * It doesn't mean we must do clustering here because by default
                  * the processClustering() does nothing unless in the
                  * configuration file we have specified to use clustering
                  */
-                processClustering();
-                /**
-                 * Add stage-in jobs Currently we just add a job that has
-                 * minimum runtime but inputs all input data at the beginning of
-                 * the workflow execution
-                 */
-                processDatastaging();
-                sendNow(this.workflowEngineId, WorkflowSimTags.JOB_SUBMIT, getJobList());
+                //extract the tasklist of every workflow and processClustering and DataStaging
+                //record the workflow info and transfer to workflowEngine
+                for(Integer key : taskListOfWorkflow.keySet()) {
+                	List<Task> list = taskListOfWorkflow.get(key);
+                	setTaskList(list);
+                	processClustering();
+                    /**
+                     * Add stage-in jobs Currently we just add a job that has
+                     * minimum runtime but inputs all input data at the beginning of
+                     * the workflow execution
+                     */
+                    //processDatastaging();
+                    jobSizeOfWorkflow.put(key, getJobList().size());
+                    sendNow(this.workflowEngineId, WorkflowSimTags.JOB_SUBMIT, getJobList());
+                }
+                sendNow(this.workflowEngineId, CloudSimTags.WORKFLOW_INFO,jobSizeOfWorkflow);
                 break;
             case CloudSimTags.END_OF_SIMULATION:
                 shutdownEntity();

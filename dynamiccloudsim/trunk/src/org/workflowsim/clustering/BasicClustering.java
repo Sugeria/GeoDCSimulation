@@ -176,6 +176,34 @@ public class BasicClustering implements ClusteringInterface {
             /// a bug of cloudsim makes it final of input file size and output file size
             Job job = new Job(userId,idIndex,length/*, inputFileSize, outputFileSize*/);
             job.setClassType(ClassType.COMPUTE.value);
+            // set taskset RemoteData
+            int numberofData = (int)Math.round(Math.random()*Parameters.ubOfData);
+
+            int[] positionOfData = null;
+			int[] sizeOfData = null;
+			long remoteInputSize = 0;
+			
+			
+			if (numberofData != 0) {
+				
+				positionOfData = new int[numberofData];
+				
+				sizeOfData = new int[numberofData];
+				
+				
+				for (int dataindex = 0; dataindex < numberofData; dataindex++) {
+					positionOfData[dataindex] = ((int)((Math.random()*Parameters.numberOfDC)) % Parameters.numberOfDC);
+					sizeOfData[dataindex] = (int)(Math.random()*(Parameters.ubOfDataSize - Parameters.lbOfDataSize ) + Parameters.lbOfDataSize);
+					remoteInputSize += sizeOfData[dataindex];
+				}
+			}
+			
+			// choose the one milength of task to replace all the mi in the same taskset
+			int representTaskIndex = (int)(Math.random()*(taskList.size()-1));
+			long representMiLength = taskList.get(representTaskIndex).getMi();
+			
+			
+			
             for (Task task : taskList) {
                 length += task.getCloudletLength();
 
@@ -184,6 +212,24 @@ public class BasicClustering implements ClusteringInterface {
                 List<FileItem> fileList = task.getFileList();
                 job.getTaskList().add(task);
                 task.jobId = job.getCloudletId();
+                task.setMi(representMiLength > 0 ? representMiLength : 1);
+                for (int dataindex = 0; dataindex < numberofData; dataindex++) {
+					positionOfData[dataindex] = ((int)((Math.random()*Parameters.numberOfDC)) % Parameters.numberOfDC);
+				}
+                
+                if (numberofData != 0) {
+                	task.incBw(remoteInputSize/1024);
+                	task.incIo(remoteInputSize/1024);
+					task.numberOfData = numberofData;
+					task.positionOfData = positionOfData;
+					task.sizeOfData = sizeOfData;
+					task.requiredBandwidth = new double[numberofData];
+					task.positionOfDataID = new int[numberofData];
+					task.numberOfTransferData = new int[Parameters.numberOfDC];
+					task.TotalTransferDataSize = new double[Parameters.numberOfDC];
+					task.transferDataSize = new double[Parameters.numberOfDC][Parameters.ubOfData];
+					
+				}
                 getTask2Job().put(task, job);
                 for (FileItem file : fileList) {
                     boolean hasFile = job.getFileList().contains(file);
@@ -209,7 +255,8 @@ public class BasicClustering implements ClusteringInterface {
             job.setCloudletLength(length);
             job.setDepth(depth);
             job.setPriority(priority);
-
+            job.workflowId = taskList.get(0).workflowId;
+            job.unscheduledTaskList.addAll(job.getTaskList());
             idIndex++;
             getJobList().add(job);
             return job;
@@ -264,7 +311,7 @@ public class BasicClustering implements ClusteringInterface {
 
         if (root == null) {
             //bug maybe
-            root = new Task("fake_root","null",0,taskList.size() + 1,1,0,0,1,0,0,new UtilizationModelFull(),new UtilizationModelFull(),new UtilizationModelFull());
+            root = new Task("fake_root","null",0,taskList.size() + 1,1,0,0,1,0,0,new UtilizationModelFull(),new UtilizationModelFull(),new UtilizationModelFull(),0);
             for (Task node : taskList) {
                 if (node.getParentList().isEmpty()) {
                     node.addParent(root);

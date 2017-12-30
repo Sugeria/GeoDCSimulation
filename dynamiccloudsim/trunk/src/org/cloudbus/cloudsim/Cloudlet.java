@@ -15,6 +15,8 @@ import java.util.List;
 
 import org.cloudbus.cloudsim.core.CloudSim;
 
+import de.huberlin.wbi.dcs.examples.Parameters;
+
 /**
  * Cloudlet is an extension to the cloudlet. It stores, despite all the information encapsulated in
  * the Cloudlet, the ID of the VM running it.
@@ -164,6 +166,9 @@ public class Cloudlet {
 	public double[] requiredBandwidth;
 
 	public int[] numberOfTransferData;
+	
+	public double[] TotalTransferDataSize;
+	public double[][] transferDataSize;
 	
 	public int getAssignmentDCId() {
 		return assignmentDCId;

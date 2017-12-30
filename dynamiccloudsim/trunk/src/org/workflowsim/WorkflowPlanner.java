@@ -16,7 +16,10 @@
 package org.workflowsim;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+
 import org.cloudbus.cloudsim.Log;
 import org.cloudbus.cloudsim.core.CloudSimTags;
 import org.cloudbus.cloudsim.core.SimEntity;
@@ -25,6 +28,7 @@ import org.workflowsim.planning.BasePlanningAlgorithm;
 import org.workflowsim.planning.DHEFTPlanningAlgorithm;
 import org.workflowsim.planning.HEFTPlanningAlgorithm;
 import org.workflowsim.planning.RandomPlanningAlgorithm;
+import org.workflowsim.utils.CloneUtils;
 
 import de.huberlin.wbi.dcs.examples.Parameters;
 import de.huberlin.wbi.dcs.examples.Parameters.PlanningAlgorithm;
@@ -47,6 +51,8 @@ public final class WorkflowPlanner extends SimEntity {
      * The task list.
      */
     protected List<Task> taskList;
+    
+    public Map<Integer, List<Task>> taskListOfWorkflow;
     /**
      * The workflow parser.
      */
@@ -77,7 +83,7 @@ public final class WorkflowPlanner extends SimEntity {
         this.clusteringEngine = new ClusteringEngine(name + "_Merger_", schedulers);
         this.clusteringEngineId = this.clusteringEngine.getId();
         this.parser = new WorkflowParser(getClusteringEngine().getWorkflowEngine().getSchedulerId(0));
-
+        this.taskListOfWorkflow = new HashMap<>();
     }
 
     /**
@@ -136,12 +142,29 @@ public final class WorkflowPlanner extends SimEntity {
     public void processEvent(SimEvent ev) {
         switch (ev.getTag()) {
             case WorkflowSimTags.START_SIMULATION:
-                getWorkflowParser().parse();
-                setTaskList(getWorkflowParser().getTaskList());
-                processPlanning();
-                processImpactFactors(getTaskList());
-                sendNow(getClusteringEngineId(), WorkflowSimTags.JOB_SUBMIT, getTaskList());
+            	
+            	//generate the event send to workflowPlanner
+            	for(double time:Parameters.workflowArrival.keySet()) {
+            		List<String> daxList = Parameters.workflowArrival.get(time);
+            		send(getId(), time, CloudSimTags.WORKFLOW_ARRIVAL,daxList);
+            	}
                 break;
+            case CloudSimTags.WORKFLOW_ARRIVAL:
+            	List<String> daxList = (ArrayList<String>)ev.getData();
+            	if(daxList.size() == 1) {
+            		getWorkflowParser().daxPath = daxList.get(0);
+            	}else {
+            		getWorkflowParser().daxPaths = daxList;
+            	}
+            	getWorkflowParser().parse();
+                //setTaskList(getWorkflowParser().getTaskList());
+                this.taskListOfWorkflow = getWorkflowParser().taskListOfWorkflow;
+                // current is invalid if change to another planning method something will be changed
+                processPlanning();
+                //processImpactFactors(getTaskList());
+                sendNow(getClusteringEngineId(), WorkflowSimTags.JOB_SUBMIT, taskListOfWorkflow);
+                getWorkflowParser().taskListOfWorkflow.clear();
+            	break;
             case CloudSimTags.END_OF_SIMULATION:
                 shutdownEntity();
                 break;

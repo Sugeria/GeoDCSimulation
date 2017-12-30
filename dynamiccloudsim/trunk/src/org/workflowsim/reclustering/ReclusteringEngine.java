@@ -144,6 +144,7 @@ public class ReclusteringEngine {
         	Job newJob = createJob(id, job, job.getCloudletLength(), newTaskList, true);
         	newJob.setExecStartTime(job.getExecStartTime());
             newJob.setFinishTime(job.getFinishTime());
+            newJob.workflowId = job.workflowId;
         	jobList.add(newJob);
         	return jobList;
         }
@@ -159,6 +160,7 @@ public class ReclusteringEngine {
         newJob.successTaskList = job.successTaskList;
         newJob.setExecStartTime(job.getExecStartTime());
         newJob.setFinishTime(job.getFinishTime());
+        newJob.workflowId = job.workflowId;
         jobList.add(newJob);
         return jobList;
     }

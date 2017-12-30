@@ -22,6 +22,8 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+
+import org.apache.commons.math3.analysis.function.Max;
 import org.cloudbus.cloudsim.Log;
 import org.cloudbus.cloudsim.UtilizationModel;
 import org.cloudbus.cloudsim.UtilizationModelFull;
@@ -49,19 +51,22 @@ public final class WorkflowParser {
     /**
      * The path to DAX file.
      */
-    private final String daxPath;
+    public String daxPath;
     /**
      * The path to DAX files.
      */
-    private final List<String> daxPaths;
+    public List<String> daxPaths;
     /**
      * All tasks.
      */
     private List<Task> taskList;
+    
+    public HashMap<Integer, List<Task>> taskListOfWorkflow;
     /**
      * User id. used to create a new task.
      */
     private final int userId;
+    public int workflowId = 0;
 
     /**
      * current job id. In case multiple workflow submission
@@ -99,11 +104,12 @@ public final class WorkflowParser {
      */
     public WorkflowParser(int userId) {
         this.userId = userId;
+        this.workflowId = 0;
         this.mName2Task = new HashMap<>();
         this.daxPath = Parameters.getDaxPath();
         this.daxPaths = Parameters.getDAXPaths();
         this.jobIdStartsFrom = 1;
-
+        this.taskListOfWorkflow = new HashMap<>();
         setTaskList(new ArrayList<>());
     }
 
@@ -112,10 +118,12 @@ public final class WorkflowParser {
      */
     public void parse() {
         if (this.daxPath != null) {
-            parseXmlFile(this.daxPath);
+        	workflowId++;
+            parseXmlFile(this.daxPath,workflowId);
         } else if (this.daxPaths != null) {
             for (String path : this.daxPaths) {
-                parseXmlFile(path);
+            	workflowId++;
+                parseXmlFile(path,workflowId);
             }
         }
     }
@@ -138,8 +146,8 @@ public final class WorkflowParser {
     /**
      * Parse a DAX file with jdom
      */
-    private void parseXmlFile(String path) {
-
+    private void parseXmlFile(String path,int workflowId) {
+    	List<Task> taskListInWorkflow  = new ArrayList<>();
         try {
 
             SAXBuilder builder = new SAXBuilder();
@@ -147,6 +155,8 @@ public final class WorkflowParser {
             Document dom = builder.build(new File(path));
             Element root = dom.getRootElement();
             List<Element> list = root.getChildren();
+            // each workflow has one submittedPos
+            int submittedPos = ((int)((Math.random()*Parameters.numberOfDC)) % Parameters.numberOfDC);
             for (Element node : list) {
                 switch (node.getName().toLowerCase()) {
                     case "job":
@@ -257,48 +267,58 @@ public final class WorkflowParser {
                         
                         Task task;
                         
-                        int numberofData = (int)(Math.random()*Parameters.ubOfData);
-        				int[] positionOfData = null;
+                        // int numberofData = (int)(Math.random()*Parameters.ubOfData);
+                        int numberofData = Parameters.ubOfData;
+
+                        int[] positionOfData = null;
         				int[] sizeOfData = null;
         				long remoteInputSize = 0;
         				
         				
-        				if (numberofData != 0) {
-        					
-        					positionOfData = new int[numberofData];
-        					
-        					sizeOfData = new int[numberofData];
-        					
-        					remoteInputSize = 0;
-        					
-        					for (int dataindex = 0; dataindex < numberofData; dataindex++) {
-        						positionOfData[dataindex] = ((int)((Math.random()*Parameters.numberOfDC)) % Parameters.numberOfDC);
-        						sizeOfData[dataindex] = (int)(Math.random()*(Parameters.ubOfDataSize - Parameters.lbOfDataSize ) + Parameters.lbOfDataSize);
-        						remoteInputSize += sizeOfData[dataindex];
-        					}
-        				}
+//        				if (numberofData != 0) {
+//        					
+//        					positionOfData = new int[numberofData];
+//        					
+//        					sizeOfData = new int[numberofData];
+//        					
+//        					remoteInputSize = 0;
+//        					
+//        					for (int dataindex = 0; dataindex < numberofData; dataindex++) {
+//        						positionOfData[dataindex] = ((int)((Math.random()*Parameters.numberOfDC)) % Parameters.numberOfDC);
+//        						sizeOfData[dataindex] = (int)(Math.random()*(Parameters.ubOfDataSize - Parameters.lbOfDataSize ) + Parameters.lbOfDataSize);
+//        						remoteInputSize += sizeOfData[dataindex];
+//        					}
+//        				}
         				
         				
-
         				long ioLength = (remoteInputSize + (long)inputSize + (long)outputSize) / 1024;
-                        long bwLength = remoteInputSize;
+                        long bwLength = remoteInputSize / 1024;
                         int pesNumber = 1;
                         UtilizationModel utilizationModel = new UtilizationModelFull();
                         //In case of multiple workflow submission. Make sure the jobIdStartsFrom is consistent.
                         synchronized (this) {
                             task = new Task(nodeType,params,userId,this.jobIdStartsFrom,length,
                             		ioLength,bwLength,pesNumber,(long)inputSize,(long)outputSize,
-                            		utilizationModel,utilizationModel,utilizationModel);
+                            		utilizationModel,utilizationModel,utilizationModel,submittedPos);
                             this.jobIdStartsFrom++;
                         }
+//                      if (numberofData != 0) {
+//        					task.numberOfData = numberofData;
+//        					task.positionOfData = positionOfData;
+//        					task.sizeOfData = sizeOfData;
+//        					task.requiredBandwidth = new double[numberofData];
+//        					task.positionOfDataID = new int[numberofData];
+//        					task.numberOfTransferData = new int[Parameters.numberOfDC];
+//        				}
                         task.setType(nodeType);
                         task.setUserId(userId);
+                        task.workflowId = workflowId;
                         mName2Task.put(nodeName, task);
                         for (FileItem file : mFileList) {
                             task.addRequiredFile(file.getName());
                         }
                         task.setFileList(mFileList);
-                        this.getTaskList().add(task);
+                        taskListInWorkflow.add(task);
 
                         /**
                          * Add dependencies info.
@@ -345,6 +365,7 @@ public final class WorkflowParser {
              * Clean them so as to save memory. Parsing workflow may take much
              * memory
              */
+            taskListOfWorkflow.put(workflowId, taskListInWorkflow);
             this.mName2Task.clear();
 
         } catch (JDOMException jde) {

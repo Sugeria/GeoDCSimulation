@@ -120,6 +120,8 @@ public class GraphReaderBrite implements GraphReaderIF {
 		String nodeLabel = "";
 		int xPos = 0;
 		int yPos = 0;
+		int indegree = 0;
+		int outdegree = 0;
 
 		for (int actualParam = 0; tokenizer.hasMoreElements() && actualParam < parameters; actualParam++) {
 			String token = tokenizer.nextToken();
@@ -137,11 +139,22 @@ public class GraphReaderBrite implements GraphReaderIF {
 				case 2:	// Log.printLine("y-Pos: "+token);
 					yPos = Integer.valueOf(token);
 					break;
+					
+				case 3:
+					indegree = Integer.valueOf(token);
+					break;
+					
+				case 4:
+					outdegree = Integer.valueOf(token);
+					break;
+					
 			}
 		}
 
 		// instanciate an new node-object with previous parsed parameters
 		TopologicalNode topoNode = new TopologicalNode(nodeID, nodeLabel, xPos, yPos);
+		topoNode.indegree = indegree;
+		topoNode.outdegree = outdegree;
 		graph.addNode(topoNode);
 
 	}// parseNodeString-END
