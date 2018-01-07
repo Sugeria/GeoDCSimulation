@@ -89,7 +89,7 @@ public class WorkflowExample {
 	             * No Clustering
 	             */
 	            ClusteringParameters.ClusteringMethod method = ClusteringParameters.ClusteringMethod.HORIZONTAL;
-	            ClusteringParameters cp = new ClusteringParameters(10, 0, method, null);
+	            ClusteringParameters cp = new ClusteringParameters(5, 0, method, null);
 
 	            /**
 	             * Initialize static parameters
