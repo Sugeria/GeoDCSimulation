@@ -1,0 +1,53 @@
+K 25
+svn:wc:ra_dav:version-url
+V 65
+/svn/!svn/ver/13/trunk/src/de/huberlin/wbi/dcs/workflow/scheduler
+END
+GreedyQueueScheduler.java
+K 25
+svn:wc:ra_dav:version-url
+V 91
+/svn/!svn/ver/12/trunk/src/de/huberlin/wbi/dcs/workflow/scheduler/GreedyQueueScheduler.java
+END
+C2O.java
+K 25
+svn:wc:ra_dav:version-url
+V 74
+/svn/!svn/ver/13/trunk/src/de/huberlin/wbi/dcs/workflow/scheduler/C2O.java
+END
+LATEScheduler.java
+K 25
+svn:wc:ra_dav:version-url
+V 84
+/svn/!svn/ver/12/trunk/src/de/huberlin/wbi/dcs/workflow/scheduler/LATEScheduler.java
+END
+C3.java
+K 25
+svn:wc:ra_dav:version-url
+V 73
+/svn/!svn/ver/12/trunk/src/de/huberlin/wbi/dcs/workflow/scheduler/C3.java
+END
+HEFTScheduler.java
+K 25
+svn:wc:ra_dav:version-url
+V 84
+/svn/!svn/ver/12/trunk/src/de/huberlin/wbi/dcs/workflow/scheduler/HEFTScheduler.java
+END
+StaticRoundRobinScheduler.java
+K 25
+svn:wc:ra_dav:version-url
+V 96
+/svn/!svn/ver/12/trunk/src/de/huberlin/wbi/dcs/workflow/scheduler/StaticRoundRobinScheduler.java
+END
+WorkflowScheduler.java
+K 25
+svn:wc:ra_dav:version-url
+V 88
+/svn/!svn/ver/12/trunk/src/de/huberlin/wbi/dcs/workflow/scheduler/WorkflowScheduler.java
+END
+AbstractWorkflowScheduler.java
+K 25
+svn:wc:ra_dav:version-url
+V 96
+/svn/!svn/ver/13/trunk/src/de/huberlin/wbi/dcs/workflow/scheduler/AbstractWorkflowScheduler.java
+END

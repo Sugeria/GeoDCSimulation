@@ -217,19 +217,19 @@ public class BasicClustering implements ClusteringInterface {
 					positionOfData[dataindex] = ((int)((Math.random()*Parameters.numberOfDC)) % Parameters.numberOfDC);
 				}
                 
-                if (numberofData != 0) {
-                	task.incBw(remoteInputSize/1024);
-                	task.incIo(remoteInputSize/1024);
-					task.numberOfData = numberofData;
-					task.positionOfData = positionOfData;
-					task.sizeOfData = sizeOfData;
-					task.requiredBandwidth = new double[numberofData];
-					task.positionOfDataID = new int[numberofData];
-					task.numberOfTransferData = new int[Parameters.numberOfDC];
-					task.TotalTransferDataSize = new double[Parameters.numberOfDC];
-					task.transferDataSize = new double[Parameters.numberOfDC][Parameters.ubOfData];
-					
-				}
+                //if (numberofData != 0) {
+            	task.incBw(remoteInputSize/1024);
+            	task.incIo(remoteInputSize/1024);
+				task.numberOfData = numberofData;
+				task.positionOfData = positionOfData;
+				task.sizeOfData = sizeOfData;
+				task.requiredBandwidth = new double[numberofData];
+				task.positionOfDataID = new int[numberofData];
+				task.numberOfTransferData = new int[Parameters.numberOfDC];
+				task.TotalTransferDataSize = new double[Parameters.numberOfDC];
+				task.transferDataSize = new double[Parameters.numberOfDC][Parameters.ubOfData];
+				
+				//}
                 getTask2Job().put(task, job);
                 for (FileItem file : fileList) {
                     boolean hasFile = job.getFileList().contains(file);

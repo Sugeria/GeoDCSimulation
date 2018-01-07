@@ -29,10 +29,9 @@ import org.cloudbus.cloudsim.core.SimEntity;
 import org.cloudbus.cloudsim.core.SimEvent;
 import org.workflowsim.reclustering.ReclusteringEngine;
 
-import com.sun.org.apache.xalan.internal.xsltc.DOM;
 
 import de.huberlin.wbi.dcs.examples.Parameters;
-import matlabcontrol.MatlabInvocationException;
+//import matlabcontrol.MatlabInvocationException;
 
 /**
  * WorkflowEngine represents a engine acting on behalf of a user. It hides VM
@@ -174,6 +173,7 @@ public final class WorkflowEngine extends SimEntity {
                 break;
             case WorkflowSimTags.JOB_SUBMIT:
                 processJobSubmit(ev);
+                submitJobs();
                 break;
             case CloudSimTags.WORKFLOW_INFO:
             	processWorkflowInfo(ev);
@@ -290,11 +290,11 @@ public final class WorkflowEngine extends SimEntity {
             //send msg to all the schedulers
             for (int i = 0; i < getSchedulerIds().size(); i++) {
             	getScheduler(i).clearDatacenters();
-            	try {
-    				getScheduler(i).proxy.exit();
-    			} catch (MatlabInvocationException e) {
-    				e.printStackTrace();
-    			}
+//            	try {
+//    				getScheduler(i).proxy.exit();
+//    			} catch (MatlabInvocationException e) {
+//    				e.printStackTrace();
+//    			}
                 sendNow(getSchedulerId(i), CloudSimTags.END_OF_SIMULATION, null);
             }
             

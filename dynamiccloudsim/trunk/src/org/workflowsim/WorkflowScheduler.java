@@ -64,11 +64,11 @@ import ilog.concert.IloNumVar;
 import ilog.concert.IloNumVarType;
 import ilog.concert.IloRange;
 import ilog.cplex.IloCplex;
-import matlabcontrol.MatlabInvocationException;
-import matlabcontrol.MatlabProxy;
-import matlabcontrol.MatlabProxyFactory;
-import matlabcontrol.extensions.MatlabNumericArray;
-import matlabcontrol.extensions.MatlabTypeConverter;
+//import matlabcontrol.MatlabInvocationException;
+//import matlabcontrol.MatlabProxy;
+//import matlabcontrol.MatlabProxyFactory;
+//import matlabcontrol.extensions.MatlabNumericArray;
+//import matlabcontrol.extensions.MatlabTypeConverter;
 import taskAssign.TaskAssign;
 
 
@@ -100,8 +100,8 @@ public class WorkflowScheduler extends DatacenterBroker {
 	private Map<Integer, Job> JobFactory;
 	private double runtime;
 	
-	private MatlabProxyFactory factory;
-	public MatlabProxy proxy;
+//	private MatlabProxyFactory factory;
+//	public MatlabProxy proxy;
 
 	
     /**
@@ -124,8 +124,8 @@ public class WorkflowScheduler extends DatacenterBroker {
 		taskOfJob = new HashMap<>();
 		ackTaskOfJob = new HashMap<>();
 		JobFactory = new HashMap<>();
-		factory = new MatlabProxyFactory();
-		proxy = factory.getProxy();
+//		factory = new MatlabProxyFactory();
+//		proxy = factory.getProxy();
 		
     }
     
@@ -330,6 +330,7 @@ public class WorkflowScheduler extends DatacenterBroker {
             	boolean resourceEnough = true;
             	
             	for(int tindex = 0; tindex < unscheduledTaskNum; tindex++) {
+            		int datanumber = job.data[tindex];
             		int taskId = job.unscheduledTaskList.get(tindex).getCloudletId();
             		if(job.currentGreatePosition.containsKey(taskId)) {
             			int pos = job.currentGreatePosition.get(taskId);
@@ -352,8 +353,8 @@ public class WorkflowScheduler extends DatacenterBroker {
 						// uplink
 						bwOfSrcPos = new HashMap<>();
 						if(job.TotalTransferDataSize[xindex]>0) {
-							for(int dataindex = 0; dataindex < Parameters.ubOfData; dataindex++) {
-								double neededBw = job.transferDataSize[xindex][dataindex];
+							for(int dataindex = 0; dataindex < datanumber; dataindex++) {
+								double neededBw = job.bandwidth[xindex][dataindex];
 								int srcPos = (int) job.datapos[tindex][dataindex];
 								if(bwOfSrcPos.containsKey(srcPos)) {
 									double oldvalue = bwOfSrcPos.get(srcPos);
@@ -403,6 +404,7 @@ public class WorkflowScheduler extends DatacenterBroker {
     						
                 		}
                 	}
+            		
             		
     	        	// copy based on the great assignment and preAssigned slots
             		MWNumericArray xOrig = null;
@@ -483,6 +485,7 @@ public class WorkflowScheduler extends DatacenterBroker {
 								xOrig.set(pos, job.greatX[xindex]);
 								allRateMuArray.set(pos, job.allRateMuArray[0][xindex]);
 								allRateSigmaArray.set(pos, job.allRateSigmaArray[0][xindex]);
+								TotalTransferDataSize.set(pos, job.TotalTransferDataSize[xindex]);
 								uselessDCforTask.set(pos, job.uselessDCforTask[xindex]);
 								for(int dataindex = 0; dataindex < Parameters.ubOfData; dataindex++) {
 									pos[0] = xindex + 1;
@@ -501,9 +504,9 @@ public class WorkflowScheduler extends DatacenterBroker {
 							Down.set(pos, DownArray[0][dcindex]);
 						}
 						
-						result = taskAssign.copyStrategy(4,xOrig,tasknum,dcnum,allRateMuArray,allRateSigmaArray,TotalTransferDataSize,data,datapos,bandwidth,Slot,Up,Down,r,slotlimit);
+						result = taskAssign.copyStrategy(4,xOrig,tasknum,dcnum,allRateMuArray,allRateSigmaArray,TotalTransferDataSize,data,datapos,bandwidth,Slot,Up,Down,uselessDCforTask,r,slotlimit);
 //						result = taskAssign.copyStrategy_optimizeExp_Traverse(4,xOrig,tasknum,dcnum,allRateMuArray,allRateSigmaArray,TotalTransferDataSize,data,datapos,bandwidth,Slot,Up,Down,uselessDCforTask,r,slotlimit);
-//						result = taskAssign.copyStrategy_optimizeAll_orderedRes(4,xOrig,tasknum,dcnum,allRateMuArray,allRateSigmaArray,TotalTransferDataSize,data,datapos,bandwidth,Slot,Up,Down,r,slotlimit);
+//						result = taskAssign.copyStrategy_optimizeAll_orderedRes(4,xOrig,tasknum,dcnum,allRateMuArray,allRateSigmaArray,TotalTransferDataSize,data,datapos,bandwidth,Slot,Up,Down,uselessDCforTask,r,slotlimit);
 //						result = taskAssign.copyStrategy_optimizeAll_Traverse(4,xOrig,tasknum,dcnum,allRateMuArray,allRateSigmaArray,TotalTransferDataSize,data,datapos,bandwidth,Slot,Up,Down,uselessDCforTask,r,slotlimit);
 						
 						xAssign = (MWNumericArray)result[0];
@@ -525,26 +528,36 @@ public class WorkflowScheduler extends DatacenterBroker {
 						// successful assignment
 						for (int tindex = 0; tindex < unscheduledTaskNum; tindex++) {
 							Task task = job.unscheduledTaskList.get(tindex);
+							boolean submitflag = false;
 							for (int dcindex = 0; dcindex < Parameters.numberOfDC; dcindex++) {
-								if (x[tindex*Parameters.numberOfDC + dcindex] == 1) {
-									Vm vm = idleTaskSlotsOfDC.get(dcindex + DCbase).remove();
-									if (tasks.containsKey(task.getCloudletId())) {
-										Task speculativeTask = new Task(task);
-										speculativeTask.setAssignmentDCId(dcindex + DCbase);
-										speculativeTask.assignmentDCindex = dcindex;
-										speculativeTask.setSpeculativeCopy(true);
-										speculativeTasks.get(speculativeTask.getCloudletId()).add(speculativeTask);
-										submitSpeculativeTask(speculativeTask, vm);
-									} else {
-										task.setAssignmentDCId(dcindex + DCbase);
-										task.assignmentDCindex = dcindex;
-										tasks.put(task.getCloudletId(), task);
-										submitTask(task, vm);
-										speculativeTasks.put(task.getCloudletId(), new LinkedList<>());
+								if (x[tindex*Parameters.numberOfDC + dcindex] != 0) {
+									if(submitflag == false) {
+										submitflag = true;
 									}
+									int submittedNum = (int) x[tindex*Parameters.numberOfDC + dcindex];
+									for(int copyindex = 0; copyindex < submittedNum; copyindex++) {
+										Vm vm = idleTaskSlotsOfDC.get(dcindex + DCbase).remove();
+										if (tasks.containsKey(task.getCloudletId())) {
+											Task speculativeTask = new Task(task);
+											speculativeTask.setAssignmentDCId(dcindex + DCbase);
+											speculativeTask.assignmentDCindex = dcindex;
+											speculativeTask.setSpeculativeCopy(true);
+											speculativeTasks.get(speculativeTask.getCloudletId()).add(speculativeTask);
+											submitSpeculativeTask(speculativeTask, vm);
+										} else {
+											task.setAssignmentDCId(dcindex + DCbase);
+											task.assignmentDCindex = dcindex;
+											tasks.put(task.getCloudletId(), task);
+											submitTask(task, vm);
+											speculativeTasks.put(task.getCloudletId(), new LinkedList<>());
+										}
+									}
+									
 								}
 							}
-							taskSubmitted.add(task);
+							if(submitflag == true) {
+								taskSubmitted.add(task);
+							}
 						}
 						
 						// there to verify that modify the job 
@@ -604,10 +617,12 @@ public class WorkflowScheduler extends DatacenterBroker {
 								xlb[vindex] = 0.0d;
 								xub[vindex] = Double.MAX_VALUE;
 								xTypes[vindex] = IloNumVarType.Float;
+							}else {
+								xlb[vindex] = 0.0;
+								xub[vindex] = 1.0;
+								xTypes[vindex] = IloNumVarType.Int;
 							}
-							xlb[vindex] = 0.0;
-							xub[vindex] = 1.0;
-							xTypes[vindex] = IloNumVarType.Int;
+							
 						}
 						var = cplex.numVarArray(vnumplusone, xlb, xub,xTypes);
 						
@@ -616,8 +631,10 @@ public class WorkflowScheduler extends DatacenterBroker {
 						for(int vindex = 0; vindex < vnumplusone; vindex++) {
 							if(vindex == (vnumplusone-1)) {
 								objvals[vindex] = 1;
+							}else {
+								objvals[vindex] = 0;
 							}
-							objvals[vindex] = 0;
+							
 						}
 						cplex.addMaximize(cplex.scalProd(var, objvals));
 						
@@ -767,7 +784,7 @@ public class WorkflowScheduler extends DatacenterBroker {
 										bwOfSrcPos = new HashMap<>();
 										if(job.TotalTransferDataSize[xindex]>0) {
 											for(int dataindex = 0; dataindex < Parameters.ubOfData; dataindex++) {
-												double neededBw = job.transferDataSize[xindex][dataindex];
+												double neededBw = job.bandwidth[xindex][dataindex];
 												int srcPos = (int) job.datapos[tindex][dataindex];
 												if(bwOfSrcPos.containsKey(srcPos)) {
 													double oldvalue = bwOfSrcPos.get(srcPos);
@@ -820,33 +837,19 @@ public class WorkflowScheduler extends DatacenterBroker {
 							// when there is some tasks do not be assigned then the copy is not needed
 							// use the matlab jar
 							
-							Map<Integer,List<Map.Entry<Integer, Double>>> sortedListOfTask = new HashMap<>();
 							singlex = new double[vnum];
 							for(int tindex = 0; tindex < unscheduledTaskNum; tindex++) {
 								Task task = job.unscheduledTaskList.get(tindex);
 								int taskId = task.getCloudletId();
-								Map<Integer, Double> map = job.objParaOfTaskInDC.get(taskId);
-								sortedListOfTask.put(taskId, new ArrayList<>());
-								for(Map.Entry<Integer, Double> entry:map.entrySet()) {
-									sortedListOfTask.get(taskId).add(entry);
-								}
-								sortedListOfTask.get(taskId).sort(new Comparator<Map.Entry<Integer, Double>>() {
-
-									@Override
-									public int compare(Entry<Integer, Double> o1, Entry<Integer, Double> o2) {
-										// TODO Auto-generated method stub
-										return o2.getValue().compareTo(o1.getValue());
-									}
-									
-								});
+								
 								boolean success = true;
 								int successDC = -1;
-								for(Map.Entry<Integer, Double> iterm:sortedListOfTask.get(taskId)) {
+								for(Map.Entry<Integer, Double> iterm:job.sortedListOfTask.get(taskId)) {
 									int dcindex = iterm.getKey();
 									int xindex = tindex * Parameters.numberOfDC + dcindex;
 									success = true;
 									// when the dc is not too far
-									if(job.uselessDCforTask[xindex] != 0) {
+//									if(job.uselessDCforTask[xindex] != 0) {
 										// verify that the resource is enough
 										
 										// machines
@@ -867,7 +870,7 @@ public class WorkflowScheduler extends DatacenterBroker {
 										bwOfSrcPos = new HashMap<>();
 										if(job.TotalTransferDataSize[xindex]>0) {
 											for(int dataindex = 0; dataindex < Parameters.ubOfData; dataindex++) {
-												double neededBw = job.transferDataSize[xindex][dataindex];
+												double neededBw = job.bandwidth[xindex][dataindex];
 												int srcPos = (int) job.datapos[tindex][dataindex];
 												if(bwOfSrcPos.containsKey(srcPos)) {
 													double oldvalue = bwOfSrcPos.get(srcPos);
@@ -885,14 +888,17 @@ public class WorkflowScheduler extends DatacenterBroker {
 										}
 										if(success == true) {
 											SlotArray[0][dcindex] -= 1;
-											DownArray[0][dcindex] -= Parameters.bwBaselineOfDC[dcindex];
+											if(job.TotalTransferDataSize[xindex]>0) {
+												DownArray[0][dcindex] -= Parameters.bwBaselineOfDC[dcindex];
+
+											}
 											for(int pos : bwOfSrcPos.keySet()) {
 												UpArray[0][pos]-=bwOfSrcPos.get(pos);
 											}
 											successDC = dcindex;
 											break;
 										}
-									}
+//									}
 								}
 								if(success == true) {
 									
@@ -1006,9 +1012,9 @@ public class WorkflowScheduler extends DatacenterBroker {
 							Down.set(pos, DownArray[0][dcindex]);
 						}
 						
-						result = taskAssign.copyStrategy(4,xOrig,tasknum,dcnum,allRateMuArray,allRateSigmaArray,TotalTransferDataSize,data,datapos,bandwidth,Slot,Up,Down,r,slotlimit);
+						result = taskAssign.copyStrategy(4,xOrig,tasknum,dcnum,allRateMuArray,allRateSigmaArray,TotalTransferDataSize,data,datapos,bandwidth,Slot,Up,Down,uselessDCforTask,r,slotlimit);
 //						result = taskAssign.copyStrategy_optimizeExp_Traverse(4,xOrig,tasknum,dcnum,allRateMuArray,allRateSigmaArray,TotalTransferDataSize,data,datapos,bandwidth,Slot,Up,Down,uselessDCforTask,r,slotlimit);
-//						result = taskAssign.copyStrategy_optimizeAll_orderedRes(4,xOrig,tasknum,dcnum,allRateMuArray,allRateSigmaArray,TotalTransferDataSize,data,datapos,bandwidth,Slot,Up,Down,r,slotlimit);
+//						result = taskAssign.copyStrategy_optimizeAll_orderedRes(4,xOrig,tasknum,dcnum,allRateMuArray,allRateSigmaArray,TotalTransferDataSize,data,datapos,bandwidth,Slot,Up,Down,uselessDCforTask,r,slotlimit);
 //						result = taskAssign.copyStrategy_optimizeAll_Traverse(4,xOrig,tasknum,dcnum,allRateMuArray,allRateSigmaArray,TotalTransferDataSize,data,datapos,bandwidth,Slot,Up,Down,uselessDCforTask,r,slotlimit);
 						
 						xAssign = (MWNumericArray)result[0];
@@ -1028,30 +1034,40 @@ public class WorkflowScheduler extends DatacenterBroker {
 						// Queue<Vm> taskSlotsKeptIdle = new LinkedList<>();
 						Queue<Task> taskSubmitted = new LinkedList<>();
 						// successful assignment
+						
 						for (int tindex = 0; tindex < unscheduledTaskNum; tindex++) {
 							Task task = job.unscheduledTaskList.get(tindex);
+							boolean submitflag = false;
 							for (int dcindex = 0; dcindex < Parameters.numberOfDC; dcindex++) {
-								if (x[tindex*Parameters.numberOfDC + dcindex] == 1) {
-									Vm vm = idleTaskSlotsOfDC.get(dcindex + DCbase).remove();
-									if (tasks.containsKey(task.getCloudletId())) {
-										Task speculativeTask = new Task(task);
-										speculativeTask.setAssignmentDCId(dcindex + DCbase);
-										speculativeTask.assignmentDCindex = dcindex;
-										speculativeTask.setSpeculativeCopy(true);
-										speculativeTasks.get(speculativeTask.getCloudletId()).add(speculativeTask);
-										submitSpeculativeTask(speculativeTask, vm);
-									} else {
-										task.setAssignmentDCId(dcindex + DCbase);
-										task.assignmentDCindex = dcindex;
-										tasks.put(task.getCloudletId(), task);
-										submitTask(task, vm);
-										speculativeTasks.put(task.getCloudletId(), new LinkedList<>());
+								if (x[tindex*Parameters.numberOfDC + dcindex] != 0) {
+									if(submitflag == false) {
+										submitflag = true;
 									}
+									int submittedNum = (int) x[tindex*Parameters.numberOfDC + dcindex];
+									for(int copyindex = 0; copyindex < submittedNum; copyindex++) {
+										Vm vm = idleTaskSlotsOfDC.get(dcindex + DCbase).remove();
+										if (tasks.containsKey(task.getCloudletId())) {
+											Task speculativeTask = new Task(task);
+											speculativeTask.setAssignmentDCId(dcindex + DCbase);
+											speculativeTask.assignmentDCindex = dcindex;
+											speculativeTask.setSpeculativeCopy(true);
+											speculativeTasks.get(speculativeTask.getCloudletId()).add(speculativeTask);
+											submitSpeculativeTask(speculativeTask, vm);
+										} else {
+											task.setAssignmentDCId(dcindex + DCbase);
+											task.assignmentDCindex = dcindex;
+											tasks.put(task.getCloudletId(), task);
+											submitTask(task, vm);
+											speculativeTasks.put(task.getCloudletId(), new LinkedList<>());
+										}
+									}
+									
 								}
 							}
-							taskSubmitted.add(task);
+							if(submitflag == true) {
+								taskSubmitted.add(task);
+							}
 						}
-						
 						// there to verify that modify the job 
 						// JobFactory whether change the corresponding value
 						// JobList whether change the corresponding value
@@ -1094,33 +1110,19 @@ public class WorkflowScheduler extends DatacenterBroker {
         	}else {
         	// if no
             	// greedy assign for the tasks one by one
-        		Map<Integer,List<Map.Entry<Integer, Double>>> sortedListOfTask = new HashMap<>();
 				singlex = new double[vnum];
 				for(int tindex = 0; tindex < unscheduledTaskNum; tindex++) {
 					Task task = job.unscheduledTaskList.get(tindex);
 					int taskId = task.getCloudletId();
-					Map<Integer, Double> map = job.objParaOfTaskInDC.get(taskId);
-					sortedListOfTask.put(taskId, new ArrayList<>());
-					for(Map.Entry<Integer, Double> entry:map.entrySet()) {
-						sortedListOfTask.get(taskId).add(entry);
-					}
-					sortedListOfTask.get(taskId).sort(new Comparator<Map.Entry<Integer, Double>>() {
-
-						@Override
-						public int compare(Entry<Integer, Double> o1, Entry<Integer, Double> o2) {
-							// TODO Auto-generated method stub
-							return o2.getValue().compareTo(o1.getValue());
-						}
-						
-					});
+					
 					boolean success = true;
 					int successDC = -1;
-					for(Map.Entry<Integer, Double> iterm:sortedListOfTask.get(taskId)) {
+					for(Map.Entry<Integer, Double> iterm:job.sortedListOfTask.get(taskId)) {
 						int dcindex = iterm.getKey();
 						int xindex = tindex * Parameters.numberOfDC + dcindex;
 						success = true;
 						// when the dc is not too far
-						if(job.uselessDCforTask[xindex] != 0) {
+//						if(job.uselessDCforTask[xindex] != 0) {
 							// verify that the resource is enough
 							
 							// machines
@@ -1141,7 +1143,7 @@ public class WorkflowScheduler extends DatacenterBroker {
 							bwOfSrcPos = new HashMap<>();
 							if(job.TotalTransferDataSize[xindex]>0) {
 								for(int dataindex = 0; dataindex < Parameters.ubOfData; dataindex++) {
-									double neededBw = job.transferDataSize[xindex][dataindex];
+									double neededBw = job.bandwidth[xindex][dataindex];
 									int srcPos = (int) job.datapos[tindex][dataindex];
 									if(bwOfSrcPos.containsKey(srcPos)) {
 										double oldvalue = bwOfSrcPos.get(srcPos);
@@ -1159,14 +1161,17 @@ public class WorkflowScheduler extends DatacenterBroker {
 							}
 							if(success == true) {
 								SlotArray[0][dcindex] -= 1;
-								DownArray[0][dcindex] -= Parameters.bwBaselineOfDC[dcindex];
+								if(job.TotalTransferDataSize[xindex]>0) {
+									DownArray[0][dcindex] -= Parameters.bwBaselineOfDC[dcindex];
+
+								}
 								for(int pos : bwOfSrcPos.keySet()) {
 									UpArray[0][pos]-=bwOfSrcPos.get(pos);
 								}
 								successDC = dcindex;
 								break;
 							}
-						}
+//						}
 					}
 					if(success == true) {
 						
@@ -1274,9 +1279,9 @@ public class WorkflowScheduler extends DatacenterBroker {
 						Down.set(pos, DownArray[0][dcindex]);
 					}
 					
-					result = taskAssign.copyStrategy(4,xOrig,tasknum,dcnum,allRateMuArray,allRateSigmaArray,TotalTransferDataSize,data,datapos,bandwidth,Slot,Up,Down,r,slotlimit);
+					result = taskAssign.copyStrategy(4,xOrig,tasknum,dcnum,allRateMuArray,allRateSigmaArray,TotalTransferDataSize,data,datapos,bandwidth,Slot,Up,Down,uselessDCforTask,uselessDCforTask,r,slotlimit);
 //					result = taskAssign.copyStrategy_optimizeExp_Traverse(4,xOrig,tasknum,dcnum,allRateMuArray,allRateSigmaArray,TotalTransferDataSize,data,datapos,bandwidth,Slot,Up,Down,uselessDCforTask,r,slotlimit);
-//					result = taskAssign.copyStrategy_optimizeAll_orderedRes(4,xOrig,tasknum,dcnum,allRateMuArray,allRateSigmaArray,TotalTransferDataSize,data,datapos,bandwidth,Slot,Up,Down,r,slotlimit);
+//					result = taskAssign.copyStrategy_optimizeAll_orderedRes(4,xOrig,tasknum,dcnum,allRateMuArray,allRateSigmaArray,TotalTransferDataSize,data,datapos,bandwidth,Slot,Up,Down,uselessDCforTask,r,slotlimit);
 //					result = taskAssign.copyStrategy_optimizeAll_Traverse(4,xOrig,tasknum,dcnum,allRateMuArray,allRateSigmaArray,TotalTransferDataSize,data,datapos,bandwidth,Slot,Up,Down,uselessDCforTask,r,slotlimit);
 					
 					xAssign = (MWNumericArray)result[0];
@@ -1296,30 +1301,40 @@ public class WorkflowScheduler extends DatacenterBroker {
 					// Queue<Vm> taskSlotsKeptIdle = new LinkedList<>();
 					Queue<Task> taskSubmitted = new LinkedList<>();
 					// successful assignment
+					
 					for (int tindex = 0; tindex < unscheduledTaskNum; tindex++) {
 						Task task = job.unscheduledTaskList.get(tindex);
+						boolean submitflag = false;
 						for (int dcindex = 0; dcindex < Parameters.numberOfDC; dcindex++) {
-							if (x[tindex*Parameters.numberOfDC + dcindex] == 1) {
-								Vm vm = idleTaskSlotsOfDC.get(dcindex + DCbase).remove();
-								if (tasks.containsKey(task.getCloudletId())) {
-									Task speculativeTask = new Task(task);
-									speculativeTask.setAssignmentDCId(dcindex + DCbase);
-									speculativeTask.assignmentDCindex = dcindex;
-									speculativeTask.setSpeculativeCopy(true);
-									speculativeTasks.get(speculativeTask.getCloudletId()).add(speculativeTask);
-									submitSpeculativeTask(speculativeTask, vm);
-								} else {
-									task.setAssignmentDCId(dcindex + DCbase);
-									task.assignmentDCindex = dcindex;
-									tasks.put(task.getCloudletId(), task);
-									submitTask(task, vm);
-									speculativeTasks.put(task.getCloudletId(), new LinkedList<>());
+							if (x[tindex*Parameters.numberOfDC + dcindex] != 0) {
+								if(submitflag == false) {
+									submitflag = true;
 								}
+								int submittedNum = (int) x[tindex*Parameters.numberOfDC + dcindex];
+								for(int copyindex = 0; copyindex < submittedNum; copyindex++) {
+									Vm vm = idleTaskSlotsOfDC.get(dcindex + DCbase).remove();
+									if (tasks.containsKey(task.getCloudletId())) {
+										Task speculativeTask = new Task(task);
+										speculativeTask.setAssignmentDCId(dcindex + DCbase);
+										speculativeTask.assignmentDCindex = dcindex;
+										speculativeTask.setSpeculativeCopy(true);
+										speculativeTasks.get(speculativeTask.getCloudletId()).add(speculativeTask);
+										submitSpeculativeTask(speculativeTask, vm);
+									} else {
+										task.setAssignmentDCId(dcindex + DCbase);
+										task.assignmentDCindex = dcindex;
+										tasks.put(task.getCloudletId(), task);
+										submitTask(task, vm);
+										speculativeTasks.put(task.getCloudletId(), new LinkedList<>());
+									}
+								}
+								
 							}
 						}
-						taskSubmitted.add(task);
+						if(submitflag == true) {
+							taskSubmitted.add(task);
+						}
 					}
-					
 					// there to verify that modify the job 
 					// JobFactory whether change the corresponding value
 					// JobList whether change the corresponding value
@@ -1489,207 +1504,207 @@ public class WorkflowScheduler extends DatacenterBroker {
     }    
     
     
-	protected int submitTasks() {
-		// Queue<Vm> taskSlotsKeptIdle = new LinkedList<>();
-		Queue<Task> taskSubmitted = new LinkedList<>();
-		// compute the task assignment among datacenters for ready tasks
-		Integer numberOfTask = getTaskQueue().size();
-		
-		int tasknum = numberOfTask;
-		int dcnum = Parameters.numberOfDC;
-		int iteration_bound = Parameters.boundOfIter;
-		double[][] probArray = new double[Parameters.numberOfDC][4];
-		double[][] allDuraArray = new double[numberOfTask*Parameters.numberOfDC][4];
-		int[] data = new int[numberOfTask];
-		double[][] datapos = new double[numberOfTask][Parameters.ubOfData];
-		double[][] bandwidth = new double[numberOfTask*Parameters.numberOfDC][Parameters.ubOfData];
-		double[][] SlotArray = new double[1][Parameters.numberOfDC];
-		double[][] UpArray = new double[1][Parameters.numberOfDC];
-		double[][] DownArray = new double[1][Parameters.numberOfDC];
-		double[] xb = null;
-		int flagi = 0;
-		LinkedList<Task> ReadyTasks = (LinkedList<Task>)getTaskQueue();
-		
-		//probArray
-		for (int dcindex = 0; dcindex < Parameters.numberOfDC; dcindex++) {
-			for (int iterm = 0; iterm < 4; iterm++) {
-				double value = 0d;
-				switch (iterm) {
-				case 0:
-					value = (1-Parameters.likelihoodOfDCFailure[dcindex])*(1-Parameters.likelihoodOfFailure[dcindex])*(1-Parameters.likelihoodOfStragglerOfDC[dcindex]);
-					break;
-				case 1:
-					value = (1-Parameters.likelihoodOfDCFailure[dcindex])*(1-Parameters.likelihoodOfFailure[dcindex])*Parameters.likelihoodOfStragglerOfDC[dcindex];
-					break;
-				case 2:
-					value = (1-Parameters.likelihoodOfDCFailure[dcindex])*Parameters.likelihoodOfFailure[dcindex];
-					break;
-				case 3:
-					value = Parameters.likelihoodOfDCFailure[dcindex];
-					break;
-				default:
-					break;
-				}
-				probArray[dcindex][iterm] = value;
-			}
-		}
-		
-		//data datapos 
-		double[] Totaldatasize = new double[numberOfTask];
-		double[][] datasize = new double[numberOfTask][Parameters.ubOfData];
-		
-		for (int tindex = 0; tindex < numberOfTask; tindex++) {
-			Task task = ReadyTasks.get(tindex);
-			data[tindex] = task.numberOfData;
-			Totaldatasize[tindex] = 0d;
-			
-			for(int dataindex = 0; dataindex < task.numberOfData; dataindex++) {
-				datapos[tindex][dataindex] = task.positionOfData[dataindex];
-				task.positionOfDataID[dataindex] = task.positionOfData[dataindex] + DCbase;
-				datasize[tindex][dataindex] = task.sizeOfData[dataindex];
-				Totaldatasize[tindex] += task.sizeOfData[dataindex];
-			}
-			ReadyTasks.set(tindex, task);
-		}
-		
-		//bandwidth allDuraArray
-		for (int tindex = 0; tindex < numberOfTask; tindex++) {
-			Task task = ReadyTasks.get(tindex);
-			for (int dcindex = 0; dcindex < Parameters.numberOfDC; dcindex++) {
-				int xindex = tindex*Parameters.numberOfDC + dcindex;
-				int numberOfTransferData = 0;
-				int datanumber = (int)data[tindex];
-				double[] datasizeOfTask = datasize[tindex];
-				double TotaldatasizeOfTask = Totaldatasize[tindex];
-				for(int dataindex = 0; dataindex < datanumber; dataindex++) {
-					if (datapos[tindex][dataindex] == dcindex) {
-						TotaldatasizeOfTask -= datasizeOfTask[dataindex];
-						datasizeOfTask[dataindex] = 0;
-					}else {
-						numberOfTransferData++;
-					}
-				} 
-				if(datanumber > 0) {
-					task.numberOfTransferData[dcindex] = numberOfTransferData;
-				}
-				
-				for(int dataindex = 0; dataindex < datanumber; dataindex++) {
-					if (TotaldatasizeOfTask > 0) {
-						bandwidth[xindex][dataindex] = Parameters.bwBaselineOfDC[dcindex]*datasizeOfTask[dataindex]/TotaldatasizeOfTask;
-						
-					}else {
-						bandwidth[xindex][dataindex] = 0;
-					}
-				}
-				for (int iterm = 0; iterm < 4; iterm++) {
-					double value = 0d;
-					switch (iterm) {
-					case 0:
-						value = task.getMi()/Parameters.MIPSbaselineOfDC[dcindex]
-								+ TotaldatasizeOfTask/Parameters.bwBaselineOfDC[dcindex]
-								+ 2*task.getIo()/Parameters.ioBaselineOfDC[dcindex];
-						break;
-					case 1:
-						value = task.getMi()/(Parameters.MIPSbaselineOfDC[dcindex]*Parameters.stragglerPerformanceCoefficientOfDC[dcindex])
-								+ TotaldatasizeOfTask/(Parameters.bwBaselineOfDC[dcindex]*Parameters.stragglerPerformanceCoefficientOfDC[dcindex])
-								+ 2*task.getIo()/(Parameters.ioBaselineOfDC[dcindex]*Parameters.stragglerPerformanceCoefficientOfDC[dcindex]);
-						break;
-					case 2:
-						value = (Parameters.runtimeFactorInCaseOfFailure[dcindex] + 1)
-								* task.getMi()/Parameters.MIPSbaselineOfDC[dcindex]
-								+ TotaldatasizeOfTask/Parameters.bwBaselineOfDC[dcindex]
-								+ 2*task.getIo()/Parameters.ioBaselineOfDC[dcindex];
-						break;
-					case 3:
-						value = 2
-								* task.getMi()/Parameters.MIPSbaselineOfDC[dcindex]
-								+ TotaldatasizeOfTask/Parameters.bwBaselineOfDC[dcindex]
-								+ 2*task.getIo()/Parameters.ioBaselineOfDC[dcindex];
-						break;
-					default:
-						break;
-					}
-					allDuraArray[xindex][iterm] = value;
-				}
-			}
-			ReadyTasks.set(tindex, task);
-			
-		}
-		
-		//SlotArray UpArray DownArray
-		
-		for(int dcindex = 0; dcindex < Parameters.numberOfDC; dcindex++) {
-			if(healthyStateOfDC.get(dcindex + DCbase) == true) {
-				SlotArray[0][dcindex] = idleTaskSlotsOfDC.get(dcindex + DCbase).size();
-			}else {
-				SlotArray[0][dcindex] = 0;
-			}
-			UpArray[0][dcindex] = getUplinkOfDC().get(dcindex + DCbase);
-			DownArray[0][dcindex] = getDownlinkOfDC().get(dcindex + DCbase);
-		}
-		
-		try {
-			
-			MatlabTypeConverter processor = new MatlabTypeConverter(proxy);
-			processor.setNumericArray("probArray", new MatlabNumericArray(probArray, null));
-			processor.setNumericArray("allDuraArray", new MatlabNumericArray(allDuraArray, null));
-			processor.setNumericArray("bandwidth", new MatlabNumericArray(bandwidth,null));
-			processor.setNumericArray("SlotArray", new MatlabNumericArray(SlotArray, null));
-			processor.setNumericArray("UpArray", new MatlabNumericArray(UpArray, null));
-			processor.setNumericArray("DownArray", new MatlabNumericArray(DownArray,null));
-			processor.setNumericArray("datapos", new MatlabNumericArray(datapos, null));
-			proxy.setVariable("tasknum", tasknum);
-			proxy.setVariable("dcnum", dcnum);
-			proxy.setVariable("iteration_bound", iteration_bound);
-			proxy.setVariable("data", data);
-			
-			
-		//	proxy.eval("[x,flag] = command(tasknum,dcnum,probArray,allDuraArray,data,datapos,bandwidth,SlotArray,UpArray,DownArray,iteration_bound);");
-			proxy.eval("[x,flag] = commandwithnocopy(tasknum,dcnum,probArray,allDuraArray,data,datapos,bandwidth,SlotArray,UpArray,DownArray,iteration_bound);");
-			
-			xb = (double[])proxy.getVariable("x");
-			flagi = (int)((double[])proxy.getVariable("flag"))[0];
-			
-		} catch (MatlabInvocationException e) {
-			e.printStackTrace();
-		}
-		
-		
-		
-		
-		if (flagi > 0) {
-			// successful assignment
-			for (int tindex = 0; tindex < numberOfTask; tindex++) {
-				Task task = ReadyTasks.get(tindex);
-				for (int dcindex = 0; dcindex < Parameters.numberOfDC; dcindex++) {
-					if (xb[tindex*Parameters.numberOfDC + dcindex] == 1) {
-						Vm vm = idleTaskSlotsOfDC.get(dcindex + DCbase).remove();
-						if (tasks.containsKey(task.getCloudletId())) {
-							Task speculativeTask = new Task(task);
-							speculativeTask.setAssignmentDCId(dcindex + DCbase);
-							speculativeTask.assignmentDCindex = dcindex;
-							speculativeTask.setSpeculativeCopy(true);
-							speculativeTasks.get(speculativeTask.getCloudletId()).add(speculativeTask);
-							submitSpeculativeTask(speculativeTask, vm);
-						} else {
-							task.setAssignmentDCId(dcindex + DCbase);
-							task.assignmentDCindex = dcindex;
-							tasks.put(task.getCloudletId(), task);
-							submitTask(task, vm);
-							speculativeTasks.put(task.getCloudletId(), new LinkedList<>());
-						}
-					}
-				}
-				taskSubmitted.add(task);
-			}
-			getTaskQueue().removeAll(taskSubmitted);
-		}
-		
-		return flagi;
-		
-	}
-    
-    
+//	protected int submitTasks() {
+//		// Queue<Vm> taskSlotsKeptIdle = new LinkedList<>();
+//		Queue<Task> taskSubmitted = new LinkedList<>();
+//		// compute the task assignment among datacenters for ready tasks
+//		Integer numberOfTask = getTaskQueue().size();
+//		
+//		int tasknum = numberOfTask;
+//		int dcnum = Parameters.numberOfDC;
+//		int iteration_bound = Parameters.boundOfIter;
+//		double[][] probArray = new double[Parameters.numberOfDC][4];
+//		double[][] allDuraArray = new double[numberOfTask*Parameters.numberOfDC][4];
+//		int[] data = new int[numberOfTask];
+//		double[][] datapos = new double[numberOfTask][Parameters.ubOfData];
+//		double[][] bandwidth = new double[numberOfTask*Parameters.numberOfDC][Parameters.ubOfData];
+//		double[][] SlotArray = new double[1][Parameters.numberOfDC];
+//		double[][] UpArray = new double[1][Parameters.numberOfDC];
+//		double[][] DownArray = new double[1][Parameters.numberOfDC];
+//		double[] xb = null;
+//		int flagi = 0;
+//		LinkedList<Task> ReadyTasks = (LinkedList<Task>)getTaskQueue();
+//		
+//		//probArray
+//		for (int dcindex = 0; dcindex < Parameters.numberOfDC; dcindex++) {
+//			for (int iterm = 0; iterm < 4; iterm++) {
+//				double value = 0d;
+//				switch (iterm) {
+//				case 0:
+//					value = (1-Parameters.likelihoodOfDCFailure[dcindex])*(1-Parameters.likelihoodOfFailure[dcindex])*(1-Parameters.likelihoodOfStragglerOfDC[dcindex]);
+//					break;
+//				case 1:
+//					value = (1-Parameters.likelihoodOfDCFailure[dcindex])*(1-Parameters.likelihoodOfFailure[dcindex])*Parameters.likelihoodOfStragglerOfDC[dcindex];
+//					break;
+//				case 2:
+//					value = (1-Parameters.likelihoodOfDCFailure[dcindex])*Parameters.likelihoodOfFailure[dcindex];
+//					break;
+//				case 3:
+//					value = Parameters.likelihoodOfDCFailure[dcindex];
+//					break;
+//				default:
+//					break;
+//				}
+//				probArray[dcindex][iterm] = value;
+//			}
+//		}
+//		
+//		//data datapos 
+//		double[] Totaldatasize = new double[numberOfTask];
+//		double[][] datasize = new double[numberOfTask][Parameters.ubOfData];
+//		
+//		for (int tindex = 0; tindex < numberOfTask; tindex++) {
+//			Task task = ReadyTasks.get(tindex);
+//			data[tindex] = task.numberOfData;
+//			Totaldatasize[tindex] = 0d;
+//			
+//			for(int dataindex = 0; dataindex < task.numberOfData; dataindex++) {
+//				datapos[tindex][dataindex] = task.positionOfData[dataindex];
+//				task.positionOfDataID[dataindex] = task.positionOfData[dataindex] + DCbase;
+//				datasize[tindex][dataindex] = task.sizeOfData[dataindex];
+//				Totaldatasize[tindex] += task.sizeOfData[dataindex];
+//			}
+//			ReadyTasks.set(tindex, task);
+//		}
+//		
+//		//bandwidth allDuraArray
+//		for (int tindex = 0; tindex < numberOfTask; tindex++) {
+//			Task task = ReadyTasks.get(tindex);
+//			for (int dcindex = 0; dcindex < Parameters.numberOfDC; dcindex++) {
+//				int xindex = tindex*Parameters.numberOfDC + dcindex;
+//				int numberOfTransferData = 0;
+//				int datanumber = (int)data[tindex];
+//				double[] datasizeOfTask = datasize[tindex];
+//				double TotaldatasizeOfTask = Totaldatasize[tindex];
+//				for(int dataindex = 0; dataindex < datanumber; dataindex++) {
+//					if (datapos[tindex][dataindex] == dcindex) {
+//						TotaldatasizeOfTask -= datasizeOfTask[dataindex];
+//						datasizeOfTask[dataindex] = 0;
+//					}else {
+//						numberOfTransferData++;
+//					}
+//				} 
+//				if(datanumber > 0) {
+//					task.numberOfTransferData[dcindex] = numberOfTransferData;
+//				}
+//				
+//				for(int dataindex = 0; dataindex < datanumber; dataindex++) {
+//					if (TotaldatasizeOfTask > 0) {
+//						bandwidth[xindex][dataindex] = Parameters.bwBaselineOfDC[dcindex]*datasizeOfTask[dataindex]/TotaldatasizeOfTask;
+//						
+//					}else {
+//						bandwidth[xindex][dataindex] = 0;
+//					}
+//				}
+//				for (int iterm = 0; iterm < 4; iterm++) {
+//					double value = 0d;
+//					switch (iterm) {
+//					case 0:
+//						value = task.getMi()/Parameters.MIPSbaselineOfDC[dcindex]
+//								+ TotaldatasizeOfTask/Parameters.bwBaselineOfDC[dcindex]
+//								+ 2*task.getIo()/Parameters.ioBaselineOfDC[dcindex];
+//						break;
+//					case 1:
+//						value = task.getMi()/(Parameters.MIPSbaselineOfDC[dcindex]*Parameters.stragglerPerformanceCoefficientOfDC[dcindex])
+//								+ TotaldatasizeOfTask/(Parameters.bwBaselineOfDC[dcindex]*Parameters.stragglerPerformanceCoefficientOfDC[dcindex])
+//								+ 2*task.getIo()/(Parameters.ioBaselineOfDC[dcindex]*Parameters.stragglerPerformanceCoefficientOfDC[dcindex]);
+//						break;
+//					case 2:
+//						value = (Parameters.runtimeFactorInCaseOfFailure[dcindex] + 1)
+//								* task.getMi()/Parameters.MIPSbaselineOfDC[dcindex]
+//								+ TotaldatasizeOfTask/Parameters.bwBaselineOfDC[dcindex]
+//								+ 2*task.getIo()/Parameters.ioBaselineOfDC[dcindex];
+//						break;
+//					case 3:
+//						value = 2
+//								* task.getMi()/Parameters.MIPSbaselineOfDC[dcindex]
+//								+ TotaldatasizeOfTask/Parameters.bwBaselineOfDC[dcindex]
+//								+ 2*task.getIo()/Parameters.ioBaselineOfDC[dcindex];
+//						break;
+//					default:
+//						break;
+//					}
+//					allDuraArray[xindex][iterm] = value;
+//				}
+//			}
+//			ReadyTasks.set(tindex, task);
+//			
+//		}
+//		
+//		//SlotArray UpArray DownArray
+//		
+//		for(int dcindex = 0; dcindex < Parameters.numberOfDC; dcindex++) {
+//			if(healthyStateOfDC.get(dcindex + DCbase) == true) {
+//				SlotArray[0][dcindex] = idleTaskSlotsOfDC.get(dcindex + DCbase).size();
+//			}else {
+//				SlotArray[0][dcindex] = 0;
+//			}
+//			UpArray[0][dcindex] = getUplinkOfDC().get(dcindex + DCbase);
+//			DownArray[0][dcindex] = getDownlinkOfDC().get(dcindex + DCbase);
+//		}
+//		
+//		try {
+//			
+//			MatlabTypeConverter processor = new MatlabTypeConverter(proxy);
+//			processor.setNumericArray("probArray", new MatlabNumericArray(probArray, null));
+//			processor.setNumericArray("allDuraArray", new MatlabNumericArray(allDuraArray, null));
+//			processor.setNumericArray("bandwidth", new MatlabNumericArray(bandwidth,null));
+//			processor.setNumericArray("SlotArray", new MatlabNumericArray(SlotArray, null));
+//			processor.setNumericArray("UpArray", new MatlabNumericArray(UpArray, null));
+//			processor.setNumericArray("DownArray", new MatlabNumericArray(DownArray,null));
+//			processor.setNumericArray("datapos", new MatlabNumericArray(datapos, null));
+//			proxy.setVariable("tasknum", tasknum);
+//			proxy.setVariable("dcnum", dcnum);
+//			proxy.setVariable("iteration_bound", iteration_bound);
+//			proxy.setVariable("data", data);
+//			
+//			
+//		//	proxy.eval("[x,flag] = command(tasknum,dcnum,probArray,allDuraArray,data,datapos,bandwidth,SlotArray,UpArray,DownArray,iteration_bound);");
+//			proxy.eval("[x,flag] = commandwithnocopy(tasknum,dcnum,probArray,allDuraArray,data,datapos,bandwidth,SlotArray,UpArray,DownArray,iteration_bound);");
+//			
+//			xb = (double[])proxy.getVariable("x");
+//			flagi = (int)((double[])proxy.getVariable("flag"))[0];
+//			
+//		} catch (MatlabInvocationException e) {
+//			e.printStackTrace();
+//		}
+//		
+//		
+//		
+//		
+//		if (flagi > 0) {
+//			// successful assignment
+//			for (int tindex = 0; tindex < numberOfTask; tindex++) {
+//				Task task = ReadyTasks.get(tindex);
+//				for (int dcindex = 0; dcindex < Parameters.numberOfDC; dcindex++) {
+//					if (xb[tindex*Parameters.numberOfDC + dcindex] == 1) {
+//						Vm vm = idleTaskSlotsOfDC.get(dcindex + DCbase).remove();
+//						if (tasks.containsKey(task.getCloudletId())) {
+//							Task speculativeTask = new Task(task);
+//							speculativeTask.setAssignmentDCId(dcindex + DCbase);
+//							speculativeTask.assignmentDCindex = dcindex;
+//							speculativeTask.setSpeculativeCopy(true);
+//							speculativeTasks.get(speculativeTask.getCloudletId()).add(speculativeTask);
+//							submitSpeculativeTask(speculativeTask, vm);
+//						} else {
+//							task.setAssignmentDCId(dcindex + DCbase);
+//							task.assignmentDCindex = dcindex;
+//							tasks.put(task.getCloudletId(), task);
+//							submitTask(task, vm);
+//							speculativeTasks.put(task.getCloudletId(), new LinkedList<>());
+//						}
+//					}
+//				}
+//				taskSubmitted.add(task);
+//			}
+//			getTaskQueue().removeAll(taskSubmitted);
+//		}
+//		
+//		return flagi;
+//		
+//	}
+//    
+//    
     
     
     

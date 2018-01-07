@@ -7,9 +7,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
-import java.util.zip.Inflater;
 
-import javax.imageio.stream.IIOByteBuffer;
 
 import org.cloudbus.cloudsim.Cloudlet;
 import org.cloudbus.cloudsim.Log;
@@ -29,13 +27,13 @@ import org.workflowsim.Job;
 import org.workflowsim.utils.ClusteringParameters;
 import org.workflowsim.utils.OverheadParameters;
 
-import com.ctc.wstx.dtd.StarModel;
 import com.mathworks.toolbox.javabuilder.*;
-import com.sun.org.apache.bcel.internal.generic.TypedInstruction;
 
 import de.huberlin.wbi.dcs.distributions.NormalDistribution;
 import de.huberlin.wbi.dcs.workflow.Task;
 import taskAssign.TaskAssign;
+import wtt.info.extractor.ModelExtractor;
+import wtt.info.generator.ModelGenerator;
 
 public class Parameters {
 	
@@ -218,9 +216,23 @@ public class Parameters {
         reduceMethod = rMethod;
         deadline = dl;
         maxDepth = 0;
-        generateWorkflow();
-        setInfoAmongDC();
-        createInfoOfDC();
+//        generateWorkflow();
+//        setInfoAmongDC();
+//        createInfoOfDC();
+//        try {
+//			ModelGenerator.save();
+//		} catch (IOException e) {
+//			e.printStackTrace();
+//		}
+        try {
+			ModelExtractor.extracte();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+        MIPSbaselineOfDC = getMIPSBaseline();
+    	bwBaselineOfDC = getBwBaseline();
+    	ioBaselineOfDC = getIoBaseline();
+    	nVms = sumOfVM();
     }
     
     /**
@@ -237,28 +249,32 @@ public class Parameters {
      * @param rMethod , reducer mode
      * @param dl, deadline of a workflow
      */
-    public static void init(
-            int vm, List<String> dax, String runtime, String datasize,
-            OverheadParameters op, ClusteringParameters cp,
-            SchedulingAlgorithm scheduler, PlanningAlgorithm planner, String rMethod,
-            long dl) {
-
-        cParams = cp;
-        vmNum = vm;
-        daxPaths = dax;
-        runtimePath = runtime;
-        datasizePath = datasize;
-
-        oParams = op;
-        schedulingAlgorithm = scheduler;
-        planningAlgorithm = planner;
-        reduceMethod = rMethod;
-        deadline = dl;
-        maxDepth = 0;
-        generateWorkflow();
-        setInfoAmongDC();
-        createInfoOfDC();
-    }
+//    public void init(
+//            int vm, List<String> dax, String runtime, String datasize,
+//            OverheadParameters op, ClusteringParameters cp,
+//            SchedulingAlgorithm scheduler, PlanningAlgorithm planner, String rMethod,
+//            long dl) {
+//
+//        cParams = cp;
+//        vmNum = vm;
+//        //daxPaths = dax;
+//        runtimePath = runtime;
+//        datasizePath = datasize;
+//
+//        oParams = op;
+//        schedulingAlgorithm = scheduler;
+//        planningAlgorithm = planner;
+//        reduceMethod = rMethod;
+//        deadline = dl;
+//        maxDepth = 0;
+//        generateWorkflow();
+//        setInfoAmongDC();
+//        createInfoOfDC();
+//        MIPSbaselineOfDC = getMIPSBaseline();
+//    	bwBaselineOfDC = getBwBaseline();
+//    	ioBaselineOfDC = getIoBaseline();
+//    	nVms = sumOfVM();
+//    }
 
     /**
      * Gets the overhead parameters
@@ -469,7 +485,27 @@ public class Parameters {
     		"C:/Users/han/git/GeoDCSimulation/dynamiccloudsim/config/dax/Montage_1000.xml",
     		"C:/Users/han/git/GeoDCSimulation/dynamiccloudsim/config/dax/Sipht_1000.xml"
     };
-    
+    public static String[] workflow_relative_Candidate = {
+    		"./dynamiccloudsim/config/dax/CyberShake_50.xml",
+    		"./dynamiccloudsim/config/dax/CyberShake_100.xml",
+    		"./dynamiccloudsim/config/dax/Epigenomics_24.xml",
+    		"./dynamiccloudsim/config/dax/Epigenomics_46.xml",
+    		"./dynamiccloudsim/config/dax/Epigenomics_100.xml",
+    		"./dynamiccloudsim/config/dax/Inspiral_30.xml",
+    		"./dynamiccloudsim/config/dax/Inspiral_50.xml",
+    		"./dynamiccloudsim/config/dax/Inspiral_100.xml",
+    		"./dynamiccloudsim/config/dax/Montage_25.xml",
+    		"./dynamiccloudsim/config/dax/Montage_50.xml",
+    		"./dynamiccloudsim/config/dax/Montage_100.xml",
+    		"./dynamiccloudsim/config/dax/Sipht_30.xml",
+    		"./dynamiccloudsim/config/dax/Sipht_60.xml",
+    		"./dynamiccloudsim/config/dax/Sipht_100.xml",
+    		"./dynamiccloudsim/config/dax/CyberShake_1000.xml",
+    		"./dynamiccloudsim/config/dax/Epigenomics_997.xml",
+    		"./dynamiccloudsim/config/dax/Inspiral_1000.xml",
+    		"./dynamiccloudsim/config/dax/Montage_1000.xml",
+    		"./dynamiccloudsim/config/dax/Sipht_1000.xml"
+    };
     
     
 	
@@ -478,7 +514,7 @@ public class Parameters {
     public static double lambda = 0.083;
     // default 3 days workflow
     // defend time exceed INT.MAX_VALUE
-    public static double seconds = 3d * 24 * 60 * 60;
+    public static double seconds = 10;
     
     public static Map<Double, List<String>> workflowArrival;
     
@@ -511,13 +547,13 @@ public class Parameters {
 						if(workflowSizeProb < 0.89) {
 							// 0-13
 							int candidateIndex = (int)(Math.random() * 13);
-							workflowFileName.add(workflowCandidate[candidateIndex]);
+							workflowFileName.add(workflow_relative_Candidate[candidateIndex]);
 						}else if(workflowSizeProb < 0.11) {
 							// 14-18
 							int candidateIndex = (int)(Math.random() * 4 + 14);
-							workflowFileName.add(workflowCandidate[candidateIndex]);
+							workflowFileName.add(workflow_relative_Candidate[candidateIndex]);
 						}
-					}
+					} 
 					workflowArrival.put((double)timeindex, workflowFileName);
 					
 				}
@@ -753,7 +789,7 @@ public class Parameters {
 		GraphReaderBrite brite = new GraphReaderBrite();
 		TopologicalGraph topograph = null;
 		try {
-			topograph = brite.readGraphFile("topo.brite");
+			topograph = brite.readGraphFile("./dynamiccloudsim/world.brite");
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -852,7 +888,7 @@ public class Parameters {
 		int Medium_part = (int)(numberOfDC * 0.2) + Large_part;
 		int dcindex = 0;
 		for(int dccounter = 0; dccounter < numberOfDC; dccounter++) {
-			dcindex = I[dccounter];
+			dcindex = I[dccounter]-1;
 			if(dccounter < Large_part) {
 				//Large DC
 				int Type = (int)(Math.random()*machineType);
@@ -985,12 +1021,20 @@ public class Parameters {
 				//Small DC
 				int Type = (int)(Math.random()*machineType);
 				for(int typeindex = 0; typeindex < machineType; typeindex++) {
-					if(Type == typeindex) {
-						nOpteronOfMachineTypeOfDC[dcindex][typeindex] = (int)(Math.random()*500 + 50);
-						numberOfVMperDC[dcindex] = nOpteronOfMachineTypeOfDC[dcindex][typeindex];
-					}else {
-						nOpteronOfMachineTypeOfDC[dcindex][typeindex] = 0;
+					try {
+						if(Type == typeindex) {
+							nOpteronOfMachineTypeOfDC[dcindex][typeindex] = (int)(Math.random()*500 + 50);
+							numberOfVMperDC[dcindex] = nOpteronOfMachineTypeOfDC[dcindex][typeindex];
+						}else {
+							
+							nOpteronOfMachineTypeOfDC[dcindex][typeindex] = 0;
+							
+							
+						}
+					}catch (Exception e) {
+						e.printStackTrace();
 					}
+					
 				}
 				cpuHeterogeneityDistributionOfDC[dcindex] = Distribution.NORMAL;
 				// 0.3 0.4 0.6
@@ -1161,11 +1205,11 @@ public class Parameters {
 	
 	
 	// datacenter number
-	public static int numberOfDC = 1000;
+	public static int numberOfDC = 10;
 	
 	
 	// number of machineType in each datacenter
-	public static int[][] nOpteronOfMachineTypeOfDC = {{200,200,100},{200,200,100}};
+	public static int[][] nOpteronOfMachineTypeOfDC = new int[numberOfDC][machineType];
 	
 	
 	
@@ -1184,9 +1228,9 @@ public class Parameters {
 
 	
 	// performance baseline of datacenter
-	public static double[] MIPSbaselineOfDC = getMIPSBaseline();
-	public static double[] bwBaselineOfDC = getBwBaseline();
-	public static double[] ioBaselineOfDC = getIoBaseline();
+	public static double[] MIPSbaselineOfDC;
+	public static double[] bwBaselineOfDC;
+	public static double[] ioBaselineOfDC;
 	
 	
 	//upperbound of datasize
@@ -1208,7 +1252,7 @@ public class Parameters {
 	
 	// vm params
 	
-	public static int nVms = sumOfVM(numberOfVMperDC);
+	public static int nVms;
 	public static int taskSlotsPerVm = 1;
 
 	public static double numberOfCusPerPe = 1;
@@ -1391,7 +1435,7 @@ public class Parameters {
 		return result;
 	}
 
-	public static int sumOfVM(int[] vmlist) {
+	public static int sumOfVM() {
 		int sumOfVM = 0;
 		for (int index = 0; index<numberOfDC;index++) {
 			sumOfVM += numberOfVMperDC[index];

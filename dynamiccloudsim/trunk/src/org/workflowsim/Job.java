@@ -53,10 +53,14 @@ public class Job extends Task {
     public Map<Integer, Double> currentGreateRate;
     public Map<Integer, Integer> currentGreatePosition;
     
+    public Map<Integer, Double> unscheduledGreateRate;
+    public Map<Integer, Integer> unscheduledGreatePosition;
+    
     public List<Integer> failedAssignTaskIndexInGreateAssign;
 
     
     // required information when scheduled
+    public Map<Integer,List<Map.Entry<Integer, Double>>> sortedListOfTask;
     public double[] muParaOfTaskInDC;
 	public double[] sigmaParaOfTaskInDC;
 	public int[] uselessDCforTask;
@@ -74,8 +78,10 @@ public class Job extends Task {
     
 	public double[] TotalTransferDataSize;
 	public double[][] transferDataSize;
+	public double[] bestRateOfTask;
 	
 	public double[] greatX;
+	public boolean sortedflag;
     
     
     
@@ -103,16 +109,27 @@ public class Job extends Task {
         this.schedulingTaskList = new ArrayList<>();
         currentGreateRate = new HashMap<>();
         currentGreatePosition = new HashMap<>();
+        unscheduledGreateRate = new HashMap<>();
+        unscheduledGreatePosition = new HashMap<>();
         failedAssignTaskIndexInGreateAssign = new ArrayList<>();
+        sortedflag = false;
     }
 
 
     public double getJobUtility() {
     	double utility = 0d;
-    	for(int tindex = 0; tindex < taskList.size(); tindex++) {
+    	for(int tindex = 0; tindex < unscheduledTaskList.size(); tindex++) {
     		Task task  = taskList.get(tindex);
-    		double rate = currentGreateRate.get(task.getCloudletId());
-    		int pos = currentGreatePosition.get(task.getCloudletId());
+    		double rate;
+    		int pos;
+    		if(currentGreateRate.containsKey(task.getCloudletId())) {
+    			rate = currentGreateRate.get(task.getCloudletId());
+        		pos = currentGreatePosition.get(task.getCloudletId());
+    		}else {
+    			rate = unscheduledGreateRate.get(task.getCloudletId());
+        		pos = unscheduledGreatePosition.get(task.getCloudletId());
+    		}
+    		
     		double task_workload = task.getMi()+task.getIo()+task.TotalTransferDataSize[pos];
     		utility += task_workload/rate;
     	}

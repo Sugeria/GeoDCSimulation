@@ -51,7 +51,7 @@ public class HeterogeneousCloudlet extends Cloudlet {
 	}
 	
 	public void setMi(long mi) {
-		this.mi = mi;
+		this.mi = 0;
 		incMi(mi);
 	}
 	

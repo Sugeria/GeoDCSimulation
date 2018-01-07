@@ -97,7 +97,7 @@ public class GraphReaderBrite implements GraphReaderIF {
 		StringTokenizer tokenizer = new StringTokenizer(nodeLine);
 
 		// number of node parameters to parse (counts at linestart)
-		int parameters = 3;
+		int parameters = 5;
 
 		// first test to step to the next parsing-state (edges)
 		if (nodeLine.contains("Edges:")) {

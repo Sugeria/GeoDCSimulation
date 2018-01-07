@@ -150,10 +150,12 @@ public final class WorkflowPlanner extends SimEntity {
             	}
                 break;
             case CloudSimTags.WORKFLOW_ARRIVAL:
+            	
             	List<String> daxList = (ArrayList<String>)ev.getData();
             	if(daxList.size() == 1) {
             		getWorkflowParser().daxPath = daxList.get(0);
             	}else {
+            		getWorkflowParser().daxPath = null;
             		getWorkflowParser().daxPaths = daxList;
             	}
             	getWorkflowParser().parse();
@@ -163,7 +165,7 @@ public final class WorkflowPlanner extends SimEntity {
                 processPlanning();
                 //processImpactFactors(getTaskList());
                 sendNow(getClusteringEngineId(), WorkflowSimTags.JOB_SUBMIT, taskListOfWorkflow);
-                getWorkflowParser().taskListOfWorkflow.clear();
+                //getWorkflowParser().taskListOfWorkflow.clear();
             	break;
             case CloudSimTags.END_OF_SIMULATION:
                 shutdownEntity();

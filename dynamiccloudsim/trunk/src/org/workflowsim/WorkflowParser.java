@@ -117,6 +117,7 @@ public final class WorkflowParser {
      * Start to parse a workflow which is a xml file(s).
      */
     public void parse() {
+    	taskListOfWorkflow.clear();
         if (this.daxPath != null) {
         	workflowId++;
             parseXmlFile(this.daxPath,workflowId);

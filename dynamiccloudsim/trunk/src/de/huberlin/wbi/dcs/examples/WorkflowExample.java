@@ -4,6 +4,7 @@ import java.io.File;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Random;
@@ -22,6 +23,12 @@ import org.workflowsim.utils.ClusteringParameters;
 import org.workflowsim.utils.OverheadParameters;
 import org.workflowsim.utils.ReplicaCatalog;
 
+import com.mathworks.toolbox.javabuilder.MWClassID;
+import com.mathworks.toolbox.javabuilder.MWComplexity;
+import com.mathworks.toolbox.javabuilder.MWException;
+import com.mathworks.toolbox.javabuilder.MWNumericArray;
+
+import EDU.oswego.cs.dl.util.concurrent.FJTask.Par;
 import de.huberlin.wbi.dcs.CloudletSchedulerGreedyDivided;
 import de.huberlin.wbi.dcs.DynamicHost;
 import de.huberlin.wbi.dcs.DynamicModel;
@@ -39,6 +46,8 @@ import de.huberlin.wbi.dcs.workflow.scheduler.GreedyQueueScheduler;
 import de.huberlin.wbi.dcs.workflow.scheduler.HEFTScheduler;
 import de.huberlin.wbi.dcs.workflow.scheduler.LATEScheduler;
 import de.huberlin.wbi.dcs.workflow.scheduler.StaticRoundRobinScheduler;
+import taskAssign.TaskAssign;
+import transFunc.Trans;
 import de.huberlin.wbi.dcs.workflow.scheduler.AbstractWorkflowScheduler;
 
 public class WorkflowExample {
@@ -46,7 +55,7 @@ public class WorkflowExample {
 	public static void main(String[] args) {
 		double totalRuntime = 0d;
 		//Parameters.parseParameters(args);
-
+		
 		try {
 			for (int i = 0; i < Parameters.numberOfRuns; i++) {
 				WorkflowExample ex = new WorkflowExample();
@@ -56,7 +65,7 @@ public class WorkflowExample {
 				/**
 	             * Should change this based on real physical path
 	             */
-	            String daxPath = "C:/Users/han/git/WorkflowSim-1.0/config/dax/Montage_1000.xml";
+	            String daxPath = "./dynamiccloudsim/config/dax/Montage_1000.xml";
 	            File daxFile = new File(daxPath);
 	            if (!daxFile.exists()) {
 	                Log.printLine("Warning: Please replace daxPath with the physical path in your working environment!");
@@ -67,7 +76,7 @@ public class WorkflowExample {
 	             * algorithm should be INVALID such that the planner would not
 	             * override the result of the scheduler
 	             */
-	            Parameters.SchedulingAlgorithm sch_method = Parameters.SchedulingAlgorithm.MIN;
+	            Parameters.SchedulingAlgorithm sch_method = Parameters.SchedulingAlgorithm.MINRATE;
 	            Parameters.PlanningAlgorithm pln_method = Parameters.PlanningAlgorithm.INVALID;
 	            ReplicaCatalog.FileSystem file_system = ReplicaCatalog.FileSystem.SHARED;
 
@@ -80,14 +89,18 @@ public class WorkflowExample {
 	             * No Clustering
 	             */
 	            ClusteringParameters.ClusteringMethod method = ClusteringParameters.ClusteringMethod.HORIZONTAL;
-	            ClusteringParameters cp = new ClusteringParameters(0, 20, method, null);
+	            ClusteringParameters cp = new ClusteringParameters(10, 0, method, null);
 
 	            /**
 	             * Initialize static parameters
 	             */
+	            
 	            Parameters.init(Parameters.nVms, daxPath, null,
 	                    null, op, cp, sch_method, pln_method,
 	                    null, 0);
+	            
+	            
+	            
 	            ReplicaCatalog.init(file_system);
 				
 				
@@ -129,6 +142,7 @@ public class WorkflowExample {
 				// Start the simulation
 				CloudSim.startSimulation();
 	            List<Job> outputList0 = wfEngine.getJobsReceivedList();
+	            
 				CloudSim.stopSimulation();
 				Parameters.printJobList(outputList0);
 				totalRuntime += wfEngine.getScheduler(0).getRuntime();
@@ -147,6 +161,10 @@ public class WorkflowExample {
 	}
 	
 	
+
+	
+
+
 
 	public AbstractWorkflowScheduler createScheduler(int i) {
 		try {
@@ -232,43 +250,43 @@ public class WorkflowExample {
 			StringBuilder sb = new StringBuilder("Datacenter_");
 			StringBuilder dcname = sb;
 			dcname.append(String.valueOf(dcindex));
-			Para.setLikelihoodOfStraggler(Parameters.likelihoodOfStragglerOfDC[dcindex]);
-			Para.setStragglerPerformanceCoefficient(Parameters.stragglerPerformanceCoefficientOfDC[dcindex]);
-			
-			Para.setDCHeterogeneity(
-					Parameters.cpuHeterogeneityDistributionOfDC[dcindex],
-					Parameters.cpuHeterogeneityCVOfDC[dcindex],
-//					Parameters.cpuHeterogeneityAlphaOfDC[dcindex],
-//					Parameters.cpuHeterogeneityBetaOfDC[dcindex],
-//					Parameters.cpuHeterogeneityShapeOfDC[dcindex],
-//					Parameters.cpuHeterogeneityLocationOfDC[dcindex],
-//					Parameters.cpuHeterogeneityShiftOfDC[dcindex],
-//					Parameters.cpuHeterogeneityMinOfDC[dcindex],
-//					Parameters.cpuHeterogeneityMaxOfDC[dcindex],
-//					Parameters.cpuHeterogeneityPopulationOfDC[dcindex],
-					Parameters.ioHeterogeneityDistributionOfDC[dcindex],
-					Parameters.ioHeterogeneityCVOfDC[dcindex],
-//					Parameters.ioHeterogeneityAlphaOfDC[dcindex],
-//					Parameters.ioHeterogeneityBetaOfDC[dcindex],
-//					Parameters.ioHeterogeneityShapeOfDC[dcindex],
-//					Parameters.ioHeterogeneityLocationOfDC[dcindex],
-//					Parameters.ioHeterogeneityShiftOfDC[dcindex],
-//					Parameters.ioHeterogeneityMinOfDC[dcindex],
-//					Parameters.ioHeterogeneityMaxOfDC[dcindex],
-//					Parameters.ioHeterogeneityPopulationOfDC[dcindex],
-					Parameters.bwHeterogeneityDistributionOfDC[dcindex],
-					Parameters.bwHeterogeneityCVOfDC[dcindex],
-//					Parameters.bwHeterogeneityAlphaOfDC[dcindex],
-//					Parameters.bwHeterogeneityBetaOfDC[dcindex],
-//					Parameters.bwHeterogeneityShapeOfDC[dcindex],
-//					Parameters.bwHeterogeneityLocationOfDC[dcindex],
-//					Parameters.bwHeterogeneityShiftOfDC[dcindex],
-//					Parameters.bwHeterogeneityMinOfDC[dcindex],
-//					Parameters.bwHeterogeneityMaxOfDC[dcindex],
-//					Parameters.bwHeterogeneityPopulationOfDC[dcindex],
-					Parameters.nOpteronOfMachineTypeOfDC[dcindex]
-					);
-			Datacenter dc = createDatacenter(dcname.toString());
+//			Para.setLikelihoodOfStraggler(Parameters.likelihoodOfStragglerOfDC[dcindex]);
+//			Para.setStragglerPerformanceCoefficient(Parameters.stragglerPerformanceCoefficientOfDC[dcindex]);
+//			
+//			Para.setDCHeterogeneity(
+//					Parameters.cpuHeterogeneityDistributionOfDC[dcindex],
+//					Parameters.cpuHeterogeneityCVOfDC[dcindex],
+////					Parameters.cpuHeterogeneityAlphaOfDC[dcindex],
+////					Parameters.cpuHeterogeneityBetaOfDC[dcindex],
+////					Parameters.cpuHeterogeneityShapeOfDC[dcindex],
+////					Parameters.cpuHeterogeneityLocationOfDC[dcindex],
+////					Parameters.cpuHeterogeneityShiftOfDC[dcindex],
+////					Parameters.cpuHeterogeneityMinOfDC[dcindex],
+////					Parameters.cpuHeterogeneityMaxOfDC[dcindex],
+////					Parameters.cpuHeterogeneityPopulationOfDC[dcindex],
+//					Parameters.ioHeterogeneityDistributionOfDC[dcindex],
+//					Parameters.ioHeterogeneityCVOfDC[dcindex],
+////					Parameters.ioHeterogeneityAlphaOfDC[dcindex],
+////					Parameters.ioHeterogeneityBetaOfDC[dcindex],
+////					Parameters.ioHeterogeneityShapeOfDC[dcindex],
+////					Parameters.ioHeterogeneityLocationOfDC[dcindex],
+////					Parameters.ioHeterogeneityShiftOfDC[dcindex],
+////					Parameters.ioHeterogeneityMinOfDC[dcindex],
+////					Parameters.ioHeterogeneityMaxOfDC[dcindex],
+////					Parameters.ioHeterogeneityPopulationOfDC[dcindex],
+//					Parameters.bwHeterogeneityDistributionOfDC[dcindex],
+//					Parameters.bwHeterogeneityCVOfDC[dcindex],
+////					Parameters.bwHeterogeneityAlphaOfDC[dcindex],
+////					Parameters.bwHeterogeneityBetaOfDC[dcindex],
+////					Parameters.bwHeterogeneityShapeOfDC[dcindex],
+////					Parameters.bwHeterogeneityLocationOfDC[dcindex],
+////					Parameters.bwHeterogeneityShiftOfDC[dcindex],
+////					Parameters.bwHeterogeneityMinOfDC[dcindex],
+////					Parameters.bwHeterogeneityMaxOfDC[dcindex],
+////					Parameters.bwHeterogeneityPopulationOfDC[dcindex],
+//					Parameters.nOpteronOfMachineTypeOfDC[dcindex]
+//					);
+			Datacenter dc = createDatacenter(dcname.toString(),dcindex);
 			dc.setDownlink(Parameters.downlinkOfDC[dcindex]);
 			dc.setUplink(Parameters.uplinkOfDC[dcindex]);
 			DatacenterCharacteristics dcc = dc.getCharacteristics();
@@ -363,7 +381,7 @@ public class WorkflowExample {
 	
 	
 	// all numbers in 1000 (e.g. kb/s)
-	public Datacenter createDatacenter(String name) {
+	public Datacenter createDatacenter(String name,int dcindex) {
 		Random numGen;
 		Parameters parameters = new Parameters();
 		numGen = Parameters.numGen;
@@ -373,9 +391,9 @@ public class WorkflowExample {
 
 		for(int typeindex = 0; typeindex < Parameters.machineType; typeindex++) {
 			int ram = (int) (2 * 1024 * Parameters.nCusPerCoreOpteronOfMachineType[typeindex] * Parameters.nCoresOpteronOfMachineType[typeindex]);
-			for (int i = 0; i < parameters.nOpteronOfMachineType[typeindex]; i++) {
+			for (int i = 0; i < Parameters.nOpteronOfMachineTypeOfDC[dcindex][typeindex]; i++) {
 				double mean = 1d;
-				double dev = parameters.bwHeterogeneityCV;
+				double dev = Parameters.bwHeterogeneityCVOfDC[dcindex];
 				ContinuousDistribution dist = Parameters.getDistribution(
 						parameters.bwHeterogeneityDistribution, mean,
 						parameters.bwHeterogeneityAlpha,
@@ -391,7 +409,7 @@ public class WorkflowExample {
 					bwps = (long) (dist.sample() * Parameters.bwpsPerPeOfMachineType[typeindex]);
 				}
 				mean = 1d;
-				dev = parameters.ioHeterogeneityCV;
+				dev = Parameters.ioHeterogeneityCVOfDC[dcindex];
 				dist = Parameters.getDistribution(
 						parameters.ioHeterogeneityDistribution, mean,
 						parameters.ioHeterogeneityAlpha,
@@ -407,7 +425,7 @@ public class WorkflowExample {
 					iops = (long) (long) (dist.sample() * Parameters.iopsPerPeOfMachineType[typeindex]);
 				}
 				mean = 1d;
-				dev = parameters.cpuHeterogeneityCV;
+				dev = Parameters.cpuHeterogeneityCVOfDC[dcindex];
 				dist = Parameters.getDistribution(
 						parameters.cpuHeterogeneityDistribution, mean,
 						parameters.cpuHeterogeneityAlpha,
@@ -422,10 +440,10 @@ public class WorkflowExample {
 				while (mips <= 0) {
 					mips = (long) (dist.sample() * Parameters.mipsPerCoreOpteronOfMachineType[typeindex]);
 				}
-				if (numGen.nextDouble() < parameters.likelihoodOfStraggler) {
-					bwps *= parameters.stragglerPerformanceCoefficient;
-					iops *= parameters.stragglerPerformanceCoefficient;
-					mips *= parameters.stragglerPerformanceCoefficient;
+				if (numGen.nextDouble() < Parameters.likelihoodOfStragglerOfDC[dcindex]) {
+					bwps *= Parameters.stragglerPerformanceCoefficientOfDC[dcindex];
+					iops *= Parameters.stragglerPerformanceCoefficientOfDC[dcindex];
+					mips *= Parameters.stragglerPerformanceCoefficientOfDC[dcindex];
 				}
 				hostList.add(new DynamicHost(hostId++, ram, bwps, iops, storage,
 						Parameters.nCusPerCoreOpteronOfMachineType[typeindex], Parameters.nCoresOpteronOfMachineType[typeindex], mips));
@@ -470,7 +488,6 @@ public class WorkflowExample {
 		String vmm = "Xen";
 
 		// create VMs
-		Vm[] vm = new DynamicVm[Parameters.nVms];
 		int vmnum = 0;
 		for (int dcindex = 0; dcindex < Parameters.numberOfDC; dcindex++) {
 			for (int j = 0; j < Parameters.numberOfVMperDC[dcindex]; j++) {
@@ -506,12 +523,18 @@ public class WorkflowExample {
 						Parameters.bwDynamicsMaxOfDC[0],
 						Parameters.bwDynamicsPopulationOfDC[0]
 						);
-				vm[vmnum] = new DynamicVm(vmnum, userId, Parameters.numberOfCusPerPe, Parameters.numberOfPes,
-						Parameters.ram, storage, vmm, new CloudletSchedulerGreedyDivided(),
-						dynamicModel, "output/run_" + run + "_vm_" + vmnum + ".csv",
-						Parameters.taskSlotsPerVm,dcindex);
-				list.add(vm[vmnum]);
-				vmnum++;
+				try {
+					DynamicVm vm = new DynamicVm(vmnum, userId, Parameters.numberOfCusPerPe, Parameters.numberOfPes,
+							Parameters.ram, storage, vmm, new CloudletSchedulerGreedyDivided(),
+							dynamicModel, "output/run_" + run + "_vm_" + vmnum + ".csv",
+							Parameters.taskSlotsPerVm,dcindex);
+					list.add(vm);
+					vmnum++;
+				}catch (Exception e) {
+					// TODO: handle exception
+					e.printStackTrace();
+				}
+				
 			}
 		}
 
