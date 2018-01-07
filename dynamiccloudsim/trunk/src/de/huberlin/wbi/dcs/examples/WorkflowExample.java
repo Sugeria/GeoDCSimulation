@@ -46,8 +46,6 @@ import de.huberlin.wbi.dcs.workflow.scheduler.GreedyQueueScheduler;
 import de.huberlin.wbi.dcs.workflow.scheduler.HEFTScheduler;
 import de.huberlin.wbi.dcs.workflow.scheduler.LATEScheduler;
 import de.huberlin.wbi.dcs.workflow.scheduler.StaticRoundRobinScheduler;
-import taskAssign.TaskAssign;
-import transFunc.Trans;
 import de.huberlin.wbi.dcs.workflow.scheduler.AbstractWorkflowScheduler;
 
 public class WorkflowExample {

@@ -7,7 +7,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import org.cloudbus.cloudsim.Cloudlet;
 import org.cloudbus.cloudsim.Vm;
 import org.workflowsim.Job;
 import org.workflowsim.WorkflowScheduler;
@@ -433,7 +432,16 @@ public class MinRateSchedulingAlgorithm extends BaseSchedulingAlgorithm{
 							
 						});
 						job.unscheduledGreateRate.put(taskId, job.sortedListOfTask.get(taskId).get(0).getValue());
-						job.unscheduledGreatePosition.put(taskId, job.sortedListOfTask.get(taskId).get(0).getKey());
+						
+						job.unscheduledGreatePosition.put(taskId, new ArrayList<>());
+						job.unscheduledGreatePosition.get(taskId).add(job.sortedListOfTask.get(taskId).get(0).getKey());
+						for(int posindex = 1; posindex < Parameters.numberOfDC; posindex++) {
+							if(job.unscheduledGreateRate.get(taskId) > job.sortedListOfTask.get(taskId).get(posindex).getValue()) {
+								break;
+							}else {
+								job.unscheduledGreatePosition.get(taskId).add(job.sortedListOfTask.get(taskId).get(posindex).getKey());
+							}
+						}
 					}
 					job.sortedflag = true;
 				}
@@ -443,9 +451,11 @@ public class MinRateSchedulingAlgorithm extends BaseSchedulingAlgorithm{
 				// wait for verify
 				for(int taskindex = 0; taskindex < numberOfTask; taskindex++) {
 					Task task = tasklist.get(taskindex);
+					int taskId = task.getCloudletId();
 					int datanumber = data[taskindex];
 					// best vm in best DC
-					int bestDCindex = job.unscheduledGreatePosition.get(task.getCloudletId());
+					int randomeindex = (int)Math.round(Math.random()*job.unscheduledGreatePosition.get(task.getCloudletId()).size());
+					int bestDCindex = job.unscheduledGreatePosition.get(task.getCloudletId()).get(randomeindex);
 					int bestxindex = taskindex * Parameters.numberOfDC + bestDCindex;
 					List<Vm> vmList = scheduler.getIdleTaskSlotsOfDC().get(bestDCindex+DCbase);
 					int vmSize = vmList.size();
@@ -518,6 +528,21 @@ public class MinRateSchedulingAlgorithm extends BaseSchedulingAlgorithm{
 							uselessDCforTask[xindex] = 0;
 							uselessConstraintsNum += 1;
 						}
+					}
+					boolean noCandidateDCflag = true;
+					for(int dcindex = 0; dcindex < Parameters.numberOfDC; dcindex++) {
+						int xindex = taskindex * Parameters.numberOfDC + dcindex;
+						if(uselessDCforTask[xindex]==-1) {
+							noCandidateDCflag = false;
+						}	
+					}
+					if(noCandidateDCflag == true) {
+						for(int bdcindex = 0; bdcindex < job.unscheduledGreatePosition.get(taskId).size(); bdcindex++) {
+							int bxindex = taskindex * Parameters.numberOfDC + bdcindex;
+							uselessDCforTask[bxindex] = -1;
+							uselessConstraintsNum -= 1;
+						}
+						
 					}
 				}
 				

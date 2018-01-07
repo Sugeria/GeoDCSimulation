@@ -26,6 +26,7 @@ import org.cloudbus.cloudsim.UtilizationModelFull;
 
 import de.huberlin.wbi.dcs.examples.Parameters;
 import de.huberlin.wbi.dcs.workflow.Task;
+import edu.isi.pegasus.planner.selector.site.Random;
 
 /**
  * Job is an extention to Task. It is basically a group of tasks. In
@@ -54,7 +55,7 @@ public class Job extends Task {
     public Map<Integer, Integer> currentGreatePosition;
     
     public Map<Integer, Double> unscheduledGreateRate;
-    public Map<Integer, Integer> unscheduledGreatePosition;
+    public Map<Integer, List<Integer>> unscheduledGreatePosition;
     
     public List<Integer> failedAssignTaskIndexInGreateAssign;
 
@@ -127,7 +128,9 @@ public class Job extends Task {
         		pos = currentGreatePosition.get(task.getCloudletId());
     		}else {
     			rate = unscheduledGreateRate.get(task.getCloudletId());
-        		pos = unscheduledGreatePosition.get(task.getCloudletId());
+    			int possize = unscheduledGreatePosition.get(task.getCloudletId()).size();
+    			int posindex = (int)Math.round(Math.random()*possize);
+        		pos = unscheduledGreatePosition.get(task.getCloudletId()).get(posindex);
     		}
     		
     		double task_workload = task.getMi()+task.getIo()+task.TotalTransferDataSize[pos];
