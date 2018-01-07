@@ -1218,9 +1218,9 @@ public class Parameters {
 	
 	// datacenter params
 	// Kb / s
-	public static long[] bwpsPerPeOfMachineType = {256,256,256};
+	public static long[] bwpsPerPeOfMachineType = {128 * 1024,185 * 1024,256 * 1024};
 	// Kb / s
-	public static long[] iopsPerPeOfMachineType = {20 * 1024, 20 * 1024, 20 * 1024};
+	public static long[] iopsPerPeOfMachineType = {150 * 1024, 150 * 1024, 275 * 1024};
 
 	public static int[] nCusPerCoreOpteronOfMachineType = {1,1,1};
 	public static int[] nCoresOpteronOfMachineType = {4,4,8};

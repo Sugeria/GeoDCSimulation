@@ -456,7 +456,7 @@ public class MinRateSchedulingAlgorithm extends BaseSchedulingAlgorithm{
 						//compute the rate
 						double mips = vm.getMips();
 						double bwps = vm.getBw();
-						double iops = vm.getBw();
+						double iops = vm.getIo();
 						double miSeconds = task.getMi()/mips;
 	        			double ioSeconds = task.getIo()/iops;
 	        			double bwSeconds = TotalTransferDataSize[bestxindex]/bwps;
