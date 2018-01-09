@@ -103,6 +103,9 @@ public class ModelExtractor {
 		Parameters.uplinkOfDC = new double[numberOfDC];
 		Parameters.downlinkOfDC = new double[numberOfDC];
 		Parameters.numberOfVMperDC = new int[numberOfDC];
+		Parameters.MIPSbaselineOfDC = new double[numberOfDC];
+		Parameters.bwBaselineOfDC = new double[numberOfDC];
+		Parameters.ioBaselineOfDC = new double[numberOfDC];
 		line = in.readLine();
 		para_string = line.split("\t");
 		for(int rowindex = 0; rowindex < dim[0]; rowindex++) {
@@ -195,6 +198,7 @@ public class ModelExtractor {
 		para_string = line.split("\t");
 		for(int rowindex = 0; rowindex < dim[0]; rowindex++) {
 			Parameters.likelihoodOfDCFailure[rowindex] =  Double.parseDouble(para_string[rowindex]);
+			//Parameters.likelihoodOfDCFailure[rowindex] = 0d;
 		}
 		line = in.readLine();
 		para_string = line.split("\t");

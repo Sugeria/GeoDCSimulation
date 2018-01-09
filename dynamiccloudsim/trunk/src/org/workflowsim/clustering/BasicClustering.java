@@ -62,7 +62,7 @@ public class BasicClustering implements ClusteringInterface {
     /**
      * the id index.
      */
-    private int idIndex;
+    public static int idIndex = 0;
 
     
     
@@ -86,7 +86,7 @@ public class BasicClustering implements ClusteringInterface {
         this.taskList = new ArrayList<>();
         this.mTask2Job = new HashMap<>();
         this.allFileList = new ArrayList<>();
-        this.idIndex = 0;
+ //       this.idIndex = 0;
         this.root = null;
     }
 
@@ -221,8 +221,13 @@ public class BasicClustering implements ClusteringInterface {
             	task.incBw(remoteInputSize/1024);
             	task.incIo(remoteInputSize/1024);
 				task.numberOfData = numberofData;
-				task.positionOfData = positionOfData;
-				task.sizeOfData = sizeOfData;
+				task.positionOfData = new int[numberofData];
+				task.sizeOfData = new int[numberofData];
+				for(int dataindex = 0; dataindex < numberofData; dataindex++) {
+					task.positionOfData[dataindex] = positionOfData[dataindex];
+					task.sizeOfData[dataindex] = sizeOfData[dataindex];
+				}
+				
 				task.requiredBandwidth = new double[numberofData];
 				task.positionOfDataID = new int[numberofData];
 				task.numberOfTransferData = new int[Parameters.numberOfDC];

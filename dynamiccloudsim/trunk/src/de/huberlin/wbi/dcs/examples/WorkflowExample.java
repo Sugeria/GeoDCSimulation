@@ -87,7 +87,7 @@ public class WorkflowExample {
 	             * No Clustering
 	             */
 	            ClusteringParameters.ClusteringMethod method = ClusteringParameters.ClusteringMethod.HORIZONTAL;
-	            ClusteringParameters cp = new ClusteringParameters(5, 0, method, null);
+	            ClusteringParameters cp = new ClusteringParameters(1, 0, method, null);
 
 	            /**
 	             * Initialize static parameters
@@ -386,67 +386,166 @@ public class WorkflowExample {
 		List<DynamicHost> hostList = new ArrayList<DynamicHost>();
 		int hostId = 0;
 		long storage = 1024 * 1024;
-
-		for(int typeindex = 0; typeindex < Parameters.machineType; typeindex++) {
-			int ram = (int) (2 * 1024 * Parameters.nCusPerCoreOpteronOfMachineType[typeindex] * Parameters.nCoresOpteronOfMachineType[typeindex]);
-			for (int i = 0; i < Parameters.nOpteronOfMachineTypeOfDC[dcindex][typeindex]; i++) {
-				double mean = 1d;
-				double dev = Parameters.bwHeterogeneityCVOfDC[dcindex];
-				ContinuousDistribution dist = Parameters.getDistribution(
-						parameters.bwHeterogeneityDistribution, mean,
-						parameters.bwHeterogeneityAlpha,
-						parameters.bwHeterogeneityBeta, dev,
-						parameters.bwHeterogeneityShape,
-						parameters.bwHeterogeneityLocation,
-						parameters.bwHeterogeneityShift,
-						parameters.bwHeterogeneityMin,
-						parameters.bwHeterogeneityMax,
-						parameters.bwHeterogeneityPopulation);
-				long bwps = 0;
-				while (bwps <= 0) {
-					bwps = (long) (dist.sample() * Parameters.bwpsPerPeOfMachineType[typeindex]);
-				}
-				mean = 1d;
-				dev = Parameters.ioHeterogeneityCVOfDC[dcindex];
-				dist = Parameters.getDistribution(
-						parameters.ioHeterogeneityDistribution, mean,
-						parameters.ioHeterogeneityAlpha,
-						parameters.ioHeterogeneityBeta, dev,
-						parameters.ioHeterogeneityShape,
-						parameters.ioHeterogeneityLocation,
-						parameters.ioHeterogeneityShift,
-						parameters.ioHeterogeneityMin,
-						parameters.ioHeterogeneityMax,
-						parameters.ioHeterogeneityPopulation);
-				long iops = 0;
-				while (iops <= 0) {
-					iops = (long) (long) (dist.sample() * Parameters.iopsPerPeOfMachineType[typeindex]);
-				}
-				mean = 1d;
-				dev = Parameters.cpuHeterogeneityCVOfDC[dcindex];
-				dist = Parameters.getDistribution(
-						parameters.cpuHeterogeneityDistribution, mean,
-						parameters.cpuHeterogeneityAlpha,
-						parameters.cpuHeterogeneityBeta, dev,
-						parameters.cpuHeterogeneityShape,
-						parameters.cpuHeterogeneityLocation,
-						parameters.cpuHeterogeneityShift,
-						parameters.cpuHeterogeneityMin,
-						parameters.cpuHeterogeneityMax,
-						parameters.cpuHeterogeneityPopulation);
-				long mips = 0;
-				while (mips <= 0) {
-					mips = (long) (dist.sample() * Parameters.mipsPerCoreOpteronOfMachineType[typeindex]);
-				}
-				if (numGen.nextDouble() < Parameters.likelihoodOfStragglerOfDC[dcindex]) {
-					bwps *= Parameters.stragglerPerformanceCoefficientOfDC[dcindex];
-					iops *= Parameters.stragglerPerformanceCoefficientOfDC[dcindex];
-					mips *= Parameters.stragglerPerformanceCoefficientOfDC[dcindex];
-				}
-				hostList.add(new DynamicHost(hostId++, ram, bwps, iops, storage,
-						Parameters.nCusPerCoreOpteronOfMachineType[typeindex], Parameters.nCoresOpteronOfMachineType[typeindex], mips));
+		double mipsmean = 0d;
+		double bwpsmean = 0d;
+		double iopsmean = 0d;
+		
+		for(int i = 0; i < Parameters.numberOfVMperDC[dcindex]; i++) {
+			int typeindex = (int)(Math.round(Math.random()*(Parameters.machineType-1)));
+			Parameters.nOpteronOfMachineTypeOfDC[dcindex][typeindex] += 1;
+			int ram = (int) (2 * 1024 * Parameters.nCusPerCoreOpteronOfMachineType[typeindex] 
+					* Parameters.nCoresOpteronOfMachineType[typeindex]);
+			double mean = 1d;
+			double dev = Parameters.bwHeterogeneityCVOfPlatform;
+			ContinuousDistribution dist = Parameters.getDistribution(
+					parameters.bwHeterogeneityDistribution, mean,
+					parameters.bwHeterogeneityAlpha,
+					parameters.bwHeterogeneityBeta, dev,
+					parameters.bwHeterogeneityShape,
+					parameters.bwHeterogeneityLocation,
+					parameters.bwHeterogeneityShift,
+					parameters.bwHeterogeneityMin,
+					parameters.bwHeterogeneityMax,
+					parameters.bwHeterogeneityPopulation);
+			long bwps = 0;
+			while (bwps <= 0) {
+				bwps = (long) (dist.sample() * Parameters.bwpsPerPeOfMachineType[typeindex]);
 			}
+			mean = 1d;
+			dev = Parameters.ioHeterogeneityCVOfPlatform;
+			dist = Parameters.getDistribution(
+					parameters.ioHeterogeneityDistribution, mean,
+					parameters.ioHeterogeneityAlpha,
+					parameters.ioHeterogeneityBeta, dev,
+					parameters.ioHeterogeneityShape,
+					parameters.ioHeterogeneityLocation,
+					parameters.ioHeterogeneityShift,
+					parameters.ioHeterogeneityMin,
+					parameters.ioHeterogeneityMax,
+					parameters.ioHeterogeneityPopulation);
+			long iops = 0;
+			while (iops <= 0) {
+				iops = (long) (long) (dist.sample() * Parameters.iopsPerPeOfMachineType[typeindex]);
+			}
+			mean = 1d;
+			dev = Parameters.cpuHeterogeneityCVOfPlatform;
+			dist = Parameters.getDistribution(
+					parameters.cpuHeterogeneityDistribution, mean,
+					parameters.cpuHeterogeneityAlpha,
+					parameters.cpuHeterogeneityBeta, dev,
+					parameters.cpuHeterogeneityShape,
+					parameters.cpuHeterogeneityLocation,
+					parameters.cpuHeterogeneityShift,
+					parameters.cpuHeterogeneityMin,
+					parameters.cpuHeterogeneityMax,
+					parameters.cpuHeterogeneityPopulation);
+			long mips = 0;
+			while (mips <= 0) {
+				mips = (long) (dist.sample() * Parameters.mipsPerCoreOpteronOfMachineType[typeindex]);
+			}
+			
+			if (numGen.nextDouble() < Parameters.likelihoodOfStragglerOfDC[dcindex]) {
+				bwps *= Parameters.stragglerPerformanceCoefficientOfDC[dcindex];
+				iops *= Parameters.stragglerPerformanceCoefficientOfDC[dcindex];
+				mips *= Parameters.stragglerPerformanceCoefficientOfDC[dcindex];
+			}
+			
+			bwpsmean += bwps;
+			iopsmean += iops;
+			mipsmean += mips;
+			hostList.add(new DynamicHost(hostId++, ram, bwps, iops, storage,
+					Parameters.nCusPerCoreOpteronOfMachineType[typeindex], Parameters.nCoresOpteronOfMachineType[typeindex], mips));
+			
 		}
+		bwpsmean /= Parameters.numberOfVMperDC[dcindex];
+		iopsmean /= Parameters.numberOfVMperDC[dcindex];
+		mipsmean /= Parameters.numberOfVMperDC[dcindex];
+		Parameters.bwBaselineOfDC[dcindex] = bwpsmean;
+		Parameters.ioBaselineOfDC[dcindex] = iopsmean;
+		Parameters.MIPSbaselineOfDC[dcindex] = mipsmean;
+		
+		// obtain the COV of each DC
+		double bwpssumOfSqure = 0d;
+		double iopssumOfSqure = 0d;
+		double mipssumOfSqure = 0d;
+		
+		for(int hostindex = 0; hostindex < hostList.size(); hostindex++) {
+			bwpssumOfSqure += Math.pow(hostList.get(hostindex).getBw()-bwpsmean, 2);
+			iopssumOfSqure += Math.pow(hostList.get(hostindex).getIo()-iopsmean, 2);
+			mipssumOfSqure += Math.pow(hostList.get(hostindex).getMipsPerPe()-mipsmean, 2);
+		}
+		double bwpsCOV = 0d;
+		double iopsCOV = 0d;
+		double mipsCOV = 0d;
+		
+		bwpsCOV = Math.sqrt(bwpssumOfSqure/(hostList.size()-1))/bwpsmean;
+		iopsCOV = Math.sqrt(iopssumOfSqure/(hostList.size()-1))/iopsmean;
+		mipsCOV = Math.sqrt(mipssumOfSqure/(hostList.size()-1))/mipsmean;
+		Parameters.bwHeterogeneityCVOfDC[dcindex] = bwpsCOV;
+		Parameters.ioHeterogeneityCVOfDC[dcindex] = iopsCOV;
+		Parameters.cpuHeterogeneityCVOfDC[dcindex] = mipsCOV;
+		
+		
+//		for(int typeindex = 0; typeindex < Parameters.machineType; typeindex++) {
+//			int ram = (int) (2 * 1024 * Parameters.nCusPerCoreOpteronOfMachineType[typeindex] * Parameters.nCoresOpteronOfMachineType[typeindex]);
+//			for (int i = 0; i < Parameters.nOpteronOfMachineTypeOfDC[dcindex][typeindex]; i++) {
+//				double mean = 1d;
+//				double dev = Parameters.bwHeterogeneityCVOfDC[dcindex];
+//				ContinuousDistribution dist = Parameters.getDistribution(
+//						parameters.bwHeterogeneityDistribution, mean,
+//						parameters.bwHeterogeneityAlpha,
+//						parameters.bwHeterogeneityBeta, dev,
+//						parameters.bwHeterogeneityShape,
+//						parameters.bwHeterogeneityLocation,
+//						parameters.bwHeterogeneityShift,
+//						parameters.bwHeterogeneityMin,
+//						parameters.bwHeterogeneityMax,
+//						parameters.bwHeterogeneityPopulation);
+//				long bwps = 0;
+//				while (bwps <= 0) {
+//					bwps = (long) (dist.sample() * Parameters.bwpsPerPeOfMachineType[typeindex]);
+//				}
+//				mean = 1d;
+//				dev = Parameters.ioHeterogeneityCVOfDC[dcindex];
+//				dist = Parameters.getDistribution(
+//						parameters.ioHeterogeneityDistribution, mean,
+//						parameters.ioHeterogeneityAlpha,
+//						parameters.ioHeterogeneityBeta, dev,
+//						parameters.ioHeterogeneityShape,
+//						parameters.ioHeterogeneityLocation,
+//						parameters.ioHeterogeneityShift,
+//						parameters.ioHeterogeneityMin,
+//						parameters.ioHeterogeneityMax,
+//						parameters.ioHeterogeneityPopulation);
+//				long iops = 0;
+//				while (iops <= 0) {
+//					iops = (long) (long) (dist.sample() * Parameters.iopsPerPeOfMachineType[typeindex]);
+//				}
+//				mean = 1d;
+//				dev = Parameters.cpuHeterogeneityCVOfDC[dcindex];
+//				dist = Parameters.getDistribution(
+//						parameters.cpuHeterogeneityDistribution, mean,
+//						parameters.cpuHeterogeneityAlpha,
+//						parameters.cpuHeterogeneityBeta, dev,
+//						parameters.cpuHeterogeneityShape,
+//						parameters.cpuHeterogeneityLocation,
+//						parameters.cpuHeterogeneityShift,
+//						parameters.cpuHeterogeneityMin,
+//						parameters.cpuHeterogeneityMax,
+//						parameters.cpuHeterogeneityPopulation);
+//				long mips = 0;
+//				while (mips <= 0) {
+//					mips = (long) (dist.sample() * Parameters.mipsPerCoreOpteronOfMachineType[typeindex]);
+//				}
+//				if (numGen.nextDouble() < Parameters.likelihoodOfStragglerOfDC[dcindex]) {
+//					bwps *= Parameters.stragglerPerformanceCoefficientOfDC[dcindex];
+//					iops *= Parameters.stragglerPerformanceCoefficientOfDC[dcindex];
+//					mips *= Parameters.stragglerPerformanceCoefficientOfDC[dcindex];
+//				}
+//				hostList.add(new DynamicHost(hostId++, ram, bwps, iops, storage,
+//						Parameters.nCusPerCoreOpteronOfMachineType[typeindex], Parameters.nCoresOpteronOfMachineType[typeindex], mips));
+//			}
+//		}
 		
 		
 		String arch = "x86";

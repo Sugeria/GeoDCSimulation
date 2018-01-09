@@ -8,6 +8,7 @@ import org.cloudbus.cloudsim.UtilizationModel;
 import org.workflowsim.FileItem;
 
 import de.huberlin.wbi.dcs.HeterogeneousCloudlet;
+import de.huberlin.wbi.dcs.examples.Parameters;
 
 public class Task extends HeterogeneousCloudlet implements Comparable<Task> {
 	
@@ -130,6 +131,7 @@ public class Task extends HeterogeneousCloudlet implements Comparable<Task> {
 				task.getUtilizationModelRam(),
 				task.getUtilizationModelBw(),
 				task.submitDCIndex);
+		
 	}
 	
 	/**

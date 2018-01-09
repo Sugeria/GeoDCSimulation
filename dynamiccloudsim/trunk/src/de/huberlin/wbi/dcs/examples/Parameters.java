@@ -216,22 +216,22 @@ public class Parameters {
         reduceMethod = rMethod;
         deadline = dl;
         maxDepth = 0;
-//        generateWorkflow();
-//        setInfoAmongDC();
-//        createInfoOfDC();
-//        try {
-//			ModelGenerator.save();
-//		} catch (IOException e) {
-//			e.printStackTrace();
-//		}
+        generateWorkflow();
+        setInfoAmongDC();
+        createInfoOfDC();
         try {
-			ModelExtractor.extracte();
+			ModelGenerator.save();
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
-        MIPSbaselineOfDC = getMIPSBaseline();
-    	bwBaselineOfDC = getBwBaseline();
-    	ioBaselineOfDC = getIoBaseline();
+//        try {
+//			ModelExtractor.extracte();
+//		} catch (IOException e) {
+//			e.printStackTrace();
+//		}
+//        MIPSbaselineOfDC = getMIPSBaseline();
+//    	bwBaselineOfDC = getBwBaseline();
+//    	ioBaselineOfDC = getIoBaseline();
     	nVms = sumOfVM();
     }
     
@@ -640,6 +640,11 @@ public class Parameters {
 	public static double[] cpuHeterogeneityMaxOfDC = {0d,0d};
 	public static int[] cpuHeterogeneityPopulationOfDC = {0,0};;
 	
+	
+	public static double cpuHeterogeneityCVOfPlatform = 0.35d;
+	public static double ioHeterogeneityCVOfPlatform = 0.2d;
+	public static double bwHeterogeneityCVOfPlatform = 0.19d;
+	
 	// CPU Default Heterogeneity
 	public Distribution cpuHeterogeneityDistribution = Distribution.NORMAL;
 	public double cpuHeterogeneityCV = 0.4;
@@ -844,6 +849,9 @@ public class Parameters {
 		uplinkOfDC = new double[numberOfDC];
 		downlinkOfDC = new double[numberOfDC];
 		numberOfVMperDC = new int[numberOfDC];
+		MIPSbaselineOfDC = new double[numberOfDC];
+		bwBaselineOfDC = new double[numberOfDC];
+		ioBaselineOfDC = new double[numberOfDC];
 		// degree rank
 		MWNumericArray degreelist_para = null;
 		MWNumericArray B_out = null;
@@ -891,15 +899,19 @@ public class Parameters {
 			dcindex = I[dccounter]-1;
 			if(dccounter < Large_part) {
 				//Large DC
-				int Type = (int)(Math.random()*machineType);
+				numberOfVMperDC[dcindex] = (int)(Math.random()*1500 + 1500);
 				for(int typeindex = 0; typeindex < machineType; typeindex++) {
-					if(Type == typeindex) {
-						nOpteronOfMachineTypeOfDC[dcindex][typeindex] = (int)(Math.random()*1500 + 1500);
-						numberOfVMperDC[dcindex] = nOpteronOfMachineTypeOfDC[dcindex][typeindex];
-					}else {
-						nOpteronOfMachineTypeOfDC[dcindex][typeindex] = 0;
-					}
+					nOpteronOfMachineTypeOfDC[dcindex][typeindex] = 0;
 				}
+//				int Type = (int)(Math.random()*(machineType-1));
+//				for(int typeindex = 0; typeindex < machineType; typeindex++) {
+//					if(Type == typeindex) {
+//						nOpteronOfMachineTypeOfDC[dcindex][typeindex] = (int)(Math.random()*1500 + 1500);
+//						numberOfVMperDC[dcindex] = nOpteronOfMachineTypeOfDC[dcindex][typeindex];
+//					}else {
+//						nOpteronOfMachineTypeOfDC[dcindex][typeindex] = 0;
+//					}
+//				}
 				cpuHeterogeneityDistributionOfDC[dcindex] = Distribution.NORMAL;
 				// 0.3 0.4 0.6
 				cpuHeterogeneityCVOfDC[dcindex] = Math.random()*(0.3);
@@ -948,21 +960,22 @@ public class Parameters {
 				likelihoodOfDCFailure[dcindex] = Math.random()*0.0001;
 				
 				// 0.55 0.60 0.85
-				uplinkOfDC[dcindex] = Math.random()*nOpteronOfMachineTypeOfDC[dcindex][Type]*200*1024*0.55;
-				downlinkOfDC[dcindex] = Math.random()*nOpteronOfMachineTypeOfDC[dcindex][Type]*200*1024*0.55;
+				uplinkOfDC[dcindex] = Math.random()*numberOfVMperDC[dcindex]*200*1024*0.55;
+				downlinkOfDC[dcindex] = Math.random()*numberOfVMperDC[dcindex]*200*1024*0.55;
 				
 				
 			}else if(dccounter < Medium_part) {
 				//Medium DC
-				int Type = (int)(Math.random()*machineType);
-				for(int typeindex = 0; typeindex < machineType; typeindex++) {
-					if(Type == typeindex) {
-						nOpteronOfMachineTypeOfDC[dcindex][typeindex] = (int)(Math.random()*1000 + 500);
-						numberOfVMperDC[dcindex] = nOpteronOfMachineTypeOfDC[dcindex][typeindex];
-					}else {
-						nOpteronOfMachineTypeOfDC[dcindex][typeindex] = 0;
-					}
-				}
+				numberOfVMperDC[dcindex] = (int)(Math.random()*1000 + 500);
+//				int Type = (int)(Math.random()*(machineType-1));
+//				for(int typeindex = 0; typeindex < machineType; typeindex++) {
+//					if(Type == typeindex) {
+//						nOpteronOfMachineTypeOfDC[dcindex][typeindex] = (int)(Math.random()*1000 + 500);
+//						numberOfVMperDC[dcindex] = nOpteronOfMachineTypeOfDC[dcindex][typeindex];
+//					}else {
+//						nOpteronOfMachineTypeOfDC[dcindex][typeindex] = 0;
+//					}
+//				}
 				cpuHeterogeneityDistributionOfDC[dcindex] = Distribution.NORMAL;
 				// 0.3 0.4 0.6
 				cpuHeterogeneityCVOfDC[dcindex] = Math.random()*(0.4-0.3)+0.3;
@@ -1011,31 +1024,32 @@ public class Parameters {
 				likelihoodOfDCFailure[dcindex] = Math.random()*(0.0002-0.0001)+0.0001;
 				
 				// 0.55 0.60 0.85
-				uplinkOfDC[dcindex] = Math.random()*nOpteronOfMachineTypeOfDC[dcindex][Type]*200*1024*(0.60-0.55)+
-						nOpteronOfMachineTypeOfDC[dcindex][Type]*200*1024*0.55;
-				downlinkOfDC[dcindex] = Math.random()*nOpteronOfMachineTypeOfDC[dcindex][Type]*200*1024*(0.60-0.55)+
-						nOpteronOfMachineTypeOfDC[dcindex][Type]*200*1024*0.55;
+				uplinkOfDC[dcindex] = Math.random()*numberOfVMperDC[dcindex]*200*1024*(0.60-0.55)+
+						numberOfVMperDC[dcindex]*200*1024*0.55;
+				downlinkOfDC[dcindex] = Math.random()*numberOfVMperDC[dcindex]*200*1024*(0.60-0.55)+
+						numberOfVMperDC[dcindex]*200*1024*0.55;
 				
 				
 			}else {
 				//Small DC
-				int Type = (int)(Math.random()*machineType);
-				for(int typeindex = 0; typeindex < machineType; typeindex++) {
-					try {
-						if(Type == typeindex) {
-							nOpteronOfMachineTypeOfDC[dcindex][typeindex] = (int)(Math.random()*500 + 50);
-							numberOfVMperDC[dcindex] = nOpteronOfMachineTypeOfDC[dcindex][typeindex];
-						}else {
-							
-							nOpteronOfMachineTypeOfDC[dcindex][typeindex] = 0;
-							
-							
-						}
-					}catch (Exception e) {
-						e.printStackTrace();
-					}
-					
-				}
+				numberOfVMperDC[dcindex] = (int)(Math.random()*500 + 50);
+//				int Type = (int)(Math.random()*(machineType-1));
+//				for(int typeindex = 0; typeindex < machineType; typeindex++) {
+//					try {
+//						if(Type == typeindex) {
+//							nOpteronOfMachineTypeOfDC[dcindex][typeindex] = (int)(Math.random()*500 + 50);
+//							numberOfVMperDC[dcindex] = nOpteronOfMachineTypeOfDC[dcindex][typeindex];
+//						}else {
+//							
+//							nOpteronOfMachineTypeOfDC[dcindex][typeindex] = 0;
+//							
+//							
+//						}
+//					}catch (Exception e) {
+//						e.printStackTrace();
+//					}
+//					
+//				}
 				cpuHeterogeneityDistributionOfDC[dcindex] = Distribution.NORMAL;
 				// 0.3 0.4 0.6
 				cpuHeterogeneityCVOfDC[dcindex] = Math.random()*(0.6-0.4)+0.4;
@@ -1084,10 +1098,10 @@ public class Parameters {
 				likelihoodOfDCFailure[dcindex] = Math.random()*(0.0004-0.0002)+0.0002;
 				
 				// 0.55 0.60 0.85
-				uplinkOfDC[dcindex] = Math.random()*nOpteronOfMachineTypeOfDC[dcindex][Type]*200*1024*(0.85-0.60)+
-						nOpteronOfMachineTypeOfDC[dcindex][Type]*200*1024*0.60;
-				downlinkOfDC[dcindex] = Math.random()*nOpteronOfMachineTypeOfDC[dcindex][Type]*200*1024*(0.85-0.60)+
-						nOpteronOfMachineTypeOfDC[dcindex][Type]*200*1024*0.60;
+				uplinkOfDC[dcindex] = Math.random()*numberOfVMperDC[dcindex]*200*1024*(0.85-0.60)+
+						numberOfVMperDC[dcindex]*200*1024*0.60;
+				downlinkOfDC[dcindex] = Math.random()*numberOfVMperDC[dcindex]*200*1024*(0.85-0.60)+
+						numberOfVMperDC[dcindex]*200*1024*0.60;
 				
 			}
 		}
@@ -1205,7 +1219,7 @@ public class Parameters {
 	
 	
 	// datacenter number
-	public static int numberOfDC = 10;
+	public static int numberOfDC = 1000;
 	
 	
 	// number of machineType in each datacenter

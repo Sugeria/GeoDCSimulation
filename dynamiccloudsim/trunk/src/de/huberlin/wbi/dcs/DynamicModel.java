@@ -101,16 +101,17 @@ public class DynamicModel {
 			double cpuDynamicsMax,
 			int cpuDynamicsPopulation
 			) {
-		double mean = 1d;
-		double dev = cpuDynamicsCV;
-		ContinuousDistribution dist = Parameters.getDistribution(cpuDynamicsDistribution, 
-				mean, cpuDynamicsAlpha, cpuDynamicsBeta, dev, cpuDynamicsShape, 
-				cpuDynamicsLocation, cpuDynamicsShift, cpuDynamicsMin, 
-				cpuDynamicsMax, cpuDynamicsPopulation);
-		miCurrentBaseline = 0;
-		while (miCurrentBaseline <= 0) {
-			miCurrentBaseline = dist.sample();
-		}
+//		double mean = 1d;
+//		double dev = cpuDynamicsCV;
+//		ContinuousDistribution dist = Parameters.getDistribution(cpuDynamicsDistribution, 
+//				mean, cpuDynamicsAlpha, cpuDynamicsBeta, dev, cpuDynamicsShape, 
+//				cpuDynamicsLocation, cpuDynamicsShift, cpuDynamicsMin, 
+//				cpuDynamicsMax, cpuDynamicsPopulation);
+//		miCurrentBaseline = 0;
+//		while (miCurrentBaseline <= 0) {
+//			miCurrentBaseline = dist.sample();
+//		}
+		miCurrentBaseline = 1d;
 	}
 
 	private void changeIoBaseline(
@@ -125,16 +126,17 @@ public class DynamicModel {
 			double ioDynamicsMax,
 			int ioDynamicsPopulation
 			) {
-		double mean = 1d;
-		double dev = ioDynamicsCV;
-		ContinuousDistribution dist = Parameters.getDistribution(ioDynamicsDistribution, 
-				mean, ioDynamicsAlpha, ioDynamicsBeta, dev, ioDynamicsShape, 
-				ioDynamicsLocation, ioDynamicsShift, ioDynamicsMin, 
-				ioDynamicsMax, ioDynamicsPopulation);
-		ioCurrentBaseline = 0;
-		while (ioCurrentBaseline <= 0) {
-			ioCurrentBaseline = dist.sample();
-		}
+//		double mean = 1d;
+//		double dev = ioDynamicsCV;
+//		ContinuousDistribution dist = Parameters.getDistribution(ioDynamicsDistribution, 
+//				mean, ioDynamicsAlpha, ioDynamicsBeta, dev, ioDynamicsShape, 
+//				ioDynamicsLocation, ioDynamicsShift, ioDynamicsMin, 
+//				ioDynamicsMax, ioDynamicsPopulation);
+//		ioCurrentBaseline = 0;
+//		while (ioCurrentBaseline <= 0) {
+//			ioCurrentBaseline = dist.sample();
+//		}
+		ioCurrentBaseline = 1d;
 	}
 
 	private void changeBwBaseline(
@@ -149,16 +151,17 @@ public class DynamicModel {
 			double bwDynamicsMax,
 			int bwDynamicsPopulation
 			) {
-		double mean = 1d;
-		double dev = bwDynamicsCV;
-		ContinuousDistribution dist = Parameters.getDistribution(bwDynamicsDistribution, mean, 
-				bwDynamicsAlpha, bwDynamicsBeta, dev, bwDynamicsShape, 
-				bwDynamicsLocation, bwDynamicsShift, bwDynamicsMin, 
-				bwDynamicsMax, bwDynamicsPopulation);
-		bwCurrentBaseline = 0;
-		while (bwCurrentBaseline <= 0) {
-			bwCurrentBaseline = dist.sample();
-		}
+//		double mean = 1d;
+//		double dev = bwDynamicsCV;
+//		ContinuousDistribution dist = Parameters.getDistribution(bwDynamicsDistribution, mean, 
+//				bwDynamicsAlpha, bwDynamicsBeta, dev, bwDynamicsShape, 
+//				bwDynamicsLocation, bwDynamicsShift, bwDynamicsMin, 
+//				bwDynamicsMax, bwDynamicsPopulation);
+//		bwCurrentBaseline = 0;
+//		while (bwCurrentBaseline <= 0) {
+//			bwCurrentBaseline = dist.sample();
+//		}
+		bwCurrentBaseline = 1d;
 	}
 
 	public void updateBaselines(

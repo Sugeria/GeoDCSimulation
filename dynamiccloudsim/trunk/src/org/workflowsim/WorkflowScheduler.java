@@ -518,9 +518,12 @@ public class WorkflowScheduler extends DatacenterBroker {
 						slot = UpdatedSlot.getDoubleData();
 						up = UpdatedUp.getDoubleData();
 						down = UpdatedDown.getDoubleData();
-						SlotArray[0] = slot;
-						UpArray[0] = up;
-						DownArray[0] = down;
+						for(int dcindex = 0; dcindex < Parameters.numberOfDC; dcindex++) {
+							SlotArray[0][dcindex] = slot[dcindex];
+							UpArray[0][dcindex] = up[dcindex];
+							DownArray[0][dcindex] = down[dcindex];
+						}
+						
 						
 						
 						// Queue<Vm> taskSlotsKeptIdle = new LinkedList<>();
@@ -539,6 +542,7 @@ public class WorkflowScheduler extends DatacenterBroker {
 										Vm vm = idleTaskSlotsOfDC.get(dcindex + DCbase).remove();
 										if (tasks.containsKey(task.getCloudletId())) {
 											Task speculativeTask = new Task(task);
+											cloneTask(speculativeTask,task);
 											speculativeTask.setAssignmentDCId(dcindex + DCbase);
 											speculativeTask.assignmentDCindex = dcindex;
 											speculativeTask.setSpeculativeCopy(true);
@@ -564,7 +568,7 @@ public class WorkflowScheduler extends DatacenterBroker {
 						// JobFactory whether change the corresponding value
 						// JobList whether change the corresponding value
 						job.unscheduledTaskList.removeAll(taskSubmitted);
-						
+						JobFactory.put(job.getCloudletId(), job);
 						if(job.unscheduledTaskList.size() == 0) {
 							scheduler.getScheduledList().add(job);
 						}
@@ -1026,9 +1030,11 @@ public class WorkflowScheduler extends DatacenterBroker {
 						slot = UpdatedSlot.getDoubleData();
 						up = UpdatedUp.getDoubleData();
 						down = UpdatedDown.getDoubleData();
-						SlotArray[0] = slot;
-						UpArray[0] = up;
-						DownArray[0] = down;
+						for(int dcindex = 0; dcindex < Parameters.numberOfDC; dcindex++) {
+							SlotArray[0][dcindex] = slot[dcindex];
+							UpArray[0][dcindex] = up[dcindex];
+							DownArray[0][dcindex] = down[dcindex];
+						}
 						
 						
 						// Queue<Vm> taskSlotsKeptIdle = new LinkedList<>();
@@ -1048,6 +1054,7 @@ public class WorkflowScheduler extends DatacenterBroker {
 										Vm vm = idleTaskSlotsOfDC.get(dcindex + DCbase).remove();
 										if (tasks.containsKey(task.getCloudletId())) {
 											Task speculativeTask = new Task(task);
+											cloneTask(speculativeTask,task);
 											speculativeTask.setAssignmentDCId(dcindex + DCbase);
 											speculativeTask.assignmentDCindex = dcindex;
 											speculativeTask.setSpeculativeCopy(true);
@@ -1072,7 +1079,7 @@ public class WorkflowScheduler extends DatacenterBroker {
 						// JobFactory whether change the corresponding value
 						// JobList whether change the corresponding value
 						job.unscheduledTaskList.removeAll(taskSubmitted);
-						
+						JobFactory.put(job.getCloudletId(), job);
 						if(job.unscheduledTaskList.size() == 0) {
 							scheduler.getScheduledList().add(job);
 						}
@@ -1293,9 +1300,11 @@ public class WorkflowScheduler extends DatacenterBroker {
 					slot = UpdatedSlot.getDoubleData();
 					up = UpdatedUp.getDoubleData();
 					down = UpdatedDown.getDoubleData();
-					SlotArray[0] = slot;
-					UpArray[0] = up;
-					DownArray[0] = down;
+					for(int dcindex = 0; dcindex < Parameters.numberOfDC; dcindex++) {
+						SlotArray[0][dcindex] = slot[dcindex];
+						UpArray[0][dcindex] = up[dcindex];
+						DownArray[0][dcindex] = down[dcindex];
+					}
 					
 					
 					// Queue<Vm> taskSlotsKeptIdle = new LinkedList<>();
@@ -1315,6 +1324,7 @@ public class WorkflowScheduler extends DatacenterBroker {
 									Vm vm = idleTaskSlotsOfDC.get(dcindex + DCbase).remove();
 									if (tasks.containsKey(task.getCloudletId())) {
 										Task speculativeTask = new Task(task);
+										cloneTask(speculativeTask,task);
 										speculativeTask.setAssignmentDCId(dcindex + DCbase);
 										speculativeTask.assignmentDCindex = dcindex;
 										speculativeTask.setSpeculativeCopy(true);
@@ -1339,7 +1349,7 @@ public class WorkflowScheduler extends DatacenterBroker {
 					// JobFactory whether change the corresponding value
 					// JobList whether change the corresponding value
 					job.unscheduledTaskList.removeAll(taskSubmitted);
-					
+					JobFactory.put(job.getCloudletId(), job);
 					if(job.unscheduledTaskList.size() == 0) {
 						scheduler.getScheduledList().add(job);
 					}
@@ -1446,7 +1456,44 @@ public class WorkflowScheduler extends DatacenterBroker {
     }
     
     
-    public Map<Integer, LinkedList<Vm>> getIdleTaskSlotsOfDC(){
+    private void cloneTask(Task speculativeTask, Task task) {
+		speculativeTask.setDepth(task.getDepth());
+		speculativeTask.setImpact(task.getImpact());
+		speculativeTask.numberOfData = task.numberOfData;
+		speculativeTask.jobId = task.jobId;
+		speculativeTask.setSpeculativeCopy(true);
+		// initial
+		speculativeTask.positionOfData = new int[speculativeTask.numberOfData];
+		speculativeTask.sizeOfData = new int[speculativeTask.numberOfData];
+		speculativeTask.requiredBandwidth = new double[speculativeTask.numberOfData];
+		speculativeTask.positionOfDataID = new int[speculativeTask.numberOfData];
+		for(int dataindex = 0; dataindex < speculativeTask.numberOfData; dataindex++) {
+			speculativeTask.positionOfData[dataindex] = task.positionOfData[dataindex];
+			speculativeTask.sizeOfData[dataindex] = task.sizeOfData[dataindex];
+			speculativeTask.requiredBandwidth[dataindex] = task.requiredBandwidth[dataindex];
+			speculativeTask.positionOfDataID[dataindex] = task.positionOfDataID[dataindex];
+		}
+		speculativeTask.numberOfTransferData = new int[Parameters.numberOfDC];
+		speculativeTask.TotalTransferDataSize = new double[Parameters.numberOfDC];
+		speculativeTask.transferDataSize = new double[Parameters.numberOfDC][Parameters.ubOfData];
+		for(int dcindex = 0; dcindex < Parameters.numberOfDC; dcindex++) {
+			speculativeTask.numberOfTransferData[dcindex] = task.numberOfTransferData[dcindex];
+			speculativeTask.TotalTransferDataSize[dcindex] = task.TotalTransferDataSize[dcindex];
+			for(int dataindex = 0; dataindex < speculativeTask.numberOfData; dataindex++) {
+				speculativeTask.transferDataSize[dcindex][dataindex] = task.transferDataSize[dcindex][dataindex];
+			}
+		}
+		speculativeTask.addChildList(task.getChildList());
+		speculativeTask.addParentList(task.getParentList());
+		List<FileItem> fileList = task.getFileList();
+		for(int index = 0; index < fileList.size(); index++) {
+			speculativeTask.getFileList().add(fileList.get(index));
+		}
+		
+		
+	}
+
+	public Map<Integer, LinkedList<Vm>> getIdleTaskSlotsOfDC(){
 		return idleTaskSlotsOfDC;
 	}
     
@@ -1952,7 +1999,7 @@ public class WorkflowScheduler extends DatacenterBroker {
     	
     	int attributedJobId = task.jobId;
     	Job job = JobFactory.get(attributedJobId);
-    	if(task.getStatus() != Cloudlet.SUCCESS) {
+    	if(task.getStatus() == Cloudlet.FAILED) {
     		resetTask(task);
     		if(job.unscheduledTaskList.size() > 0) {
     			job.unscheduledTaskList.add(task);
@@ -1960,6 +2007,7 @@ public class WorkflowScheduler extends DatacenterBroker {
     			job.unscheduledTaskList.add(task);
     			getCloudletList().add(job);
     		}
+    		schedule(this.getId(), 0.0, WorkflowSimTags.CLOUDLET_UPDATE);
     		return ;
     	}
         int alreadyAckTaskNumber = ackTaskOfJob.get(attributedJobId);
@@ -1972,7 +2020,7 @@ public class WorkflowScheduler extends DatacenterBroker {
     			break;
     		}
     	}
-    	job.setTaskList(originalTaskList);
+    	//job.setTaskList(originalTaskList);
     	JobFactory.put(job.getCloudletId(), job);
         if(ackTaskOfJob.get(attributedJobId) == taskOfJob.get(attributedJobId)) {
         	// modify the job state and return the job to the WorkflowEngine
@@ -2035,14 +2083,14 @@ public class WorkflowScheduler extends DatacenterBroker {
         			completeJob.getTaskList().set(taskindex, completeTask);
         		}
         		
-        		if (successflag == true && completeTask.getStatus() != Cloudlet.SUCCESS) {
-        			successflag = false;
-        			try {
-						completeJob.setCloudletStatus(Cloudlet.FAILED);
-					} catch (Exception e) {
-						e.printStackTrace();
-					}
-        		}
+//        		if (successflag == true && completeTask.getStatus() == Cloudlet.FAILED) {
+//        			successflag = false;
+//        			try {
+//						completeJob.setCloudletStatus(Cloudlet.FAILED);
+//					} catch (Exception e) {
+//						e.printStackTrace();
+//					}
+//        		}
         		
         	}
         	if(successflag == true) {
