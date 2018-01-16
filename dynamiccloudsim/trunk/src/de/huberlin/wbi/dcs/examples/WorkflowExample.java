@@ -1,9 +1,14 @@
 package de.huberlin.wbi.dcs.examples;
 
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -27,6 +32,8 @@ import com.mathworks.toolbox.javabuilder.MWClassID;
 import com.mathworks.toolbox.javabuilder.MWComplexity;
 import com.mathworks.toolbox.javabuilder.MWException;
 import com.mathworks.toolbox.javabuilder.MWNumericArray;
+import java.util.Collections;
+import java.util.Comparator;
 
 import EDU.oswego.cs.dl.util.concurrent.FJTask.Par;
 import de.huberlin.wbi.dcs.CloudletSchedulerGreedyDivided;
@@ -46,15 +53,38 @@ import de.huberlin.wbi.dcs.workflow.scheduler.GreedyQueueScheduler;
 import de.huberlin.wbi.dcs.workflow.scheduler.HEFTScheduler;
 import de.huberlin.wbi.dcs.workflow.scheduler.LATEScheduler;
 import de.huberlin.wbi.dcs.workflow.scheduler.StaticRoundRobinScheduler;
+import de.huberlin.wbi.dcs.workflow.scheduler.LATEScheduler.TaskProgressRateComparator;
 import de.huberlin.wbi.dcs.workflow.scheduler.AbstractWorkflowScheduler;
 
 public class WorkflowExample {
+	
+	
+	
+    
+    public static class JobIdComparator implements Comparator<Job> {
+
+		@Override
+		public int compare(Job job1, Job job2) {
+			return Double.compare(job1.getCloudletId(),
+					job2.getCloudletId());
+		}
+
+	}
+    
+    private static FileWriter out;
+    private static BufferedReader in;
+    
+    
+    public static void sortJobId(List<Job> list) {
+		Collections.sort(list,new JobIdComparator());
+	}
 
 	public static void main(String[] args) {
 		double totalRuntime = 0d;
 		//Parameters.parseParameters(args);
 		
 		try {
+			
 			for (int i = 0; i < Parameters.numberOfRuns; i++) {
 				WorkflowExample ex = new WorkflowExample();
 				if (!Parameters.outputDatacenterEvents) {
@@ -121,6 +151,7 @@ public class WorkflowExample {
 	            WorkflowEngine wfEngine = wfPlanner.getWorkflowEngine();
 	            
 				// ex.createDatacenter("Datacenter");
+	            
 				List<Datacenter> dcList = ex.createMulDatacenters(Parameters.numberOfDC);
 //				AbstractWorkflowScheduler scheduler = ex.createScheduler(i);
 				List<Vm> vmlist = createVMList(wfEngine.getSchedulerId(0), i);
@@ -142,9 +173,14 @@ public class WorkflowExample {
 	            List<Job> outputList0 = wfEngine.getJobsReceivedList();
 	            
 				CloudSim.stopSimulation();
+				//Collections.sort(outputList0, new JobIdComparator());
+				sortJobId(outputList0);
 				Parameters.printJobList(outputList0);
+				int numberOfSuccessfulJob = outputList0.size();
+				double accumulatedRuntime = Parameters.sumOfJobExecutime/numberOfSuccessfulJob;
 				totalRuntime += wfEngine.getScheduler(0).getRuntime();
-				Log.printLine(wfEngine.getScheduler(0).getRuntime() / 60);
+				//Log.printLine(wfEngine.getScheduler(0).getRuntime() / 60);
+				Log.printLine(accumulatedRuntime / 60);
 			}
 
 			Log.printLine("Average runtime in minutes: " + totalRuntime
@@ -159,7 +195,6 @@ public class WorkflowExample {
 	}
 	
 	
-
 	
 
 
@@ -243,7 +278,18 @@ public class WorkflowExample {
 	
 	public List<Datacenter> createMulDatacenters(int numberOfDC) {
 		LinkedList<Datacenter> dcList = new LinkedList<>();
-		Parameters Para = new Parameters();
+		
+		File file = new File("./dynamiccloudsim/model/modelInfo-hostinfo.txt");
+		try {
+			if(!Parameters.isExtracte) {
+				out = new FileWriter(file);
+			}else {
+				in = new BufferedReader(new FileReader(file));
+			}
+		}catch (IOException e) {
+			// TODO: handle exception
+			e.printStackTrace();
+		}
 		for (int dcindex = 0;dcindex < numberOfDC; dcindex++) {
 			StringBuilder sb = new StringBuilder("Datacenter_");
 			StringBuilder dcname = sb;
@@ -291,8 +337,8 @@ public class WorkflowExample {
 			dcc.setLikelihoodOfFailure(Parameters.likelihoodOfFailure[dcindex]);
 			dcc.setRuntimeFactorIncaseOfFailure(Parameters.runtimeFactorInCaseOfFailure[dcindex]);
 			dcc.setLikelihoodOfDCFailure(Parameters.likelihoodOfDCFailure[dcindex]);
-//			dcc.ubOfDCFailureDuration = Parameters.ubOfDCFailureDuration[dcindex];
-//			dcc.lbOfDCFailureDuration = Parameters.lbOfDCFailureDuration[dcindex];
+			dcc.ubOfDCFailureDuration = Parameters.ubOfDCFailureDuration[dcindex];
+			dcc.lbOfDCFailureDuration = Parameters.lbOfDCFailureDuration[dcindex];
 			// CPU Dynamics
 			dcc.cpuBaselineChangesPerHour = Parameters.cpuBaselineChangesPerHourOfDC[dcindex];
 			dcc.cpuDynamicsDistribution = Parameters.cpuDynamicsDistributionOfDC[dcindex];
@@ -373,6 +419,17 @@ public class WorkflowExample {
 			dcc.ioBaseline = Parameters.ioBaselineOfDC[dcindex];
 			dcList.add(dc);
 		}
+		
+		try {
+			if(!Parameters.isExtracte) {
+				out.close();
+			}else {
+				in.close();
+			}
+		}catch (IOException e) {
+			// TODO: handle exception
+			e.printStackTrace();
+		}
 		return dcList;
 	}
 	
@@ -389,101 +446,163 @@ public class WorkflowExample {
 		double mipsmean = 0d;
 		double bwpsmean = 0d;
 		double iopsmean = 0d;
-		
+		String line;
+		String[] para_string;
 		for(int i = 0; i < Parameters.numberOfVMperDC[dcindex]; i++) {
-			int typeindex = (int)(Math.round(Math.random()*(Parameters.machineType-1)));
-			Parameters.nOpteronOfMachineTypeOfDC[dcindex][typeindex] += 1;
-			int ram = (int) (2 * 1024 * Parameters.nCusPerCoreOpteronOfMachineType[typeindex] 
-					* Parameters.nCoresOpteronOfMachineType[typeindex]);
-			double mean = 1d;
-			double dev = Parameters.bwHeterogeneityCVOfPlatform;
-			ContinuousDistribution dist = Parameters.getDistribution(
-					parameters.bwHeterogeneityDistribution, mean,
-					parameters.bwHeterogeneityAlpha,
-					parameters.bwHeterogeneityBeta, dev,
-					parameters.bwHeterogeneityShape,
-					parameters.bwHeterogeneityLocation,
-					parameters.bwHeterogeneityShift,
-					parameters.bwHeterogeneityMin,
-					parameters.bwHeterogeneityMax,
-					parameters.bwHeterogeneityPopulation);
-			long bwps = 0;
-			while (bwps <= 0) {
-				bwps = (long) (dist.sample() * Parameters.bwpsPerPeOfMachineType[typeindex]);
-			}
-			mean = 1d;
-			dev = Parameters.ioHeterogeneityCVOfPlatform;
-			dist = Parameters.getDistribution(
-					parameters.ioHeterogeneityDistribution, mean,
-					parameters.ioHeterogeneityAlpha,
-					parameters.ioHeterogeneityBeta, dev,
-					parameters.ioHeterogeneityShape,
-					parameters.ioHeterogeneityLocation,
-					parameters.ioHeterogeneityShift,
-					parameters.ioHeterogeneityMin,
-					parameters.ioHeterogeneityMax,
-					parameters.ioHeterogeneityPopulation);
-			long iops = 0;
-			while (iops <= 0) {
-				iops = (long) (long) (dist.sample() * Parameters.iopsPerPeOfMachineType[typeindex]);
-			}
-			mean = 1d;
-			dev = Parameters.cpuHeterogeneityCVOfPlatform;
-			dist = Parameters.getDistribution(
-					parameters.cpuHeterogeneityDistribution, mean,
-					parameters.cpuHeterogeneityAlpha,
-					parameters.cpuHeterogeneityBeta, dev,
-					parameters.cpuHeterogeneityShape,
-					parameters.cpuHeterogeneityLocation,
-					parameters.cpuHeterogeneityShift,
-					parameters.cpuHeterogeneityMin,
-					parameters.cpuHeterogeneityMax,
-					parameters.cpuHeterogeneityPopulation);
-			long mips = 0;
-			while (mips <= 0) {
-				mips = (long) (dist.sample() * Parameters.mipsPerCoreOpteronOfMachineType[typeindex]);
+			int typeindex=0;
+			int ram=0;
+			long bwps=0;
+			long iops=0;
+			long mips=0;
+			try {
+				if(!Parameters.isExtracte) {
+					typeindex = (int)(Math.round(Math.random()*(Parameters.machineType-1)));
+					out.write(typeindex+"\t");
+					Parameters.nOpteronOfMachineTypeOfDC[dcindex][typeindex] += 1;
+					ram = (int) (2 * 1024 * Parameters.nCusPerCoreOpteronOfMachineType[typeindex] 
+							* Parameters.nCoresOpteronOfMachineType[typeindex]);
+					out.write(ram+"\t");
+					double mean = 1d;
+					double dev = Parameters.bwHeterogeneityCVOfPlatform;
+					ContinuousDistribution dist = Parameters.getDistribution(
+							parameters.bwHeterogeneityDistribution, mean,
+							parameters.bwHeterogeneityAlpha,
+							parameters.bwHeterogeneityBeta, dev,
+							parameters.bwHeterogeneityShape,
+							parameters.bwHeterogeneityLocation,
+							parameters.bwHeterogeneityShift,
+							parameters.bwHeterogeneityMin,
+							parameters.bwHeterogeneityMax,
+							parameters.bwHeterogeneityPopulation);
+					bwps = 0;
+					while (bwps <= 0) {
+						bwps = (long) (dist.sample() * Parameters.bwpsPerPeOfMachineType[typeindex]);
+					}
+					mean = 1d;
+					dev = Parameters.ioHeterogeneityCVOfPlatform;
+					dist = Parameters.getDistribution(
+							parameters.ioHeterogeneityDistribution, mean,
+							parameters.ioHeterogeneityAlpha,
+							parameters.ioHeterogeneityBeta, dev,
+							parameters.ioHeterogeneityShape,
+							parameters.ioHeterogeneityLocation,
+							parameters.ioHeterogeneityShift,
+							parameters.ioHeterogeneityMin,
+							parameters.ioHeterogeneityMax,
+							parameters.ioHeterogeneityPopulation);
+					iops = 0;
+					while (iops <= 0) {
+						iops = (long) (long) (dist.sample() * Parameters.iopsPerPeOfMachineType[typeindex]);
+					}
+					mean = 1d;
+					dev = Parameters.cpuHeterogeneityCVOfPlatform;
+					dist = Parameters.getDistribution(
+							parameters.cpuHeterogeneityDistribution, mean,
+							parameters.cpuHeterogeneityAlpha,
+							parameters.cpuHeterogeneityBeta, dev,
+							parameters.cpuHeterogeneityShape,
+							parameters.cpuHeterogeneityLocation,
+							parameters.cpuHeterogeneityShift,
+							parameters.cpuHeterogeneityMin,
+							parameters.cpuHeterogeneityMax,
+							parameters.cpuHeterogeneityPopulation);
+					mips = 0;
+					while (mips <= 0) {
+						mips = (long) (dist.sample() * Parameters.mipsPerCoreOpteronOfMachineType[typeindex]);
+					}
+					
+					if (numGen.nextDouble() < Parameters.likelihoodOfStragglerOfDC[dcindex]) {
+						bwps *= Parameters.stragglerPerformanceCoefficientOfDC[dcindex];
+						iops *= Parameters.stragglerPerformanceCoefficientOfDC[dcindex];
+						mips *= Parameters.stragglerPerformanceCoefficientOfDC[dcindex];
+					}
+					out.write(bwps+"\t");
+					out.write(iops+"\t");
+					out.write(mips+"\t");
+					out.write("\r\n");
+					bwpsmean += bwps;
+					iopsmean += iops;
+					mipsmean += mips;
+				}else {
+					line = in.readLine();
+					para_string = line.split("\t");
+					typeindex = Integer.parseInt(para_string[0]);
+					Parameters.nOpteronOfMachineTypeOfDC[dcindex][typeindex] += 1;
+					ram = Integer.parseInt(para_string[1]);
+					bwps = (long)Double.parseDouble(para_string[2]);
+					iops = (long)Double.parseDouble(para_string[3]);
+					mips = (long)Double.parseDouble(para_string[4]);
+					
+				}
+			}catch (IOException e) {
+				// TODO: handle exception
+				e.printStackTrace();
 			}
 			
-			if (numGen.nextDouble() < Parameters.likelihoodOfStragglerOfDC[dcindex]) {
-				bwps *= Parameters.stragglerPerformanceCoefficientOfDC[dcindex];
-				iops *= Parameters.stragglerPerformanceCoefficientOfDC[dcindex];
-				mips *= Parameters.stragglerPerformanceCoefficientOfDC[dcindex];
-			}
-			
-			bwpsmean += bwps;
-			iopsmean += iops;
-			mipsmean += mips;
 			hostList.add(new DynamicHost(hostId++, ram, bwps, iops, storage,
 					Parameters.nCusPerCoreOpteronOfMachineType[typeindex], Parameters.nCoresOpteronOfMachineType[typeindex], mips));
 			
 		}
-		bwpsmean /= Parameters.numberOfVMperDC[dcindex];
-		iopsmean /= Parameters.numberOfVMperDC[dcindex];
-		mipsmean /= Parameters.numberOfVMperDC[dcindex];
-		Parameters.bwBaselineOfDC[dcindex] = bwpsmean;
-		Parameters.ioBaselineOfDC[dcindex] = iopsmean;
-		Parameters.MIPSbaselineOfDC[dcindex] = mipsmean;
 		
-		// obtain the COV of each DC
-		double bwpssumOfSqure = 0d;
-		double iopssumOfSqure = 0d;
-		double mipssumOfSqure = 0d;
-		
-		for(int hostindex = 0; hostindex < hostList.size(); hostindex++) {
-			bwpssumOfSqure += Math.pow(hostList.get(hostindex).getBw()-bwpsmean, 2);
-			iopssumOfSqure += Math.pow(hostList.get(hostindex).getIo()-iopsmean, 2);
-			mipssumOfSqure += Math.pow(hostList.get(hostindex).getMipsPerPe()-mipsmean, 2);
+		try {
+			if(!Parameters.isExtracte) {
+				bwpsmean /= Parameters.numberOfVMperDC[dcindex];
+				iopsmean /= Parameters.numberOfVMperDC[dcindex];
+				mipsmean /= Parameters.numberOfVMperDC[dcindex];
+				
+				Parameters.bwBaselineOfDC[dcindex] = bwpsmean;
+				Parameters.ioBaselineOfDC[dcindex] = iopsmean;
+				Parameters.MIPSbaselineOfDC[dcindex] = mipsmean;
+				
+				out.write(bwpsmean+"\t");
+				out.write(iopsmean+"\t");
+				out.write(mipsmean+"\t");
+				out.write("\r\n");
+				// obtain the COV of each DC
+				double bwpssumOfSqure = 0d;
+				double iopssumOfSqure = 0d;
+				double mipssumOfSqure = 0d;
+				
+				for(int hostindex = 0; hostindex < hostList.size(); hostindex++) {
+					bwpssumOfSqure += Math.pow(hostList.get(hostindex).getBw()-bwpsmean, 2);
+					iopssumOfSqure += Math.pow(hostList.get(hostindex).getIo()-iopsmean, 2);
+					mipssumOfSqure += Math.pow(hostList.get(hostindex).getMipsPerPe()-mipsmean, 2);
+				}
+				double bwpsCOV = 0d;
+				double iopsCOV = 0d;
+				double mipsCOV = 0d;
+				
+				bwpsCOV = Math.sqrt(bwpssumOfSqure/(hostList.size()-1))/bwpsmean;
+				iopsCOV = Math.sqrt(iopssumOfSqure/(hostList.size()-1))/iopsmean;
+				mipsCOV = Math.sqrt(mipssumOfSqure/(hostList.size()-1))/mipsmean;
+				Parameters.bwHeterogeneityCVOfDC[dcindex] = bwpsCOV;
+				Parameters.ioHeterogeneityCVOfDC[dcindex] = iopsCOV;
+				Parameters.cpuHeterogeneityCVOfDC[dcindex] = mipsCOV;
+				out.write(bwpsCOV+"\t");
+				out.write(iopsCOV+"\t");
+				out.write(mipsCOV+"\t");
+				out.write("\r\n");
+			}else {
+				line = in.readLine();
+				para_string = line.split("\t");
+				Parameters.bwBaselineOfDC[dcindex] = Double.parseDouble(para_string[0]);
+				Parameters.ioBaselineOfDC[dcindex] = Double.parseDouble(para_string[1]);
+				Parameters.MIPSbaselineOfDC[dcindex] = Double.parseDouble(para_string[2]);
+				line = in.readLine();
+				para_string = line.split("\t");
+				Parameters.bwHeterogeneityCVOfDC[dcindex] = Double.parseDouble(para_string[0]);
+				Parameters.ioHeterogeneityCVOfDC[dcindex] = Double.parseDouble(para_string[1]);
+				Parameters.cpuHeterogeneityCVOfDC[dcindex] = Double.parseDouble(para_string[2]);
+				
+			}
+			
+		}catch (IOException e) {
+			// TODO: handle exception
+			e.printStackTrace();
 		}
-		double bwpsCOV = 0d;
-		double iopsCOV = 0d;
-		double mipsCOV = 0d;
 		
-		bwpsCOV = Math.sqrt(bwpssumOfSqure/(hostList.size()-1))/bwpsmean;
-		iopsCOV = Math.sqrt(iopssumOfSqure/(hostList.size()-1))/iopsmean;
-		mipsCOV = Math.sqrt(mipssumOfSqure/(hostList.size()-1))/mipsmean;
-		Parameters.bwHeterogeneityCVOfDC[dcindex] = bwpsCOV;
-		Parameters.ioHeterogeneityCVOfDC[dcindex] = iopsCOV;
-		Parameters.cpuHeterogeneityCVOfDC[dcindex] = mipsCOV;
+		
+		
 		
 		
 //		for(int typeindex = 0; typeindex < Parameters.machineType; typeindex++) {

@@ -12,9 +12,9 @@ import de.huberlin.wbi.dcs.examples.Parameters;
 import de.huberlin.wbi.dcs.examples.Parameters.Distribution;
 
 public class ModelExtractor {
-
-	public static void extracte() throws IOException {
-		File file = new File("./dynamiccloudsim/model/modelInfo.txt");
+	
+	public static void extracteWorkflowInfo() throws IOException{
+		File file = new File("./dynamiccloudsim/model/modelInfo-workflow.txt");
 		BufferedReader in = new BufferedReader(new FileReader(file));
 		String line;
 		int[] dim = new int[2];
@@ -36,11 +36,24 @@ public class ModelExtractor {
 			}
 			Parameters.workflowArrival.put(timeslot, workflowFileName);
 		}
+		in.close();
+	}
+	
+
+	public static void extracteDCInfo() throws IOException {
+		File file = new File("./dynamiccloudsim/model/modelInfo-dc.txt");
+		BufferedReader in = new BufferedReader(new FileReader(file));
+		String line;
+		int[] dim = new int[2];
+		
+		
+		
+		
 		
 		// delayAmongDCIndex
 		
 		line = in.readLine();
-		para_string = line.split("\t");
+		String[] para_string = line.split("\t");
 		dim[0] = Integer.parseInt(para_string[0]);
 		dim[1] = Integer.parseInt(para_string[1]);
 		Parameters.delayAmongDCIndex = new float[dim[0]][dim[1]];
@@ -106,6 +119,8 @@ public class ModelExtractor {
 		Parameters.MIPSbaselineOfDC = new double[numberOfDC];
 		Parameters.bwBaselineOfDC = new double[numberOfDC];
 		Parameters.ioBaselineOfDC = new double[numberOfDC];
+		Parameters.ubOfDCFailureDuration = new double[numberOfDC];
+		Parameters.lbOfDCFailureDuration = new double[numberOfDC];
 		line = in.readLine();
 		para_string = line.split("\t");
 		for(int rowindex = 0; rowindex < dim[0]; rowindex++) {
@@ -214,6 +229,16 @@ public class ModelExtractor {
 		para_string = line.split("\t");
 		for(int rowindex = 0; rowindex < dim[0]; rowindex++) {
 			Parameters.numberOfVMperDC[rowindex] = Integer.parseInt(para_string[rowindex]);
+		}
+		line = in.readLine();
+		para_string = line.split("\t");
+		for(int rowindex = 0; rowindex < dim[0]; rowindex++) {
+			Parameters.ubOfDCFailureDuration[rowindex] = Double.parseDouble(para_string[rowindex]);
+		}
+		line = in.readLine();
+		para_string = line.split("\t");
+		for(int rowindex = 0; rowindex < dim[0]; rowindex++) {
+			Parameters.lbOfDCFailureDuration[rowindex] = Double.parseDouble(para_string[rowindex]);
 		}
 		in.close();
 		

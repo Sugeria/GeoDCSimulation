@@ -53,6 +53,7 @@ import com.mathworks.toolbox.javabuilder.MWClassID;
 import com.mathworks.toolbox.javabuilder.MWComplexity;
 import com.mathworks.toolbox.javabuilder.MWException;
 import com.mathworks.toolbox.javabuilder.MWNumericArray;
+import com.sun.xml.internal.ws.api.streaming.XMLStreamReaderFactory.Default;
 
 import de.huberlin.wbi.dcs.DynamicVm;
 import de.huberlin.wbi.dcs.examples.Parameters;
@@ -97,6 +98,7 @@ public class WorkflowScheduler extends DatacenterBroker {
 	private Map<Integer, LinkedList<Vm>> idleTaskSlotsOfDC;
 	private Map<Integer, Integer> taskOfJob;
 	private Map<Integer, Integer> ackTaskOfJob;
+	private Map<Integer, Integer> scheduledTaskOfJob;
 	private Map<Integer, Job> JobFactory;
 	private double runtime;
 	
@@ -123,6 +125,7 @@ public class WorkflowScheduler extends DatacenterBroker {
 		idleTaskSlotsOfDC = new HashMap<>();
 		taskOfJob = new HashMap<>();
 		ackTaskOfJob = new HashMap<>();
+		scheduledTaskOfJob = new HashMap<>();
 		JobFactory = new HashMap<>();
 //		factory = new MatlabProxyFactory();
 //		proxy = factory.getProxy();
@@ -257,7 +260,8 @@ public class WorkflowScheduler extends DatacenterBroker {
         scheduler.DCbase = DCbase;
         scheduler.workflowScheduler = this;
         scheduler.setCloudletList(getCloudletList());
-        scheduler.setVmList(getVmsCreatedList());
+        // for MinRateScheduler the command is not needed
+        //scheduler.setVmList(getVmsCreatedList());
 
         
         try {
@@ -302,6 +306,7 @@ public class WorkflowScheduler extends DatacenterBroker {
     			}else {
     				// when return remember to delete the item in the three tables
     				taskOfJob.put(job.getCloudletId(), job.getTaskList().size());
+    				scheduledTaskOfJob.put(job.getCloudletId(), 0);
     				ackTaskOfJob.put(job.getCloudletId(), 0);
     				JobFactory.put(job.getCloudletId(), job);
     			}
@@ -314,6 +319,7 @@ public class WorkflowScheduler extends DatacenterBroker {
         	// whether preAssigned slots is enough for the original tasks in the job
         	double[] singlex = null;
         	Map<Integer, Double> bwOfSrcPos = null;
+        	boolean allzeroflag = true;
         	int vnum = unscheduledTaskNum*Parameters.numberOfDC;
         	if(greatAssignedTaskNum <= preAssignedSlots) {
         	// if yes
@@ -384,6 +390,7 @@ public class WorkflowScheduler extends DatacenterBroker {
             		// cut down the corresponding resource
             		for(int tindex = 0; tindex < unscheduledTaskNum; tindex++) {
                 		int taskId = job.unscheduledTaskList.get(tindex).getCloudletId();
+                		int datanumber = job.data[tindex];
                 		if(job.currentGreatePosition.containsKey(taskId)) {
                 			int pos = job.currentGreatePosition.get(taskId);
                 			int xindex = tindex * Parameters.numberOfDC + pos;
@@ -395,10 +402,22 @@ public class WorkflowScheduler extends DatacenterBroker {
     						}
     						
     						// uplink
-    						
+    						bwOfSrcPos = new HashMap<>();
     						if(job.TotalTransferDataSize[xindex]>0) {
+    							for(int dataindex = 0; dataindex < datanumber; dataindex++) {
+    								double neededBw = job.bandwidth[xindex][dataindex];
+    								int srcPos = (int) job.datapos[tindex][dataindex];
+    								if(bwOfSrcPos.containsKey(srcPos)) {
+    									double oldvalue = bwOfSrcPos.get(srcPos);
+    									bwOfSrcPos.put(srcPos, oldvalue + neededBw);
+    								}else {
+    									bwOfSrcPos.put(srcPos, 0 + neededBw);
+    								}
+    							}
     							for(int posindex : bwOfSrcPos.keySet()) {
-    								UpArray[0][posindex] -= bwOfSrcPos.get(posindex);
+    								
+    								UpArray[0][posindex]-=bwOfSrcPos.get(posindex);
+    								
     							}
     						}
     						
@@ -504,11 +523,22 @@ public class WorkflowScheduler extends DatacenterBroker {
 							Down.set(pos, DownArray[0][dcindex]);
 						}
 						
-						result = taskAssign.copyStrategy(4,xOrig,tasknum,dcnum,allRateMuArray,allRateSigmaArray,TotalTransferDataSize,data,datapos,bandwidth,Slot,Up,Down,uselessDCforTask,r,slotlimit);
-//						result = taskAssign.copyStrategy_optimizeExp_Traverse(4,xOrig,tasknum,dcnum,allRateMuArray,allRateSigmaArray,TotalTransferDataSize,data,datapos,bandwidth,Slot,Up,Down,uselessDCforTask,r,slotlimit);
-//						result = taskAssign.copyStrategy_optimizeAll_orderedRes(4,xOrig,tasknum,dcnum,allRateMuArray,allRateSigmaArray,TotalTransferDataSize,data,datapos,bandwidth,Slot,Up,Down,uselessDCforTask,r,slotlimit);
-//						result = taskAssign.copyStrategy_optimizeAll_Traverse(4,xOrig,tasknum,dcnum,allRateMuArray,allRateSigmaArray,TotalTransferDataSize,data,datapos,bandwidth,Slot,Up,Down,uselessDCforTask,r,slotlimit);
-						
+						switch(Parameters.copystrategy) {
+						case 1:
+							result = taskAssign.copyStrategy(4,xOrig,tasknum,dcnum,allRateMuArray,allRateSigmaArray,TotalTransferDataSize,data,datapos,bandwidth,Slot,Up,Down,uselessDCforTask,r,slotlimit);
+							break;
+						case 2:
+							result = taskAssign.copyStrategy_optimizeExp_Traverse(4,xOrig,tasknum,dcnum,allRateMuArray,allRateSigmaArray,TotalTransferDataSize,data,datapos,bandwidth,Slot,Up,Down,uselessDCforTask,r,slotlimit);
+							break;
+						case 3:
+							result = taskAssign.copyStrategy_optimizeAll_orderedRes(4,xOrig,tasknum,dcnum,allRateMuArray,allRateSigmaArray,TotalTransferDataSize,data,datapos,bandwidth,Slot,Up,Down,uselessDCforTask,r,slotlimit);
+							break;
+						case 4:
+							result = taskAssign.copyStrategy_optimizeAll_Traverse(4,xOrig,tasknum,dcnum,allRateMuArray,allRateSigmaArray,TotalTransferDataSize,data,datapos,bandwidth,Slot,Up,Down,uselessDCforTask,r,slotlimit);
+							break;
+						default:
+							break;
+						}					
 						xAssign = (MWNumericArray)result[0];
 						UpdatedSlot = (MWNumericArray)result[1];
 						UpdatedUp = (MWNumericArray)result[2];
@@ -568,6 +598,9 @@ public class WorkflowScheduler extends DatacenterBroker {
 						// JobFactory whether change the corresponding value
 						// JobList whether change the corresponding value
 						job.unscheduledTaskList.removeAll(taskSubmitted);
+						int numOfScheduledTask = scheduledTaskOfJob.get(job.getCloudletId());
+						scheduledTaskOfJob.put(job.getCloudletId(), (numOfScheduledTask+taskSubmitted.size()));
+						//job.sortedflag = false;
 						JobFactory.put(job.getCloudletId(), job);
 						if(job.unscheduledTaskList.size() == 0) {
 							scheduler.getScheduledList().add(job);
@@ -808,7 +841,7 @@ public class WorkflowScheduler extends DatacenterBroker {
 										if(inter_resourceEnough == true) {
 											success = true;
 											singlex[xindex] = 1;
-											
+											allzeroflag = false;
 											// cut down resource
 											// machines
 											SlotArray[0][dcindex] -= 1;
@@ -908,7 +941,7 @@ public class WorkflowScheduler extends DatacenterBroker {
 									
 									// store the greatest assignment info in the job with the current resource
 									int xindex = tindex * Parameters.numberOfDC + successDC;
-									
+									allzeroflag = false;
 									singlex[xindex] = 1;
 								}
 							}
@@ -919,199 +952,218 @@ public class WorkflowScheduler extends DatacenterBroker {
 						e.printStackTrace();
 					}
             		
-            		// copy based on the fresh assignment
-            		MWNumericArray xOrig = null;
-            		MWNumericArray tasknum = null;
-            		MWNumericArray dcnum = null;
-            		MWNumericArray allRateMuArray = null;
-            		MWNumericArray allRateSigmaArray = null;
-            		MWNumericArray TotalTransferDataSize = null;
-            		MWNumericArray data = null;
-            		MWNumericArray datapos = null;
-            		MWNumericArray bandwidth = null;
-            		MWNumericArray Slot = null;
-            		MWNumericArray Up = null;
-            		MWNumericArray Down = null;
-            		MWNumericArray uselessDCforTask = null;
-            		MWNumericArray r = null;
-            		MWNumericArray slotlimit = null;
-            		Object[] result = null;	/* Stores the result */
-            		MWNumericArray xAssign = null;	/* Location of minimal value */
-            		MWNumericArray UpdatedSlot = null;	/* solvable flag */
-            		MWNumericArray UpdatedUp = null;
-            		MWNumericArray UpdatedDown = null;
+            		// judge whether x is all zero
             		double[] x = null;
-            		double[] slot = null;
-            		double[] up = null;
-            		double[] down = null;
-            		try {
-						taskAssign = new TaskAssign();
-						// initial variables
-						int[] dims = new int[2];
-						dims[0] = 1;
-						dims[1] = 1;
-						tasknum = MWNumericArray.newInstance(dims, MWClassID.INT64,MWComplexity.REAL);
-						dcnum = MWNumericArray.newInstance(dims, MWClassID.INT64,MWComplexity.REAL);
-						r = MWNumericArray.newInstance(dims, MWClassID.DOUBLE,MWComplexity.REAL);
-						slotlimit = MWNumericArray.newInstance(dims, MWClassID.INT64,MWComplexity.REAL);
-						dims[1] = unscheduledTaskNum;
-						data = MWNumericArray.newInstance(dims, MWClassID.INT64,MWComplexity.REAL);
-						dims[1] = Parameters.numberOfDC;
-						Slot = MWNumericArray.newInstance(dims, MWClassID.DOUBLE,MWComplexity.REAL);
-						Up = MWNumericArray.newInstance(dims, MWClassID.DOUBLE,MWComplexity.REAL);
-						Down = MWNumericArray.newInstance(dims, MWClassID.DOUBLE,MWComplexity.REAL);
-						dims[1] = vnum;
-						xOrig = MWNumericArray.newInstance(dims, MWClassID.DOUBLE,MWComplexity.REAL);
-						allRateMuArray = MWNumericArray.newInstance(dims, MWClassID.DOUBLE,MWComplexity.REAL);
-						allRateSigmaArray = MWNumericArray.newInstance(dims, MWClassID.DOUBLE,MWComplexity.REAL);
-						TotalTransferDataSize = MWNumericArray.newInstance(dims, MWClassID.DOUBLE,MWComplexity.REAL);
-						uselessDCforTask = MWNumericArray.newInstance(dims, MWClassID.DOUBLE,MWComplexity.REAL);
-						dims[0] = unscheduledTaskNum;
-						dims[1] = Parameters.ubOfData;
-						datapos = MWNumericArray.newInstance(dims, MWClassID.DOUBLE,MWComplexity.REAL);
-						dims[0] = vnum;
-						bandwidth = MWNumericArray.newInstance(dims, MWClassID.DOUBLE,MWComplexity.REAL);
-						
-						// assign values
-						tasknum.set(1, unscheduledTaskNum);
-						dcnum.set(1, Parameters.numberOfDC);
-						r.set(1, Parameters.r);
-						slotlimit.set(1, preAssignedSlots);
-						
-						int[] pos = new int[2];
-						
-						for(int tindex = 0; tindex < unscheduledTaskNum; tindex++) {
-							// data datapos
-							pos[0] = 1;
-							pos[1] = tindex + 1;
-							data.set(pos, job.data[tindex]);
-							for(int dataindex = 0; dataindex < Parameters.ubOfData; dataindex++) {
-								pos[0] = tindex + 1;
-								pos[1] = dataindex + 1;
-								datapos.set(pos, job.datapos[tindex][dataindex]);
-							}
-							// xOrig allRateMu allRateSigma uselessDCforTask bandwidth
-							for(int dcindex = 0; dcindex < Parameters.numberOfDC; dcindex++) {
-								int xindex = tindex * Parameters.numberOfDC + dcindex;
-								pos[0] = 1;
-								pos[1] = xindex + 1;
-								xOrig.set(pos, singlex[xindex]);
-								allRateMuArray.set(pos, job.allRateMuArray[0][xindex]);
-								allRateSigmaArray.set(pos, job.allRateSigmaArray[0][xindex]);
-								uselessDCforTask.set(pos, job.uselessDCforTask[xindex]);
-								for(int dataindex = 0; dataindex < Parameters.ubOfData; dataindex++) {
-									pos[0] = xindex + 1;
-									pos[1] = dataindex + 1;
-									bandwidth.set(pos, job.bandwidth[xindex][dataindex]);
-								}
-							}
-						}
-						
-						// current Slot Up Down
-						for(int dcindex = 0; dcindex < Parameters.numberOfDC; dcindex++) {
-							pos[0] = 1;
-							pos[1] = dcindex + 1;
-							Slot.set(pos, SlotArray[0][dcindex]);
-							Up.set(pos, UpArray[0][dcindex]);
-							Down.set(pos, DownArray[0][dcindex]);
-						}
-						
-						result = taskAssign.copyStrategy(4,xOrig,tasknum,dcnum,allRateMuArray,allRateSigmaArray,TotalTransferDataSize,data,datapos,bandwidth,Slot,Up,Down,uselessDCforTask,r,slotlimit);
-//						result = taskAssign.copyStrategy_optimizeExp_Traverse(4,xOrig,tasknum,dcnum,allRateMuArray,allRateSigmaArray,TotalTransferDataSize,data,datapos,bandwidth,Slot,Up,Down,uselessDCforTask,r,slotlimit);
-//						result = taskAssign.copyStrategy_optimizeAll_orderedRes(4,xOrig,tasknum,dcnum,allRateMuArray,allRateSigmaArray,TotalTransferDataSize,data,datapos,bandwidth,Slot,Up,Down,uselessDCforTask,r,slotlimit);
-//						result = taskAssign.copyStrategy_optimizeAll_Traverse(4,xOrig,tasknum,dcnum,allRateMuArray,allRateSigmaArray,TotalTransferDataSize,data,datapos,bandwidth,Slot,Up,Down,uselessDCforTask,r,slotlimit);
-						
-						xAssign = (MWNumericArray)result[0];
-						UpdatedSlot = (MWNumericArray)result[1];
-						UpdatedUp = (MWNumericArray)result[2];
-						UpdatedDown = (MWNumericArray)result[3];
-						
-						x = xAssign.getDoubleData();
-						slot = UpdatedSlot.getDoubleData();
-						up = UpdatedUp.getDoubleData();
-						down = UpdatedDown.getDoubleData();
-						for(int dcindex = 0; dcindex < Parameters.numberOfDC; dcindex++) {
-							SlotArray[0][dcindex] = slot[dcindex];
-							UpArray[0][dcindex] = up[dcindex];
-							DownArray[0][dcindex] = down[dcindex];
-						}
-						
-						
-						// Queue<Vm> taskSlotsKeptIdle = new LinkedList<>();
-						Queue<Task> taskSubmitted = new LinkedList<>();
-						// successful assignment
-						
-						for (int tindex = 0; tindex < unscheduledTaskNum; tindex++) {
-							Task task = job.unscheduledTaskList.get(tindex);
-							boolean submitflag = false;
-							for (int dcindex = 0; dcindex < Parameters.numberOfDC; dcindex++) {
-								if (x[tindex*Parameters.numberOfDC + dcindex] != 0) {
-									if(submitflag == false) {
-										submitflag = true;
-									}
-									int submittedNum = (int) x[tindex*Parameters.numberOfDC + dcindex];
-									for(int copyindex = 0; copyindex < submittedNum; copyindex++) {
-										Vm vm = idleTaskSlotsOfDC.get(dcindex + DCbase).remove();
-										if (tasks.containsKey(task.getCloudletId())) {
-											Task speculativeTask = new Task(task);
-											cloneTask(speculativeTask,task);
-											speculativeTask.setAssignmentDCId(dcindex + DCbase);
-											speculativeTask.assignmentDCindex = dcindex;
-											speculativeTask.setSpeculativeCopy(true);
-											speculativeTasks.get(speculativeTask.getCloudletId()).add(speculativeTask);
-											submitSpeculativeTask(speculativeTask, vm);
-										} else {
-											task.setAssignmentDCId(dcindex + DCbase);
-											task.assignmentDCindex = dcindex;
-											tasks.put(task.getCloudletId(), task);
-											submitTask(task, vm);
-											speculativeTasks.put(task.getCloudletId(), new LinkedList<>());
-										}
-									}
-									
-								}
-							}
-							if(submitflag == true) {
-								taskSubmitted.add(task);
-							}
-						}
-						// there to verify that modify the job 
-						// JobFactory whether change the corresponding value
-						// JobList whether change the corresponding value
-						job.unscheduledTaskList.removeAll(taskSubmitted);
-						JobFactory.put(job.getCloudletId(), job);
-						if(job.unscheduledTaskList.size() == 0) {
-							scheduler.getScheduledList().add(job);
-						}
-						
-					} catch (MWException e) {
-						// TODO Auto-generated catch block
-						System.out.println("Exception: "+e.toString());
-						e.printStackTrace();
-					}finally {
-						MWNumericArray.disposeArray(xOrig);
-						MWNumericArray.disposeArray(tasknum);
-						MWNumericArray.disposeArray(dcnum);
-						MWNumericArray.disposeArray(allRateMuArray);
-						MWNumericArray.disposeArray(allRateSigmaArray);
-						MWNumericArray.disposeArray(TotalTransferDataSize);
-						MWNumericArray.disposeArray(data);
-						MWNumericArray.disposeArray(datapos);
-						MWNumericArray.disposeArray(bandwidth);
-						MWNumericArray.disposeArray(Slot);
-						MWNumericArray.disposeArray(Up);
-						MWNumericArray.disposeArray(Down);
-						MWNumericArray.disposeArray(uselessDCforTask);
-						MWNumericArray.disposeArray(r);
-						MWNumericArray.disposeArray(slotlimit);
-						MWNumericArray.disposeArray(xAssign);
-						MWNumericArray.disposeArray(UpdatedSlot);
-						MWNumericArray.disposeArray(UpdatedUp);
-						MWNumericArray.disposeArray(UpdatedDown);
-						if(taskAssign != null)
-							taskAssign.dispose();
-					}
-            		
+            		if(allzeroflag == false) {
+            			// copy based on the fresh assignment
+                		MWNumericArray xOrig = null;
+                		MWNumericArray tasknum = null;
+                		MWNumericArray dcnum = null;
+                		MWNumericArray allRateMuArray = null;
+                		MWNumericArray allRateSigmaArray = null;
+                		MWNumericArray TotalTransferDataSize = null;
+                		MWNumericArray data = null;
+                		MWNumericArray datapos = null;
+                		MWNumericArray bandwidth = null;
+                		MWNumericArray Slot = null;
+                		MWNumericArray Up = null;
+                		MWNumericArray Down = null;
+                		MWNumericArray uselessDCforTask = null;
+                		MWNumericArray r = null;
+                		MWNumericArray slotlimit = null;
+                		Object[] result = null;	/* Stores the result */
+                		MWNumericArray xAssign = null;	/* Location of minimal value */
+                		MWNumericArray UpdatedSlot = null;	/* solvable flag */
+                		MWNumericArray UpdatedUp = null;
+                		MWNumericArray UpdatedDown = null;
+                		
+                		double[] slot = null;
+                		double[] up = null;
+                		double[] down = null;
+                		try {
+    						taskAssign = new TaskAssign();
+    						// initial variables
+    						int[] dims = new int[2];
+    						dims[0] = 1;
+    						dims[1] = 1;
+    						tasknum = MWNumericArray.newInstance(dims, MWClassID.INT64,MWComplexity.REAL);
+    						dcnum = MWNumericArray.newInstance(dims, MWClassID.INT64,MWComplexity.REAL);
+    						r = MWNumericArray.newInstance(dims, MWClassID.DOUBLE,MWComplexity.REAL);
+    						slotlimit = MWNumericArray.newInstance(dims, MWClassID.INT64,MWComplexity.REAL);
+    						dims[1] = unscheduledTaskNum;
+    						data = MWNumericArray.newInstance(dims, MWClassID.INT64,MWComplexity.REAL);
+    						dims[1] = Parameters.numberOfDC;
+    						Slot = MWNumericArray.newInstance(dims, MWClassID.DOUBLE,MWComplexity.REAL);
+    						Up = MWNumericArray.newInstance(dims, MWClassID.DOUBLE,MWComplexity.REAL);
+    						Down = MWNumericArray.newInstance(dims, MWClassID.DOUBLE,MWComplexity.REAL);
+    						dims[1] = vnum;
+    						xOrig = MWNumericArray.newInstance(dims, MWClassID.DOUBLE,MWComplexity.REAL);
+    						allRateMuArray = MWNumericArray.newInstance(dims, MWClassID.DOUBLE,MWComplexity.REAL);
+    						allRateSigmaArray = MWNumericArray.newInstance(dims, MWClassID.DOUBLE,MWComplexity.REAL);
+    						TotalTransferDataSize = MWNumericArray.newInstance(dims, MWClassID.DOUBLE,MWComplexity.REAL);
+    						uselessDCforTask = MWNumericArray.newInstance(dims, MWClassID.DOUBLE,MWComplexity.REAL);
+    						dims[0] = unscheduledTaskNum;
+    						dims[1] = Parameters.ubOfData;
+    						datapos = MWNumericArray.newInstance(dims, MWClassID.DOUBLE,MWComplexity.REAL);
+    						dims[0] = vnum;
+    						bandwidth = MWNumericArray.newInstance(dims, MWClassID.DOUBLE,MWComplexity.REAL);
+    						
+    						// assign values
+    						tasknum.set(1, unscheduledTaskNum);
+    						dcnum.set(1, Parameters.numberOfDC);
+    						r.set(1, Parameters.r);
+    						slotlimit.set(1, preAssignedSlots);
+    						
+    						int[] pos = new int[2];
+    						
+    						for(int tindex = 0; tindex < unscheduledTaskNum; tindex++) {
+    							// data datapos
+    							pos[0] = 1;
+    							pos[1] = tindex + 1;
+    							data.set(pos, job.data[tindex]);
+    							for(int dataindex = 0; dataindex < Parameters.ubOfData; dataindex++) {
+    								pos[0] = tindex + 1;
+    								pos[1] = dataindex + 1;
+    								datapos.set(pos, job.datapos[tindex][dataindex]);
+    							}
+    							// xOrig allRateMu allRateSigma uselessDCforTask bandwidth
+    							for(int dcindex = 0; dcindex < Parameters.numberOfDC; dcindex++) {
+    								int xindex = tindex * Parameters.numberOfDC + dcindex;
+    								pos[0] = 1;
+    								pos[1] = xindex + 1;
+    								xOrig.set(pos, singlex[xindex]);
+    								allRateMuArray.set(pos, job.allRateMuArray[0][xindex]);
+    								allRateSigmaArray.set(pos, job.allRateSigmaArray[0][xindex]);
+    								uselessDCforTask.set(pos, job.uselessDCforTask[xindex]);
+    								for(int dataindex = 0; dataindex < Parameters.ubOfData; dataindex++) {
+    									pos[0] = xindex + 1;
+    									pos[1] = dataindex + 1;
+    									bandwidth.set(pos, job.bandwidth[xindex][dataindex]);
+    								}
+    							}
+    						}
+    						
+    						// current Slot Up Down
+    						for(int dcindex = 0; dcindex < Parameters.numberOfDC; dcindex++) {
+    							pos[0] = 1;
+    							pos[1] = dcindex + 1;
+    							Slot.set(pos, SlotArray[0][dcindex]);
+    							Up.set(pos, UpArray[0][dcindex]);
+    							Down.set(pos, DownArray[0][dcindex]);
+    						}
+    						
+    						switch(Parameters.copystrategy) {
+    						case 1:
+    							result = taskAssign.copyStrategy(4,xOrig,tasknum,dcnum,allRateMuArray,allRateSigmaArray,TotalTransferDataSize,data,datapos,bandwidth,Slot,Up,Down,uselessDCforTask,r,slotlimit);
+    							break;
+    						case 2:
+    							result = taskAssign.copyStrategy_optimizeExp_Traverse(4,xOrig,tasknum,dcnum,allRateMuArray,allRateSigmaArray,TotalTransferDataSize,data,datapos,bandwidth,Slot,Up,Down,uselessDCforTask,r,slotlimit);
+    							break;
+    						case 3:
+    							result = taskAssign.copyStrategy_optimizeAll_orderedRes(4,xOrig,tasknum,dcnum,allRateMuArray,allRateSigmaArray,TotalTransferDataSize,data,datapos,bandwidth,Slot,Up,Down,uselessDCforTask,r,slotlimit);
+    							break;
+    						case 4:
+    							result = taskAssign.copyStrategy_optimizeAll_Traverse(4,xOrig,tasknum,dcnum,allRateMuArray,allRateSigmaArray,TotalTransferDataSize,data,datapos,bandwidth,Slot,Up,Down,uselessDCforTask,r,slotlimit);
+    							break;
+    						default:
+    							break;
+    						}
+    						xAssign = (MWNumericArray)result[0];
+    						UpdatedSlot = (MWNumericArray)result[1];
+    						UpdatedUp = (MWNumericArray)result[2];
+    						UpdatedDown = (MWNumericArray)result[3];
+    						
+    						x = xAssign.getDoubleData();
+    						slot = UpdatedSlot.getDoubleData();
+    						up = UpdatedUp.getDoubleData();
+    						down = UpdatedDown.getDoubleData();
+    						for(int dcindex = 0; dcindex < Parameters.numberOfDC; dcindex++) {
+    							SlotArray[0][dcindex] = slot[dcindex];
+    							UpArray[0][dcindex] = up[dcindex];
+    							DownArray[0][dcindex] = down[dcindex];
+    						}
+    						
+    						
+    						// Queue<Vm> taskSlotsKeptIdle = new LinkedList<>();
+    						Queue<Task> taskSubmitted = new LinkedList<>();
+    						// successful assignment
+    						
+    						for (int tindex = 0; tindex < unscheduledTaskNum; tindex++) {
+    							Task task = job.unscheduledTaskList.get(tindex);
+    							boolean submitflag = false;
+    							for (int dcindex = 0; dcindex < Parameters.numberOfDC; dcindex++) {
+    								if (x[tindex*Parameters.numberOfDC + dcindex] != 0) {
+    									if(submitflag == false) {
+    										submitflag = true;
+    									}
+    									int submittedNum = (int) x[tindex*Parameters.numberOfDC + dcindex];
+    									for(int copyindex = 0; copyindex < submittedNum; copyindex++) {
+    										Vm vm = idleTaskSlotsOfDC.get(dcindex + DCbase).remove();
+    										if (tasks.containsKey(task.getCloudletId())) {
+    											Task speculativeTask = new Task(task);
+    											cloneTask(speculativeTask,task);
+    											speculativeTask.setAssignmentDCId(dcindex + DCbase);
+    											speculativeTask.assignmentDCindex = dcindex;
+    											speculativeTask.setSpeculativeCopy(true);
+    											speculativeTasks.get(speculativeTask.getCloudletId()).add(speculativeTask);
+    											submitSpeculativeTask(speculativeTask, vm);
+    										} else {
+    											task.setAssignmentDCId(dcindex + DCbase);
+    											task.assignmentDCindex = dcindex;
+    											tasks.put(task.getCloudletId(), task);
+    											submitTask(task, vm);
+    											speculativeTasks.put(task.getCloudletId(), new LinkedList<>());
+    										}
+    									}
+    									
+    								}
+    							}
+    							if(submitflag == true) {
+    								taskSubmitted.add(task);
+    							}
+    						}
+    						// there to verify that modify the job 
+    						// JobFactory whether change the corresponding value
+    						// JobList whether change the corresponding value
+    						job.unscheduledTaskList.removeAll(taskSubmitted);
+    						int numOfScheduledTask = scheduledTaskOfJob.get(job.getCloudletId());
+    						scheduledTaskOfJob.put(job.getCloudletId(), (numOfScheduledTask+taskSubmitted.size()));
+    						
+    						//job.sortedflag = false;
+    						JobFactory.put(job.getCloudletId(), job);
+    						if(job.unscheduledTaskList.size() == 0) {
+    							scheduler.getScheduledList().add(job);
+    						}
+    						
+    					} catch (MWException e) {
+    						// TODO Auto-generated catch block
+    						System.out.println("Exception: "+e.toString());
+    						e.printStackTrace();
+    					}finally {
+    						MWNumericArray.disposeArray(xOrig);
+    						MWNumericArray.disposeArray(tasknum);
+    						MWNumericArray.disposeArray(dcnum);
+    						MWNumericArray.disposeArray(allRateMuArray);
+    						MWNumericArray.disposeArray(allRateSigmaArray);
+    						MWNumericArray.disposeArray(TotalTransferDataSize);
+    						MWNumericArray.disposeArray(data);
+    						MWNumericArray.disposeArray(datapos);
+    						MWNumericArray.disposeArray(bandwidth);
+    						MWNumericArray.disposeArray(Slot);
+    						MWNumericArray.disposeArray(Up);
+    						MWNumericArray.disposeArray(Down);
+    						MWNumericArray.disposeArray(uselessDCforTask);
+    						MWNumericArray.disposeArray(r);
+    						MWNumericArray.disposeArray(slotlimit);
+    						MWNumericArray.disposeArray(xAssign);
+    						MWNumericArray.disposeArray(UpdatedSlot);
+    						MWNumericArray.disposeArray(UpdatedUp);
+    						MWNumericArray.disposeArray(UpdatedDown);
+    						if(taskAssign != null)
+    							taskAssign.dispose();
+    					}
+                		
+            		}
             	}
             	
         	}else {
@@ -1184,203 +1236,221 @@ public class WorkflowScheduler extends DatacenterBroker {
 						
 						// store the greatest assignment info in the job with the current resource
 						int xindex = tindex * Parameters.numberOfDC + successDC;
-						
+						allzeroflag = false;
 						singlex[xindex] = 1;
 					}
 				}
 				
-				// copy
-				MWNumericArray xOrig = null;
-        		MWNumericArray tasknum = null;
-        		MWNumericArray dcnum = null;
-        		MWNumericArray allRateMuArray = null;
-        		MWNumericArray allRateSigmaArray = null;
-        		MWNumericArray TotalTransferDataSize = null;
-        		MWNumericArray data = null;
-        		MWNumericArray datapos = null;
-        		MWNumericArray bandwidth = null;
-        		MWNumericArray Slot = null;
-        		MWNumericArray Up = null;
-        		MWNumericArray Down = null;
-        		MWNumericArray uselessDCforTask = null;
-        		MWNumericArray r = null;
-        		MWNumericArray slotlimit = null;
-        		Object[] result = null;	/* Stores the result */
-        		MWNumericArray xAssign = null;	/* Location of minimal value */
-        		MWNumericArray UpdatedSlot = null;	/* solvable flag */
-        		MWNumericArray UpdatedUp = null;
-        		MWNumericArray UpdatedDown = null;
-        		double[] x = null;
-        		double[] slot = null;
-        		double[] up = null;
-        		double[] down = null;
-        		try {
-					taskAssign = new TaskAssign();
-					// initial variables
-					int[] dims = new int[2];
-					dims[0] = 1;
-					dims[1] = 1;
-					tasknum = MWNumericArray.newInstance(dims, MWClassID.INT64,MWComplexity.REAL);
-					dcnum = MWNumericArray.newInstance(dims, MWClassID.INT64,MWComplexity.REAL);
-					r = MWNumericArray.newInstance(dims, MWClassID.DOUBLE,MWComplexity.REAL);
-					slotlimit = MWNumericArray.newInstance(dims, MWClassID.INT64,MWComplexity.REAL);
-					dims[1] = unscheduledTaskNum;
-					data = MWNumericArray.newInstance(dims, MWClassID.INT64,MWComplexity.REAL);
-					dims[1] = Parameters.numberOfDC;
-					Slot = MWNumericArray.newInstance(dims, MWClassID.DOUBLE,MWComplexity.REAL);
-					Up = MWNumericArray.newInstance(dims, MWClassID.DOUBLE,MWComplexity.REAL);
-					Down = MWNumericArray.newInstance(dims, MWClassID.DOUBLE,MWComplexity.REAL);
-					dims[1] = vnum;
-					xOrig = MWNumericArray.newInstance(dims, MWClassID.DOUBLE,MWComplexity.REAL);
-					allRateMuArray = MWNumericArray.newInstance(dims, MWClassID.DOUBLE,MWComplexity.REAL);
-					allRateSigmaArray = MWNumericArray.newInstance(dims, MWClassID.DOUBLE,MWComplexity.REAL);
-					TotalTransferDataSize = MWNumericArray.newInstance(dims, MWClassID.DOUBLE,MWComplexity.REAL);
-					uselessDCforTask = MWNumericArray.newInstance(dims, MWClassID.DOUBLE,MWComplexity.REAL);
-					dims[0] = unscheduledTaskNum;
-					dims[1] = Parameters.ubOfData;
-					datapos = MWNumericArray.newInstance(dims, MWClassID.DOUBLE,MWComplexity.REAL);
-					dims[0] = vnum;
-					bandwidth = MWNumericArray.newInstance(dims, MWClassID.DOUBLE,MWComplexity.REAL);
-					
-					// assign values
-					tasknum.set(1, unscheduledTaskNum);
-					dcnum.set(1, Parameters.numberOfDC);
-					r.set(1, Parameters.r);
-					slotlimit.set(1, preAssignedSlots);
-					
-					int[] pos = new int[2];
-					
-					for(int tindex = 0; tindex < unscheduledTaskNum; tindex++) {
-						// data datapos
-						pos[0] = 1;
-						pos[1] = tindex + 1;
-						data.set(pos, job.data[tindex]);
-						for(int dataindex = 0; dataindex < Parameters.ubOfData; dataindex++) {
-							pos[0] = tindex + 1;
-							pos[1] = dataindex + 1;
-							datapos.set(pos, job.datapos[tindex][dataindex]);
-						}
-						// xOrig allRateMu allRateSigma uselessDCforTask bandwidth
-						for(int dcindex = 0; dcindex < Parameters.numberOfDC; dcindex++) {
-							int xindex = tindex * Parameters.numberOfDC + dcindex;
+				if(allzeroflag == false) {
+					// copy
+					MWNumericArray xOrig = null;
+	        		MWNumericArray tasknum = null;
+	        		MWNumericArray dcnum = null;
+	        		MWNumericArray allRateMuArray = null;
+	        		MWNumericArray allRateSigmaArray = null;
+	        		MWNumericArray TotalTransferDataSize = null;
+	        		MWNumericArray data = null;
+	        		MWNumericArray datapos = null;
+	        		MWNumericArray bandwidth = null;
+	        		MWNumericArray Slot = null;
+	        		MWNumericArray Up = null;
+	        		MWNumericArray Down = null;
+	        		MWNumericArray uselessDCforTask = null;
+	        		MWNumericArray r = null;
+	        		MWNumericArray slotlimit = null;
+	        		Object[] result = null;	/* Stores the result */
+	        		MWNumericArray xAssign = null;	/* Location of minimal value */
+	        		MWNumericArray UpdatedSlot = null;	/* solvable flag */
+	        		MWNumericArray UpdatedUp = null;
+	        		MWNumericArray UpdatedDown = null;
+	        		double[] x = null;
+	        		double[] slot = null;
+	        		double[] up = null;
+	        		double[] down = null;
+	        		try {
+						taskAssign = new TaskAssign();
+						// initial variables
+						int[] dims = new int[2];
+						dims[0] = 1;
+						dims[1] = 1;
+						tasknum = MWNumericArray.newInstance(dims, MWClassID.INT64,MWComplexity.REAL);
+						dcnum = MWNumericArray.newInstance(dims, MWClassID.INT64,MWComplexity.REAL);
+						r = MWNumericArray.newInstance(dims, MWClassID.DOUBLE,MWComplexity.REAL);
+						slotlimit = MWNumericArray.newInstance(dims, MWClassID.INT64,MWComplexity.REAL);
+						dims[1] = unscheduledTaskNum;
+						data = MWNumericArray.newInstance(dims, MWClassID.INT64,MWComplexity.REAL);
+						dims[1] = Parameters.numberOfDC;
+						Slot = MWNumericArray.newInstance(dims, MWClassID.DOUBLE,MWComplexity.REAL);
+						Up = MWNumericArray.newInstance(dims, MWClassID.DOUBLE,MWComplexity.REAL);
+						Down = MWNumericArray.newInstance(dims, MWClassID.DOUBLE,MWComplexity.REAL);
+						dims[1] = vnum;
+						xOrig = MWNumericArray.newInstance(dims, MWClassID.DOUBLE,MWComplexity.REAL);
+						allRateMuArray = MWNumericArray.newInstance(dims, MWClassID.DOUBLE,MWComplexity.REAL);
+						allRateSigmaArray = MWNumericArray.newInstance(dims, MWClassID.DOUBLE,MWComplexity.REAL);
+						TotalTransferDataSize = MWNumericArray.newInstance(dims, MWClassID.DOUBLE,MWComplexity.REAL);
+						uselessDCforTask = MWNumericArray.newInstance(dims, MWClassID.DOUBLE,MWComplexity.REAL);
+						dims[0] = unscheduledTaskNum;
+						dims[1] = Parameters.ubOfData;
+						datapos = MWNumericArray.newInstance(dims, MWClassID.DOUBLE,MWComplexity.REAL);
+						dims[0] = vnum;
+						bandwidth = MWNumericArray.newInstance(dims, MWClassID.DOUBLE,MWComplexity.REAL);
+						
+						// assign values
+						tasknum.set(1, unscheduledTaskNum);
+						dcnum.set(1, Parameters.numberOfDC);
+						r.set(1, Parameters.r);
+						slotlimit.set(1, preAssignedSlots);
+						
+						int[] pos = new int[2];
+						
+						for(int tindex = 0; tindex < unscheduledTaskNum; tindex++) {
+							// data datapos
 							pos[0] = 1;
-							pos[1] = xindex + 1;
-							xOrig.set(pos, singlex[xindex]);
-							allRateMuArray.set(pos, job.allRateMuArray[0][xindex]);
-							allRateSigmaArray.set(pos, job.allRateSigmaArray[0][xindex]);
-							uselessDCforTask.set(pos, job.uselessDCforTask[xindex]);
+							pos[1] = tindex + 1;
+							data.set(pos, job.data[tindex]);
 							for(int dataindex = 0; dataindex < Parameters.ubOfData; dataindex++) {
-								pos[0] = xindex + 1;
+								pos[0] = tindex + 1;
 								pos[1] = dataindex + 1;
-								bandwidth.set(pos, job.bandwidth[xindex][dataindex]);
+								datapos.set(pos, job.datapos[tindex][dataindex]);
+							}
+							// xOrig allRateMu allRateSigma uselessDCforTask bandwidth
+							for(int dcindex = 0; dcindex < Parameters.numberOfDC; dcindex++) {
+								int xindex = tindex * Parameters.numberOfDC + dcindex;
+								pos[0] = 1;
+								pos[1] = xindex + 1;
+								xOrig.set(pos, singlex[xindex]);
+								allRateMuArray.set(pos, job.allRateMuArray[0][xindex]);
+								allRateSigmaArray.set(pos, job.allRateSigmaArray[0][xindex]);
+								uselessDCforTask.set(pos, job.uselessDCforTask[xindex]);
+								for(int dataindex = 0; dataindex < Parameters.ubOfData; dataindex++) {
+									pos[0] = xindex + 1;
+									pos[1] = dataindex + 1;
+									bandwidth.set(pos, job.bandwidth[xindex][dataindex]);
+								}
 							}
 						}
-					}
-					
-					// current Slot Up Down
-					for(int dcindex = 0; dcindex < Parameters.numberOfDC; dcindex++) {
-						pos[0] = 1;
-						pos[1] = dcindex + 1;
-						Slot.set(pos, SlotArray[0][dcindex]);
-						Up.set(pos, UpArray[0][dcindex]);
-						Down.set(pos, DownArray[0][dcindex]);
-					}
-					
-					result = taskAssign.copyStrategy(4,xOrig,tasknum,dcnum,allRateMuArray,allRateSigmaArray,TotalTransferDataSize,data,datapos,bandwidth,Slot,Up,Down,uselessDCforTask,uselessDCforTask,r,slotlimit);
-//					result = taskAssign.copyStrategy_optimizeExp_Traverse(4,xOrig,tasknum,dcnum,allRateMuArray,allRateSigmaArray,TotalTransferDataSize,data,datapos,bandwidth,Slot,Up,Down,uselessDCforTask,r,slotlimit);
-//					result = taskAssign.copyStrategy_optimizeAll_orderedRes(4,xOrig,tasknum,dcnum,allRateMuArray,allRateSigmaArray,TotalTransferDataSize,data,datapos,bandwidth,Slot,Up,Down,uselessDCforTask,r,slotlimit);
-//					result = taskAssign.copyStrategy_optimizeAll_Traverse(4,xOrig,tasknum,dcnum,allRateMuArray,allRateSigmaArray,TotalTransferDataSize,data,datapos,bandwidth,Slot,Up,Down,uselessDCforTask,r,slotlimit);
-					
-					xAssign = (MWNumericArray)result[0];
-					UpdatedSlot = (MWNumericArray)result[1];
-					UpdatedUp = (MWNumericArray)result[2];
-					UpdatedDown = (MWNumericArray)result[3];
-					
-					x = xAssign.getDoubleData();
-					slot = UpdatedSlot.getDoubleData();
-					up = UpdatedUp.getDoubleData();
-					down = UpdatedDown.getDoubleData();
-					for(int dcindex = 0; dcindex < Parameters.numberOfDC; dcindex++) {
-						SlotArray[0][dcindex] = slot[dcindex];
-						UpArray[0][dcindex] = up[dcindex];
-						DownArray[0][dcindex] = down[dcindex];
-					}
-					
-					
-					// Queue<Vm> taskSlotsKeptIdle = new LinkedList<>();
-					Queue<Task> taskSubmitted = new LinkedList<>();
-					// successful assignment
-					
-					for (int tindex = 0; tindex < unscheduledTaskNum; tindex++) {
-						Task task = job.unscheduledTaskList.get(tindex);
-						boolean submitflag = false;
-						for (int dcindex = 0; dcindex < Parameters.numberOfDC; dcindex++) {
-							if (x[tindex*Parameters.numberOfDC + dcindex] != 0) {
-								if(submitflag == false) {
-									submitflag = true;
-								}
-								int submittedNum = (int) x[tindex*Parameters.numberOfDC + dcindex];
-								for(int copyindex = 0; copyindex < submittedNum; copyindex++) {
-									Vm vm = idleTaskSlotsOfDC.get(dcindex + DCbase).remove();
-									if (tasks.containsKey(task.getCloudletId())) {
-										Task speculativeTask = new Task(task);
-										cloneTask(speculativeTask,task);
-										speculativeTask.setAssignmentDCId(dcindex + DCbase);
-										speculativeTask.assignmentDCindex = dcindex;
-										speculativeTask.setSpeculativeCopy(true);
-										speculativeTasks.get(speculativeTask.getCloudletId()).add(speculativeTask);
-										submitSpeculativeTask(speculativeTask, vm);
-									} else {
-										task.setAssignmentDCId(dcindex + DCbase);
-										task.assignmentDCindex = dcindex;
-										tasks.put(task.getCloudletId(), task);
-										submitTask(task, vm);
-										speculativeTasks.put(task.getCloudletId(), new LinkedList<>());
+						
+						// current Slot Up Down
+						for(int dcindex = 0; dcindex < Parameters.numberOfDC; dcindex++) {
+							pos[0] = 1;
+							pos[1] = dcindex + 1;
+							Slot.set(pos, SlotArray[0][dcindex]);
+							Up.set(pos, UpArray[0][dcindex]);
+							Down.set(pos, DownArray[0][dcindex]);
+						}
+						switch(Parameters.copystrategy) {
+						case 1:
+							result = taskAssign.copyStrategy(4,xOrig,tasknum,dcnum,allRateMuArray,allRateSigmaArray,TotalTransferDataSize,data,datapos,bandwidth,Slot,Up,Down,uselessDCforTask,r,slotlimit);
+							break;
+						case 2:
+							result = taskAssign.copyStrategy_optimizeExp_Traverse(4,xOrig,tasknum,dcnum,allRateMuArray,allRateSigmaArray,TotalTransferDataSize,data,datapos,bandwidth,Slot,Up,Down,uselessDCforTask,r,slotlimit);
+							break;
+						case 3:
+							result = taskAssign.copyStrategy_optimizeAll_orderedRes(4,xOrig,tasknum,dcnum,allRateMuArray,allRateSigmaArray,TotalTransferDataSize,data,datapos,bandwidth,Slot,Up,Down,uselessDCforTask,r,slotlimit);
+							break;
+						case 4:
+							result = taskAssign.copyStrategy_optimizeAll_Traverse(4,xOrig,tasknum,dcnum,allRateMuArray,allRateSigmaArray,TotalTransferDataSize,data,datapos,bandwidth,Slot,Up,Down,uselessDCforTask,r,slotlimit);
+							break;
+						default:
+							break;
+						}
+
+						xAssign = (MWNumericArray)result[0];
+						UpdatedSlot = (MWNumericArray)result[1];
+						UpdatedUp = (MWNumericArray)result[2];
+						UpdatedDown = (MWNumericArray)result[3];
+						
+						x = xAssign.getDoubleData();
+						slot = UpdatedSlot.getDoubleData();
+						up = UpdatedUp.getDoubleData();
+						down = UpdatedDown.getDoubleData();
+						for(int dcindex = 0; dcindex < Parameters.numberOfDC; dcindex++) {
+							SlotArray[0][dcindex] = slot[dcindex];
+							UpArray[0][dcindex] = up[dcindex];
+							DownArray[0][dcindex] = down[dcindex];
+						}
+						
+						
+						// Queue<Vm> taskSlotsKeptIdle = new LinkedList<>();
+						Queue<Task> taskSubmitted = new LinkedList<>();
+						// successful assignment
+						
+						for (int tindex = 0; tindex < unscheduledTaskNum; tindex++) {
+							Task task = job.unscheduledTaskList.get(tindex);
+							boolean submitflag = false;
+							for (int dcindex = 0; dcindex < Parameters.numberOfDC; dcindex++) {
+								if (x[tindex*Parameters.numberOfDC + dcindex] != 0) {
+									if(submitflag == false) {
+										submitflag = true;
 									}
+									int submittedNum = (int) x[tindex*Parameters.numberOfDC + dcindex];
+									for(int copyindex = 0; copyindex < submittedNum; copyindex++) {
+										Vm vm = idleTaskSlotsOfDC.get(dcindex + DCbase).remove();
+										if (tasks.containsKey(task.getCloudletId())) {
+											Task speculativeTask = new Task(task);
+											cloneTask(speculativeTask,task);
+											speculativeTask.setAssignmentDCId(dcindex + DCbase);
+											speculativeTask.assignmentDCindex = dcindex;
+											speculativeTask.setSpeculativeCopy(true);
+											speculativeTasks.get(speculativeTask.getCloudletId()).add(speculativeTask);
+											submitSpeculativeTask(speculativeTask, vm);
+										} else {
+											task.setAssignmentDCId(dcindex + DCbase);
+											task.assignmentDCindex = dcindex;
+											tasks.put(task.getCloudletId(), task);
+											submitTask(task, vm);
+											speculativeTasks.put(task.getCloudletId(), new LinkedList<>());
+										}
+									}
+									
 								}
-								
+							}
+							if(submitflag == true) {
+								taskSubmitted.add(task);
 							}
 						}
-						if(submitflag == true) {
-							taskSubmitted.add(task);
+						// there to verify that modify the job 
+						// JobFactory whether change the corresponding value
+						// JobList whether change the corresponding value
+						job.unscheduledTaskList.removeAll(taskSubmitted);
+						int numOfScheduledTask = scheduledTaskOfJob.get(job.getCloudletId());
+						scheduledTaskOfJob.put(job.getCloudletId(), (numOfScheduledTask+taskSubmitted.size()));
+						
+						//job.sortedflag = false;
+						JobFactory.put(job.getCloudletId(), job);
+						if(job.unscheduledTaskList.size() == 0) {
+							scheduler.getScheduledList().add(job);
 						}
+						
+					} catch (MWException e) {
+						// TODO Auto-generated catch block
+						System.out.println("Exception: "+e.toString());
+						e.printStackTrace();
+					}finally {
+						MWNumericArray.disposeArray(xOrig);
+						MWNumericArray.disposeArray(tasknum);
+						MWNumericArray.disposeArray(dcnum);
+						MWNumericArray.disposeArray(allRateMuArray);
+						MWNumericArray.disposeArray(allRateSigmaArray);
+						MWNumericArray.disposeArray(TotalTransferDataSize);
+						MWNumericArray.disposeArray(data);
+						MWNumericArray.disposeArray(datapos);
+						MWNumericArray.disposeArray(bandwidth);
+						MWNumericArray.disposeArray(Slot);
+						MWNumericArray.disposeArray(Up);
+						MWNumericArray.disposeArray(Down);
+						MWNumericArray.disposeArray(uselessDCforTask);
+						MWNumericArray.disposeArray(r);
+						MWNumericArray.disposeArray(slotlimit);
+						MWNumericArray.disposeArray(xAssign);
+						MWNumericArray.disposeArray(UpdatedSlot);
+						MWNumericArray.disposeArray(UpdatedUp);
+						MWNumericArray.disposeArray(UpdatedDown);
+						if(taskAssign != null)
+							taskAssign.dispose();
 					}
-					// there to verify that modify the job 
-					// JobFactory whether change the corresponding value
-					// JobList whether change the corresponding value
-					job.unscheduledTaskList.removeAll(taskSubmitted);
-					JobFactory.put(job.getCloudletId(), job);
-					if(job.unscheduledTaskList.size() == 0) {
-						scheduler.getScheduledList().add(job);
-					}
-					
-				} catch (MWException e) {
-					// TODO Auto-generated catch block
-					System.out.println("Exception: "+e.toString());
-					e.printStackTrace();
-				}finally {
-					MWNumericArray.disposeArray(xOrig);
-					MWNumericArray.disposeArray(tasknum);
-					MWNumericArray.disposeArray(dcnum);
-					MWNumericArray.disposeArray(allRateMuArray);
-					MWNumericArray.disposeArray(allRateSigmaArray);
-					MWNumericArray.disposeArray(TotalTransferDataSize);
-					MWNumericArray.disposeArray(data);
-					MWNumericArray.disposeArray(datapos);
-					MWNumericArray.disposeArray(bandwidth);
-					MWNumericArray.disposeArray(Slot);
-					MWNumericArray.disposeArray(Up);
-					MWNumericArray.disposeArray(Down);
-					MWNumericArray.disposeArray(uselessDCforTask);
-					MWNumericArray.disposeArray(r);
-					MWNumericArray.disposeArray(slotlimit);
-					MWNumericArray.disposeArray(xAssign);
-					MWNumericArray.disposeArray(UpdatedSlot);
-					MWNumericArray.disposeArray(UpdatedUp);
-					MWNumericArray.disposeArray(UpdatedDown);
-					if(taskAssign != null)
-						taskAssign.dispose();
 				}
+				
         		
         	}	
         }
@@ -1771,7 +1841,12 @@ public class WorkflowScheduler extends DatacenterBroker {
 		Vm vm = vms.get(task.getVmId());
 		Host host = vm.getHost();
 		if (task.getCloudletStatus() == Cloudlet.SUCCESS) {
+			// in case that speculative and original tasks complete at the same time
+			if(!tasks.containsKey(task.getCloudletId())) {
+				return;
+			}
 			Task originalTask = tasks.remove(task.getCloudletId());
+			
 			LinkedList<Task> speculativeTaskOfTask = (LinkedList<Task>)speculativeTasks
 					.remove(task.getCloudletId());
 
@@ -1971,6 +2046,7 @@ public class WorkflowScheduler extends DatacenterBroker {
 					tasks.put(speculativeTask.getCloudletId(), speculativeTask);
 					speculativeTasks.put(speculativeTask.getCloudletId(), speculativeTaskOfTask);
 				} else {
+					
 					collectAckTask(task);
 				}
 			}
@@ -2002,8 +2078,12 @@ public class WorkflowScheduler extends DatacenterBroker {
     	if(task.getStatus() == Cloudlet.FAILED) {
     		resetTask(task);
     		if(job.unscheduledTaskList.size() > 0) {
+    			int numOfScheduledTask = scheduledTaskOfJob.get(job.getCloudletId());
+    			scheduledTaskOfJob.put(job.getCloudletId(), numOfScheduledTask - 1);
     			job.unscheduledTaskList.add(task);
     		}else {
+    			int numOfScheduledTask = scheduledTaskOfJob.get(job.getCloudletId());
+    			scheduledTaskOfJob.put(job.getCloudletId(), numOfScheduledTask - 1);
     			job.unscheduledTaskList.add(task);
     			getCloudletList().add(job);
     		}
@@ -2022,7 +2102,11 @@ public class WorkflowScheduler extends DatacenterBroker {
     	}
     	//job.setTaskList(originalTaskList);
     	JobFactory.put(job.getCloudletId(), job);
-        if(ackTaskOfJob.get(attributedJobId) == taskOfJob.get(attributedJobId)) {
+    	if(ackTaskOfJob.get(attributedJobId).equals(scheduledTaskOfJob.get(attributedJobId))) {
+    		//not really update right now, should wait 1 s until many jobs have returned
+            schedule(this.getId(), 0.0, WorkflowSimTags.CLOUDLET_UPDATE);
+    	}
+        if(ackTaskOfJob.get(attributedJobId).equals(taskOfJob.get(attributedJobId))) {
         	// modify the job state and return the job to the WorkflowEngine
         	Job completeJob = JobFactory.get(attributedJobId);
         	List<Task> completeTaskList = completeJob.getTaskList();
@@ -2034,6 +2118,7 @@ public class WorkflowScheduler extends DatacenterBroker {
 
                     taskOfJob.remove(attributedJobId);
                     ackTaskOfJob.remove(attributedJobId);
+                    scheduledTaskOfJob.remove(attributedJobId);
                     JobFactory.remove(attributedJobId);
                     
                     cloudletsSubmitted--;
@@ -2044,6 +2129,7 @@ public class WorkflowScheduler extends DatacenterBroker {
                     schedule(this.workflowEngineId, 0.0, CloudSimTags.CLOUDLET_RETURN, completeJob);
 
                     taskOfJob.remove(attributedJobId);
+                    scheduledTaskOfJob.remove(attributedJobId);
                     ackTaskOfJob.remove(attributedJobId);
                     JobFactory.remove(attributedJobId);
                     
@@ -2115,13 +2201,13 @@ public class WorkflowScheduler extends DatacenterBroker {
             taskOfJob.remove(attributedJobId);
             ackTaskOfJob.remove(attributedJobId);
             JobFactory.remove(attributedJobId);
-            
+            scheduledTaskOfJob.remove(attributedJobId);
             cloudletsSubmitted--;
             //not really update right now, should wait 1 s until many jobs have returned
             schedule(this.getId(), 0.0, WorkflowSimTags.CLOUDLET_UPDATE);
         	
         }
-
+        
 	}
 
 	/**

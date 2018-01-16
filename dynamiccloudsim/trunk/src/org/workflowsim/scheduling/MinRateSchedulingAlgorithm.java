@@ -52,6 +52,9 @@ public class MinRateSchedulingAlgorithm extends BaseSchedulingAlgorithm{
         // compute the optimal rate for the current job
         for(int jobindex = 0; jobindex < size; jobindex++) {
         	Job job = (Job)getCloudletList().get(jobindex);
+        	if(job.getCloudletId()==50) {
+        		double temp = 1d;
+        	}
         	int jobId = job.getCloudletId();
         	List<Task> tasklist = job.unscheduledTaskList;
         	int numberOfTask = tasklist.size();
@@ -850,7 +853,7 @@ public class MinRateSchedulingAlgorithm extends BaseSchedulingAlgorithm{
 							
 							// downlink
 							if(TotalTransferDataSize[xindex]>0) {
-								if((DownArray[0][dcindex]-Parameters.bwBaselineOfDC[dcindex])<0) {
+								if((tempDownArray[dcindex]-Parameters.bwBaselineOfDC[dcindex])<0) {
 									success = false;
 									continue;
 								}
@@ -870,7 +873,7 @@ public class MinRateSchedulingAlgorithm extends BaseSchedulingAlgorithm{
 									}
 								}
 								for(int pos : bwOfSrcPos.keySet()) {
-									if((UpArray[0][pos]-bwOfSrcPos.get(pos))<0) {
+									if((tempUpArray[pos]-bwOfSrcPos.get(pos))<0) {
 										success = false;
 										break;
 									}
@@ -909,6 +912,9 @@ public class MinRateSchedulingAlgorithm extends BaseSchedulingAlgorithm{
 				
 			} catch (IloException e) {
 				System.err.println("Concert exception caught '" + e + "' caught");
+				e.printStackTrace();
+			}catch (Exception e) {
+				// TODO: handle exception
 				e.printStackTrace();
 			}
         	

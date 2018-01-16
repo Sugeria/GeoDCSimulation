@@ -98,6 +98,11 @@ public class Parameters {
     
     public static final int BASE = 0;
     
+    public static boolean isExtracte = true;
+    // 1-4
+    public static int copystrategy = 4;
+    
+    
     /**
      * Scheduling mode
      */
@@ -164,6 +169,7 @@ public class Parameters {
     private static double[][] bandwidths;
     
     
+    
     /**
      * The maximum depth. It is inited manually and used in FailureGenerator
      */
@@ -216,19 +222,30 @@ public class Parameters {
         reduceMethod = rMethod;
         deadline = dl;
         maxDepth = 0;
-        generateWorkflow();
-        setInfoAmongDC();
-        createInfoOfDC();
-        try {
-			ModelGenerator.save();
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-//        try {
-//			ModelExtractor.extracte();
-//		} catch (IOException e) {
-//			e.printStackTrace();
-//		}
+        if(!isExtracte) {
+        	generateWorkflow();
+            try {
+    			ModelGenerator.saveWorkflowInfo();
+    		} catch (IOException e) {
+    			e.printStackTrace();
+    		}
+            setInfoAmongDC();
+            createInfoOfDC();
+            try {
+    			ModelGenerator.saveDCInfo();
+    		} catch (IOException e) {
+    			e.printStackTrace();
+    		}
+        }else {
+        	try {
+	  			ModelExtractor.extracteWorkflowInfo();
+	  			ModelExtractor.extracteDCInfo();
+	  		} catch (IOException e) {
+	  			e.printStackTrace();
+	  		}
+        }
+        
+
 //        MIPSbaselineOfDC = getMIPSBaseline();
 //    	bwBaselineOfDC = getBwBaseline();
 //    	ioBaselineOfDC = getIoBaseline();
@@ -514,7 +531,7 @@ public class Parameters {
     public static double lambda = 0.083;
     // default 3 days workflow
     // defend time exceed INT.MAX_VALUE
-    public static double seconds = 10;
+    public static double seconds = 10d;
     
     public static Map<Double, List<String>> workflowArrival;
     
@@ -543,12 +560,13 @@ public class Parameters {
 					List<String> workflowFileName = new ArrayList<>();
 					for (int workflowindex = 0; workflowindex < x[timeindex]; workflowindex++) {
 						// generate workflows from candidate
-						double workflowSizeProb = Math.random();
+						//double workflowSizeProb = Math.random();
+						double workflowSizeProb = 0.92d;
 						if(workflowSizeProb < 0.89) {
 							// 0-13
 							int candidateIndex = (int)(Math.random() * 13);
 							workflowFileName.add(workflow_relative_Candidate[candidateIndex]);
-						}else if(workflowSizeProb < 0.11) {
+						}else if(workflowSizeProb <= 1) {
 							// 14-18
 							int candidateIndex = (int)(Math.random() * 4 + 14);
 							workflowFileName.add(workflow_relative_Candidate[candidateIndex]);
@@ -852,6 +870,8 @@ public class Parameters {
 		MIPSbaselineOfDC = new double[numberOfDC];
 		bwBaselineOfDC = new double[numberOfDC];
 		ioBaselineOfDC = new double[numberOfDC];
+		ubOfDCFailureDuration = new double[numberOfDC];
+		lbOfDCFailureDuration = new double[numberOfDC];
 		// degree rank
 		MWNumericArray degreelist_para = null;
 		MWNumericArray B_out = null;
@@ -962,7 +982,10 @@ public class Parameters {
 				// 0.55 0.60 0.85
 				uplinkOfDC[dcindex] = Math.random()*numberOfVMperDC[dcindex]*200*1024*0.55;
 				downlinkOfDC[dcindex] = Math.random()*numberOfVMperDC[dcindex]*200*1024*0.55;
-				
+				// 10 20 50 80
+				ubOfDCFailureDuration[dcindex] = Math.random()*(20-10)+10;
+				// 2 4 8 10
+				lbOfDCFailureDuration[dcindex] = Math.random()*(4-2)+2;
 				
 			}else if(dccounter < Medium_part) {
 				//Medium DC
@@ -1028,7 +1051,10 @@ public class Parameters {
 						numberOfVMperDC[dcindex]*200*1024*0.55;
 				downlinkOfDC[dcindex] = Math.random()*numberOfVMperDC[dcindex]*200*1024*(0.60-0.55)+
 						numberOfVMperDC[dcindex]*200*1024*0.55;
-				
+				// 10 20 50 80
+				ubOfDCFailureDuration[dcindex] = Math.random()*(50-20)+20;
+				// 2 4 8 10
+				lbOfDCFailureDuration[dcindex] = Math.random()*(8-4)+4;
 				
 			}else {
 				//Small DC
@@ -1102,6 +1128,11 @@ public class Parameters {
 						numberOfVMperDC[dcindex]*200*1024*0.60;
 				downlinkOfDC[dcindex] = Math.random()*numberOfVMperDC[dcindex]*200*1024*(0.85-0.60)+
 						numberOfVMperDC[dcindex]*200*1024*0.60;
+				
+				// 10 20 50 80
+				ubOfDCFailureDuration[dcindex] = Math.random()*(80-50)+50;
+				// 2 4 8 10
+				lbOfDCFailureDuration[dcindex] = Math.random()*(10-8)+8;
 				
 			}
 		}
@@ -1219,7 +1250,7 @@ public class Parameters {
 	
 	
 	// datacenter number
-	public static int numberOfDC = 1000;
+	public static int numberOfDC = 3;
 	
 	
 	// number of machineType in each datacenter
@@ -1255,10 +1286,8 @@ public class Parameters {
 	
 	
 	// upperbound of inputdata
-	public static int ubOfData = 1;
+	public static int ubOfData = 10;
 	
-	//iteration_bound
-	public static int boundOfIter = 50;
 	
 	
 	// number of vms of datacenter
@@ -1335,6 +1364,8 @@ public class Parameters {
 		return dist;
 	}
 	
+	public static double sumOfJobExecutime = 0d;
+	
 	public static void printJobList(List<Job> list) {
         String indent = "    ";
         Log.printLine();
@@ -1353,6 +1384,7 @@ public class Parameters {
                 
                 for (Task task : job.successTaskList) {
                     Log.singleprint(task.getCloudletId() + ",");
+                    sumOfJobExecutime += task.getActualCPUTime();
                 }
                 Log.singleprint(indent);
 

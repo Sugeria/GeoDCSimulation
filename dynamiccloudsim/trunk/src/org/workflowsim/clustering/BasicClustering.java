@@ -15,12 +15,17 @@
  */
 package org.workflowsim.clustering;
 
+import java.io.BufferedReader;
+import java.io.DataInput;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 import org.cloudbus.cloudsim.UtilizationModelFull;
+import org.workflowsim.ClusteringEngine;
 import org.workflowsim.FileItem;
 import org.workflowsim.Job;
 
@@ -28,6 +33,7 @@ import de.huberlin.wbi.dcs.examples.Parameters;
 import de.huberlin.wbi.dcs.examples.Parameters.ClassType;
 import de.huberlin.wbi.dcs.examples.Parameters.FileType;
 import de.huberlin.wbi.dcs.workflow.Task;
+import edu.isi.pegasus.planner.transfer.refiner.Cluster;
 
 /**
  * The default clustering does no clustering at all, just map a task to a tasks
@@ -64,8 +70,7 @@ public class BasicClustering implements ClusteringInterface {
      */
     public static int idIndex = 0;
 
-    
-    
+   
     
     
     /**
@@ -168,6 +173,8 @@ public class BasicClustering implements ClusteringInterface {
      * @return tasks the newly created tasks
      */
     protected final Job addTasks2Job(List<Task> taskList) {
+    	String line;
+    	String[] para_string;
         if (taskList != null && !taskList.isEmpty()) {
             int length = 0;
 
@@ -177,12 +184,34 @@ public class BasicClustering implements ClusteringInterface {
             Job job = new Job(userId,idIndex,length/*, inputFileSize, outputFileSize*/);
             job.setClassType(ClassType.COMPUTE.value);
             // set taskset RemoteData
-            int numberofData = (int)Math.round(Math.random()*Parameters.ubOfData);
-
+            
+            int numberofData = 0;
             int[] positionOfData = null;
 			int[] sizeOfData = null;
 			long remoteInputSize = 0;
-			
+			if(!Parameters.isExtracte) {
+				numberofData = (int)Math.round(Math.random()*Parameters.ubOfData);
+				try {
+					ClusteringEngine.out.write(numberofData+"\t");
+					ClusteringEngine.out.write("\r\n");
+				} catch (IOException e) {
+					
+					e.printStackTrace();
+				}
+				
+            }else {
+            	try {
+					line = ClusteringEngine.in.readLine();
+					para_string = line.split("\t");
+					numberofData = Integer.parseInt(para_string[0]);
+				} catch (IOException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}catch (NullPointerException e) {
+					// TODO: handle exception
+					e.printStackTrace();
+				}
+            }
 			
 			if (numberofData != 0) {
 				
@@ -190,12 +219,40 @@ public class BasicClustering implements ClusteringInterface {
 				
 				sizeOfData = new int[numberofData];
 				
-				
-				for (int dataindex = 0; dataindex < numberofData; dataindex++) {
-					positionOfData[dataindex] = ((int)((Math.random()*Parameters.numberOfDC)) % Parameters.numberOfDC);
-					sizeOfData[dataindex] = (int)(Math.random()*(Parameters.ubOfDataSize - Parameters.lbOfDataSize ) + Parameters.lbOfDataSize);
-					remoteInputSize += sizeOfData[dataindex];
+				if(!Parameters.isExtracte) {
+					try {
+						for (int dataindex = 0; dataindex < numberofData; dataindex++) {
+							//positionOfData[dataindex] = ((int)((Math.random()*Parameters.numberOfDC)) % Parameters.numberOfDC);
+							sizeOfData[dataindex] = (int)(Math.random()*(Parameters.ubOfDataSize - Parameters.lbOfDataSize ) + Parameters.lbOfDataSize);
+							
+							ClusteringEngine.out.write(sizeOfData[dataindex]+"\t");
+							
+							remoteInputSize += sizeOfData[dataindex];
+						}
+						ClusteringEngine.out.write("\r\n");
+					} catch (IOException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
+					
+				}else {
+					try {
+						line = ClusteringEngine.in.readLine();
+						para_string = line.split("\t");
+						for (int dataindex = 0; dataindex < numberofData; dataindex++) {
+							//positionOfData[dataindex] = ((int)((Math.random()*Parameters.numberOfDC)) % Parameters.numberOfDC);
+							sizeOfData[dataindex] = Integer.parseInt(para_string[dataindex]);
+							remoteInputSize += sizeOfData[dataindex];
+						}
+					} catch (IOException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
+					
+					
 				}
+				
+				
 			}
 			
 			// choose the one milength of task to replace all the mi in the same taskset
@@ -213,9 +270,34 @@ public class BasicClustering implements ClusteringInterface {
                 job.getTaskList().add(task);
                 task.jobId = job.getCloudletId();
                 task.setMi(representMiLength > 0 ? representMiLength : 1);
-                for (int dataindex = 0; dataindex < numberofData; dataindex++) {
-					positionOfData[dataindex] = ((int)((Math.random()*Parameters.numberOfDC)) % Parameters.numberOfDC);
-				}
+                
+                if(numberofData != 0) {
+                	try {
+                    	if(!Parameters.isExtracte) {
+                    		for (int dataindex = 0; dataindex < numberofData; dataindex++) {
+            					positionOfData[dataindex] = ((int)((Math.random()*Parameters.numberOfDC)) % Parameters.numberOfDC);
+            					ClusteringEngine.out.write(positionOfData[dataindex]+"\t");
+                    		}
+                    		ClusteringEngine.out.write("\r\n");
+                    	}else {
+                    		line = ClusteringEngine.in.readLine();
+                    		para_string = line.split("\t");
+                    		for (int dataindex = 0; dataindex < numberofData; dataindex++) {
+                    			positionOfData[dataindex] = Integer.parseInt(para_string[dataindex]);
+                    		}
+                    	}
+    					
+    				} catch (IOException e) {
+    					// TODO Auto-generated catch block
+    					e.printStackTrace();
+    				}catch (NullPointerException e) {
+						// TODO: handle exception
+    					e.printStackTrace();
+					}
+                    
+                }
+                
+                
                 
                 //if (numberofData != 0) {
             	task.incBw(remoteInputSize/1024);

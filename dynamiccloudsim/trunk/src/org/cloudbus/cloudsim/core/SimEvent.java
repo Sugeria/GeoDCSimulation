@@ -84,7 +84,7 @@ public class SimEvent implements Cloneable, Comparable<SimEvent> {
 		entSrc = src;
 		entDst = -1;
 		tag = -1;
-		data = null;
+		data = -1;
 	}
 
 	protected void setSerial(long serial) {

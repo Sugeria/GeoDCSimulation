@@ -129,7 +129,7 @@ public class Job extends Task {
     		}else {
     			rate = unscheduledGreateRate.get(task.getCloudletId());
     			int possize = unscheduledGreatePosition.get(task.getCloudletId()).size();
-    			int posindex = (int)Math.round(Math.random()*possize);
+    			int posindex = (int)Math.round(Math.random()*(possize-1));
         		pos = unscheduledGreatePosition.get(task.getCloudletId()).get(posindex);
     		}
     		

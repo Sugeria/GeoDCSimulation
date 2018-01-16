@@ -15,6 +15,11 @@
  */
 package org.workflowsim;
 
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -31,6 +36,8 @@ import org.workflowsim.clustering.VerticalClustering;
 import org.workflowsim.clustering.balancing.BalancedClustering;
 import org.workflowsim.utils.ClusteringParameters;
 import org.workflowsim.utils.ReplicaCatalog;
+
+import com.ctc.wstx.dtd.StarModel;
 
 import de.huberlin.wbi.dcs.examples.Parameters;
 import de.huberlin.wbi.dcs.examples.Parameters.ClassType;
@@ -82,6 +89,9 @@ public final class ClusteringEngine extends SimEntity {
      */
     private final WorkflowEngine workflowEngine;
 
+    public static FileWriter out;
+    public static BufferedReader in;
+    
     
     public Map<Integer, Integer> jobSizeOfWorkflow;
     /**
@@ -96,6 +106,14 @@ public final class ClusteringEngine extends SimEntity {
      */
     public ClusteringEngine(String name, int schedulers) throws Exception {
         super(name);
+        File file = new File("./dynamiccloudsim/model/modelInfo-jobinfo.txt");
+        if(!Parameters.isExtracte) {
+        	out = new FileWriter(file);
+        }else {
+        	in = new BufferedReader(new FileReader(file));
+        }
+        
+        
         setJobList(new ArrayList<>());
         setTaskList(new ArrayList<>());
         setTaskSubmittedList(new ArrayList<>());
@@ -298,6 +316,8 @@ public final class ClusteringEngine extends SimEntity {
                 sendNow(this.workflowEngineId, CloudSimTags.WORKFLOW_INFO,jobSizeOfWorkflow);
                 break;
             case CloudSimTags.END_OF_SIMULATION:
+            	
+            	
                 shutdownEntity();
                 break;
             default:
@@ -340,6 +360,17 @@ public final class ClusteringEngine extends SimEntity {
      */
     @Override
     public void shutdownEntity() {
+    	try {
+    		if(!Parameters.isExtracte) {
+    			out.close();
+        	}else {
+        		in.close();
+        	}
+			
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
         Log.printLine(getName() + " is shutting down...");
     }
 

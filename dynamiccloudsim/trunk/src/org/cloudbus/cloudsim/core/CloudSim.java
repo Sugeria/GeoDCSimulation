@@ -10,6 +10,7 @@ package org.cloudbus.cloudsim.core;
 
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.ConcurrentModificationException;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
@@ -485,8 +486,16 @@ public class CloudSim {
 
 			// Check if next events are at same time...
 			boolean trymore = it.hasNext();
+			
 			while (trymore) {
-				SimEvent next = it.next();
+				SimEvent next = null;
+				try {
+					next = it.next();
+				}catch (ConcurrentModificationException e) {
+					// TODO: handle exception
+					e.printStackTrace();
+				}
+				
 				if (next.eventTime() == first.eventTime()) {
 					processEvent(next);
 					toRemove.add(next);
@@ -756,8 +765,7 @@ public class CloudSim {
 					entities.get(src).setState(SimEntity.RUNNABLE);
 					// only refer to the isFail in datacenter
 					SimEvent ev = new SimEvent(SimEvent.SEND, clock + 0, -1,entities.get(src).getId(),CloudSimTags.DC_RESUME,null);
-					ev.CustomtoString("CloudSim(future queue event added)\n");
-					future.addEvent(ev);
+					deferred.addEvent(ev);
 				}
 				break;
 

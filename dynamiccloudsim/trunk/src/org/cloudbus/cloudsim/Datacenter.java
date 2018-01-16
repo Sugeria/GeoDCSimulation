@@ -1085,12 +1085,14 @@ public class Datacenter extends SimEntity {
 				double[] datasizeOfTask = new double[numberOfData];
 				double TotaldatasizeOfTask = 0;
 				for(int dataindex = 0; dataindex < numberOfData; dataindex++) {
-					if (cl.positionOfData[dataindex] != cl.assignmentDCindex) {
-						datasizeOfTask[dataindex] = cl.sizeOfData[dataindex];
-						TotaldatasizeOfTask += datasizeOfTask[dataindex];
-					} else {
-						datasizeOfTask[dataindex] = 0;
-					}
+//					if (cl.positionOfData[dataindex] != cl.assignmentDCindex) {
+//						datasizeOfTask[dataindex] = cl.sizeOfData[dataindex];
+//						TotaldatasizeOfTask += datasizeOfTask[dataindex];
+//					} else {
+//						datasizeOfTask[dataindex] = 0;
+//					}
+					datasizeOfTask[dataindex] = cl.transferDataSize[cl.assignmentDCindex][dataindex];
+					TotaldatasizeOfTask += datasizeOfTask[dataindex];
 				}
 				
 				if ((downlink-TotaldatasizeOfTask) >= 0) {
@@ -1318,9 +1320,9 @@ public class Datacenter extends SimEntity {
 				while (vm.getCloudletScheduler().isFinishedCloudlets()) {
 					Cloudlet cl = vm.getCloudletScheduler().getNextFinishedCloudlet();
 					if (cl != null) {
-						CloudletTransferRequest.remove(cl.getCloudletId());
-						CloudletTransferSuccessReq.remove(cl.getCloudletId());
-						CloudletTransferFailReq.remove(cl.getCloudletId());
+//						CloudletTransferRequest.remove(cl.getCloudletId());
+//						CloudletTransferSuccessReq.remove(cl.getCloudletId());
+//						CloudletTransferFailReq.remove(cl.getCloudletId());
 						sendNow(cl.getUserId(), CloudSimTags.CLOUDLET_RETURN, cl);
 					}
 				}

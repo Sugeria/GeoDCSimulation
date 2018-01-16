@@ -7,9 +7,9 @@ import java.io.IOException;
 import de.huberlin.wbi.dcs.examples.Parameters;
 
 public class ModelGenerator {
-
-	public static void save() throws IOException {
-		File file = new File("./dynamiccloudsim/model/modelInfo.txt");
+	
+	public static void saveWorkflowInfo() throws IOException {
+		File file = new File("./dynamiccloudsim/model/modelInfo-workflow.txt");
 		FileWriter out = new FileWriter(file);
 		// workflowArrival
 		int length = Parameters.workflowArrival.size();
@@ -27,6 +27,15 @@ public class ModelGenerator {
 				out.write("\r\n");
 			}
 		}
+		out.close();
+	}
+
+	public static void saveDCInfo() throws IOException {
+		File file = new File("./dynamiccloudsim/model/modelInfo-dc.txt");
+		FileWriter out = new FileWriter(file);
+		// workflowArrival
+		int[] dim = new int[2];
+		
 		// delayAmongDCIndex
 		dim[0] = Parameters.numberOfDC;
 		dim[1] = Parameters.numberOfDC;
@@ -148,6 +157,14 @@ public class ModelGenerator {
 		out.write("\r\n");
 		for(int rowindex = 0; rowindex < dim[0]; rowindex++) {
 			out.write(Parameters.numberOfVMperDC[rowindex]+"\t");
+		}
+		out.write("\r\n");
+		for(int rowindex = 0; rowindex < dim[0]; rowindex++) {
+			out.write(Parameters.ubOfDCFailureDuration[rowindex]+"\t");
+		}
+		out.write("\r\n");
+		for(int rowindex = 0; rowindex < dim[0]; rowindex++) {
+			out.write(Parameters.lbOfDCFailureDuration[rowindex]+"\t");
 		}
 		out.write("\r\n");
 		out.close();
