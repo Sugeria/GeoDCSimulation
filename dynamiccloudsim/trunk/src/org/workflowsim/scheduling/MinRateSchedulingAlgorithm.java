@@ -207,8 +207,10 @@ public class MinRateSchedulingAlgorithm extends BaseSchedulingAlgorithm{
 							
 							if (TotaldatasizeOfTask > 0) {
 								bandwidth[xindex][dataindex] = bw_mu*datasizeOfTask[dataindex]/TotaldatasizeOfTask;
-								}else {
+								task.bandwidth[dcindex][dataindex] = bandwidth[xindex][dataindex];
+							}else {
 								bandwidth[xindex][dataindex] = 0;
+								task.bandwidth[dcindex][dataindex] = 0;
 							}
 						}
 						
@@ -438,6 +440,13 @@ public class MinRateSchedulingAlgorithm extends BaseSchedulingAlgorithm{
 							}
 							
 						});
+						int listindex = 0;
+						for(Map.Entry<Integer, Double> iterm:job.sortedListOfTask.get(taskId)) {
+							int dcindex = iterm.getKey();
+							task.orderedDClist[listindex] = dcindex;
+							listindex++;
+						}
+						tasklist.set(tindex, task);
 						job.unscheduledGreateRate.put(taskId, job.sortedListOfTask.get(taskId).get(0).getValue());
 						
 						job.unscheduledGreatePosition.put(taskId, new ArrayList<>());
@@ -465,6 +474,7 @@ public class MinRateSchedulingAlgorithm extends BaseSchedulingAlgorithm{
 						int xindex = taskindex * Parameters.numberOfDC + dcindex;
 						if(objParaOfTaskInDC.get(taskId).get(dcindex) <= (maxRate * 1/(1+Parameters.epsilon))) {
 							uselessDCforTask[xindex] = 0;
+							task.uselessDC[dcindex] = 0;
 							uselessConstraintsNum += 1;
 						}
 					}
@@ -480,10 +490,12 @@ public class MinRateSchedulingAlgorithm extends BaseSchedulingAlgorithm{
 						for(int bdcindex = 0; bdcindex < job.unscheduledGreatePosition.get(taskId).size(); bdcindex++) {
 							int bxindex = taskindex * Parameters.numberOfDC + job.unscheduledGreatePosition.get(taskId).get(bdcindex);
 							uselessDCforTask[bxindex] = -1;
+							task.uselessDC[job.unscheduledGreatePosition.get(taskId).get(bdcindex)] = -1;
 							uselessConstraintsNum -= 1;
 						}
 						
 					}
+					tasklist.set(taskindex, task);
 				}
 				
 //				for(int taskindex = 0; taskindex < numberOfTask; taskindex++) {
