@@ -169,6 +169,9 @@ public class Cloudlet {
 	
 	public double[] TotalTransferDataSize;
 	public double[][] transferDataSize;
+	public int[] orderedDClist;
+	public double[][] bandwidth;
+	public int[] uselessDC;
 	
 	public int getAssignmentDCId() {
 		return assignmentDCId;
