@@ -315,9 +315,7 @@ public class BasicClustering implements ClusteringInterface {
 				task.numberOfTransferData = new int[Parameters.numberOfDC];
 				task.TotalTransferDataSize = new double[Parameters.numberOfDC];
 				task.transferDataSize = new double[Parameters.numberOfDC][Parameters.ubOfData];
-				task.orderedDClist = new int[Parameters.numberOfDC];
-				task.bandwidth = new double[Parameters.numberOfDC][Parameters.ubOfData];
-				task.uselessDC = new int[Parameters.numberOfDC];
+				
 				//}
                 getTask2Job().put(task, job);
                 for (FileItem file : fileList) {

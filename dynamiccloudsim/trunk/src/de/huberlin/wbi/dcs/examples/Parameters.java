@@ -100,7 +100,7 @@ public class Parameters {
     
     public static boolean isExtracte = true;
     // 1-4
-    public static int copystrategy = 5;
+    public static int copystrategy = 4;
     
     
     /**

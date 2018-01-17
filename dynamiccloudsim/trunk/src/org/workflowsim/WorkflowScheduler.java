@@ -16,11 +16,8 @@
 package org.workflowsim;
 
 import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
@@ -87,54 +84,6 @@ import taskAssign.TaskAssign;
  */
 public class WorkflowScheduler extends DatacenterBroker {
 
-	
-	// comparator
-	public class TaskProgressRateComparator implements Comparator<Task> {
-
-		@Override
-		public int compare(Task task1, Task task2) {
-			return Double.compare(progressRates.get(task1),
-					progressRates.get(task2));
-		}
-
-	}
-
-	public class TaskEstimatedTimeToCompletionComparator implements Comparator<Task> {
-
-		@Override
-		public int compare(Task task1, Task task2) {
-			return Double.compare(estimatedTimesToCompletion.get(task1),
-					estimatedTimesToCompletion.get(task2));
-		}
-
-	}
-	
-	
-	
-    
-	public class VmSumOfProgressScoresComparator implements Comparator<Vm> {
-
-		Map<Integer, Double> vmIdToSumOfProgressScores;
-
-		public VmSumOfProgressScoresComparator(
-				Map<Integer, Double> vmIdToSumOfProgressScores) {
-			this.vmIdToSumOfProgressScores = vmIdToSumOfProgressScores;
-		}
-
-		@Override
-		public int compare(Vm vm1, Vm vm2) {
-			return Double.compare(vmIdToSumOfProgressScores.get(vm1.getId()),
-					vmIdToSumOfProgressScores.get(vm2.getId()));
-		}
-
-	}
-    
-    
-	
-	
-	
-	
-	
     /**
      * The workflow engine id associated with this workflow algorithm.
      */
@@ -157,34 +106,6 @@ public class WorkflowScheduler extends DatacenterBroker {
 //	public MatlabProxy proxy;
 
 	
-
-
-	// a node is slow if the sum of progress scores for all succeeded and
-	// in-progress tasks on the node is below this threshold
-	// speculative tasks are not executed on slow nodes
-	// default: 25th percentile of node progress rates
-	protected final double slowNodeThreshold = 0.25;
-	protected double currentSlowNodeThreshold;
-
-	// A threshold that a task's progress rate is compared with to determine
-	// whether it is slow enough to be speculated upon
-	// default: 25th percentile of task progress rates
-	protected final double slowTaskThreshold = 0.25;
-	protected double currentSlowTaskThreshold;
-
-	// a cap on the number of speculative tasks that can be running at once
-	// (given as a percentage of task slots)
-	// default: 10% of available task slots
-	protected final double speculativeCap = 0.1;
-	protected int speculativeCapAbs;
-
-	protected Map<Vm, Double> nSucceededTasksPerVm;
-
-	private Map<Task, Double> progressScores;
-	private Map<Task, Double> timesTaskHasBeenRunning;
-	private Map<Task, Double> progressRates;
-	private Map<Task, Double> estimatedTimesToCompletion;
-	
     /**
      * Created a new WorkflowScheduler object.
      *
@@ -206,13 +127,6 @@ public class WorkflowScheduler extends DatacenterBroker {
 		ackTaskOfJob = new HashMap<>();
 		scheduledTaskOfJob = new HashMap<>();
 		JobFactory = new HashMap<>();
-		
-		nSucceededTasksPerVm = new HashMap<>();
-		
-		progressScores = new HashMap<>();
-		timesTaskHasBeenRunning = new HashMap<>();
-		progressRates = new HashMap<>();
-		estimatedTimesToCompletion = new HashMap<>();
 //		factory = new MatlabProxyFactory();
 //		proxy = factory.getProxy();
 		
@@ -231,18 +145,10 @@ public class WorkflowScheduler extends DatacenterBroker {
 	}
 
 	public void taskSucceeded(Task task, Vm vm) {
-		nSucceededTasksPerVm.put(vm, nSucceededTasksPerVm.get(vm)
-				+ progressScores.get(task));
+		tasks.remove(task);
+		speculativeTasks.remove(task);
 	}
-	
-	public void taskFailed(Task task, Vm vm) {
-		
-		nSucceededTasksPerVm.put(vm, nSucceededTasksPerVm.get(vm)
-				+ progressScores.get(task));
-	}
-	
     
-	
 	public LinkedList<Task> getTaskQueue() {
 		// TODO Auto-generated method stub
 		return taskQueue;
@@ -403,7 +309,6 @@ public class WorkflowScheduler extends DatacenterBroker {
     				scheduledTaskOfJob.put(job.getCloudletId(), 0);
     				ackTaskOfJob.put(job.getCloudletId(), 0);
     				JobFactory.put(job.getCloudletId(), job);
-    				rescheduleTasks(job.getTaskList());
     			}
 			}
         	int preAssignedSlots = Math.min(remainingSlotNum,(int)Math.round(slotNum/(Parameters.epsilon*jobNumInOneLoop)));
@@ -519,59 +424,6 @@ public class WorkflowScheduler extends DatacenterBroker {
                 		}
                 	}
             		
-            		if(Parameters.copystrategy == 5) {
-            			// directly assign
-            			// Queue<Vm> taskSlotsKeptIdle = new LinkedList<>();
-						Queue<Task> taskSubmitted = new LinkedList<>();
-						// successful assignment
-						for (int tindex = 0; tindex < unscheduledTaskNum; tindex++) {
-							Task task = job.unscheduledTaskList.get(tindex);
-							boolean submitflag = false;
-							for (int dcindex = 0; dcindex < Parameters.numberOfDC; dcindex++) {
-								if (job.greatX[tindex*Parameters.numberOfDC + dcindex] != 0) {
-									if(submitflag == false) {
-										submitflag = true;
-									}
-									int submittedNum = (int) job.greatX[tindex*Parameters.numberOfDC + dcindex];
-									for(int copyindex = 0; copyindex < submittedNum; copyindex++) {
-										Vm vm = idleTaskSlotsOfDC.get(dcindex + DCbase).remove();
-										if (tasks.containsKey(task.getCloudletId())) {
-											Task speculativeTask = new Task(task);
-											cloneTask(speculativeTask,task);
-											speculativeTask.setAssignmentDCId(dcindex + DCbase);
-											speculativeTask.assignmentDCindex = dcindex;
-											speculativeTask.setSpeculativeCopy(true);
-											speculativeTasks.get(speculativeTask.getCloudletId()).add(speculativeTask);
-											submitSpeculativeTask(speculativeTask, vm);
-										} else {
-											task.setAssignmentDCId(dcindex + DCbase);
-											task.assignmentDCindex = dcindex;
-											tasks.put(task.getCloudletId(), task);
-											submitTask(task, vm);
-											speculativeTasks.put(task.getCloudletId(), new LinkedList<>());
-										}
-									}
-									
-								}
-							}
-							if(submitflag == true) {
-								taskSubmitted.add(task);
-							}
-						}
-						
-						// there to verify that modify the job 
-						// JobFactory whether change the corresponding value
-						// JobList whether change the corresponding value
-						job.unscheduledTaskList.removeAll(taskSubmitted);
-						int numOfScheduledTask = scheduledTaskOfJob.get(job.getCloudletId());
-						scheduledTaskOfJob.put(job.getCloudletId(), (numOfScheduledTask+taskSubmitted.size()));
-						//job.sortedflag = false;
-						JobFactory.put(job.getCloudletId(), job);
-						if(job.unscheduledTaskList.size() == 0) {
-							scheduler.getScheduledList().add(job);
-						}
-						continue;
-            		}
             		
     	        	// copy based on the great assignment and preAssigned slots
             		MWNumericArray xOrig = null;
@@ -948,7 +800,6 @@ public class WorkflowScheduler extends DatacenterBroker {
 							
 							for(int tindex = 0; tindex < unscheduledTaskNum; tindex++) {
 								boolean success = false;
-								int datanumber = job.data[tindex];
 								for(int dcindex = 0; dcindex < Parameters.numberOfDC; dcindex++) {
 									int xindex = tindex * Parameters.numberOfDC + dcindex;
 									
@@ -969,7 +820,7 @@ public class WorkflowScheduler extends DatacenterBroker {
 										// uplink
 										bwOfSrcPos = new HashMap<>();
 										if(job.TotalTransferDataSize[xindex]>0) {
-											for(int dataindex = 0; dataindex < datanumber; dataindex++) {
+											for(int dataindex = 0; dataindex < Parameters.ubOfData; dataindex++) {
 												double neededBw = job.bandwidth[xindex][dataindex];
 												int srcPos = (int) job.datapos[tindex][dataindex];
 												if(bwOfSrcPos.containsKey(srcPos)) {
@@ -1027,7 +878,7 @@ public class WorkflowScheduler extends DatacenterBroker {
 							for(int tindex = 0; tindex < unscheduledTaskNum; tindex++) {
 								Task task = job.unscheduledTaskList.get(tindex);
 								int taskId = task.getCloudletId();
-								int datanumber = task.numberOfData;
+								
 								boolean success = true;
 								int successDC = -1;
 								for(Map.Entry<Integer, Double> iterm:job.sortedListOfTask.get(taskId)) {
@@ -1055,7 +906,7 @@ public class WorkflowScheduler extends DatacenterBroker {
 										// uplink
 										bwOfSrcPos = new HashMap<>();
 										if(job.TotalTransferDataSize[xindex]>0) {
-											for(int dataindex = 0; dataindex < datanumber; dataindex++) {
+											for(int dataindex = 0; dataindex < Parameters.ubOfData; dataindex++) {
 												double neededBw = job.bandwidth[xindex][dataindex];
 												int srcPos = (int) job.datapos[tindex][dataindex];
 												if(bwOfSrcPos.containsKey(srcPos)) {
@@ -1100,61 +951,6 @@ public class WorkflowScheduler extends DatacenterBroker {
 						// TODO Auto-generated catch block
 						e.printStackTrace();
 					}
-            		
-            		if(allzeroflag == false && Parameters.copystrategy == 5) {
-            			// Queue<Vm> taskSlotsKeptIdle = new LinkedList<>();
-						Queue<Task> taskSubmitted = new LinkedList<>();
-						// successful assignment
-						
-						for (int tindex = 0; tindex < unscheduledTaskNum; tindex++) {
-							Task task = job.unscheduledTaskList.get(tindex);
-							boolean submitflag = false;
-							for (int dcindex = 0; dcindex < Parameters.numberOfDC; dcindex++) {
-								if (singlex[tindex*Parameters.numberOfDC + dcindex] != 0) {
-									if(submitflag == false) {
-										submitflag = true;
-									}
-									int submittedNum = (int) singlex[tindex*Parameters.numberOfDC + dcindex];
-									for(int copyindex = 0; copyindex < submittedNum; copyindex++) {
-										Vm vm = idleTaskSlotsOfDC.get(dcindex + DCbase).remove();
-										if (tasks.containsKey(task.getCloudletId())) {
-											Task speculativeTask = new Task(task);
-											cloneTask(speculativeTask,task);
-											speculativeTask.setAssignmentDCId(dcindex + DCbase);
-											speculativeTask.assignmentDCindex = dcindex;
-											speculativeTask.setSpeculativeCopy(true);
-											speculativeTasks.get(speculativeTask.getCloudletId()).add(speculativeTask);
-											submitSpeculativeTask(speculativeTask, vm);
-										} else {
-											task.setAssignmentDCId(dcindex + DCbase);
-											task.assignmentDCindex = dcindex;
-											tasks.put(task.getCloudletId(), task);
-											submitTask(task, vm);
-											speculativeTasks.put(task.getCloudletId(), new LinkedList<>());
-										}
-									}
-									
-								}
-							}
-							if(submitflag == true) {
-								taskSubmitted.add(task);
-							}
-							
-						}
-						// there to verify that modify the job 
-						// JobFactory whether change the corresponding value
-						// JobList whether change the corresponding value
-						job.unscheduledTaskList.removeAll(taskSubmitted);
-						int numOfScheduledTask = scheduledTaskOfJob.get(job.getCloudletId());
-						scheduledTaskOfJob.put(job.getCloudletId(), (numOfScheduledTask+taskSubmitted.size()));
-						
-						//job.sortedflag = false;
-						JobFactory.put(job.getCloudletId(), job);
-						if(job.unscheduledTaskList.size() == 0) {
-							scheduler.getScheduledList().add(job);
-						}
-						continue;
-            		}
             		
             		// judge whether x is all zero
             		double[] x = null;
@@ -1377,7 +1173,7 @@ public class WorkflowScheduler extends DatacenterBroker {
 				for(int tindex = 0; tindex < unscheduledTaskNum; tindex++) {
 					Task task = job.unscheduledTaskList.get(tindex);
 					int taskId = task.getCloudletId();
-					int datanumber = task.numberOfData;
+					
 					boolean success = true;
 					int successDC = -1;
 					for(Map.Entry<Integer, Double> iterm:job.sortedListOfTask.get(taskId)) {
@@ -1405,7 +1201,7 @@ public class WorkflowScheduler extends DatacenterBroker {
 							// uplink
 							bwOfSrcPos = new HashMap<>();
 							if(job.TotalTransferDataSize[xindex]>0) {
-								for(int dataindex = 0; dataindex < datanumber; dataindex++) {
+								for(int dataindex = 0; dataindex < Parameters.ubOfData; dataindex++) {
 									double neededBw = job.bandwidth[xindex][dataindex];
 									int srcPos = (int) job.datapos[tindex][dataindex];
 									if(bwOfSrcPos.containsKey(srcPos)) {
@@ -1443,60 +1239,6 @@ public class WorkflowScheduler extends DatacenterBroker {
 						allzeroflag = false;
 						singlex[xindex] = 1;
 					}
-				}
-				
-				if(allzeroflag == false && Parameters.copystrategy == 5) {
-					// Queue<Vm> taskSlotsKeptIdle = new LinkedList<>();
-					Queue<Task> taskSubmitted = new LinkedList<>();
-					// successful assignment
-					
-					for (int tindex = 0; tindex < unscheduledTaskNum; tindex++) {
-						Task task = job.unscheduledTaskList.get(tindex);
-						boolean submitflag = false;
-						for (int dcindex = 0; dcindex < Parameters.numberOfDC; dcindex++) {
-							if (singlex[tindex*Parameters.numberOfDC + dcindex] != 0) {
-								if(submitflag == false) {
-									submitflag = true;
-								}
-								int submittedNum = (int) singlex[tindex*Parameters.numberOfDC + dcindex];
-								for(int copyindex = 0; copyindex < submittedNum; copyindex++) {
-									Vm vm = idleTaskSlotsOfDC.get(dcindex + DCbase).remove();
-									if (tasks.containsKey(task.getCloudletId())) {
-										Task speculativeTask = new Task(task);
-										cloneTask(speculativeTask,task);
-										speculativeTask.setAssignmentDCId(dcindex + DCbase);
-										speculativeTask.assignmentDCindex = dcindex;
-										speculativeTask.setSpeculativeCopy(true);
-										speculativeTasks.get(speculativeTask.getCloudletId()).add(speculativeTask);
-										submitSpeculativeTask(speculativeTask, vm);
-									} else {
-										task.setAssignmentDCId(dcindex + DCbase);
-										task.assignmentDCindex = dcindex;
-										tasks.put(task.getCloudletId(), task);
-										submitTask(task, vm);
-										speculativeTasks.put(task.getCloudletId(), new LinkedList<>());
-									}
-								}
-								
-							}
-						}
-						if(submitflag == true) {
-							taskSubmitted.add(task);
-						}
-					}
-					// there to verify that modify the job 
-					// JobFactory whether change the corresponding value
-					// JobList whether change the corresponding value
-					job.unscheduledTaskList.removeAll(taskSubmitted);
-					int numOfScheduledTask = scheduledTaskOfJob.get(job.getCloudletId());
-					scheduledTaskOfJob.put(job.getCloudletId(), (numOfScheduledTask+taskSubmitted.size()));
-					
-					//job.sortedflag = false;
-					JobFactory.put(job.getCloudletId(), job);
-					if(job.unscheduledTaskList.size() == 0) {
-						scheduler.getScheduledList().add(job);
-					}
-					continue;
 				}
 				
 				if(allzeroflag == false) {
@@ -1712,11 +1454,6 @@ public class WorkflowScheduler extends DatacenterBroker {
         		
         	}	
         }
-        
-        if(Parameters.copystrategy == 5) {
-        	// assign speculative for the running tasks
-        	LateStractegy();
-        }
         getCloudletList().removeAll(scheduler.getScheduledList());
         for(int sindex = 0; sindex < scheduler.getScheduledList().size(); sindex++) {
         	Job job = (Job)scheduler.getScheduledList().get(sindex);
@@ -1789,218 +1526,7 @@ public class WorkflowScheduler extends DatacenterBroker {
     }
     
     
-    public void rescheduleTasks(List<Task> taskList) {
-		// TODO Auto-generated method stub
-    	for (Task task : taskList) {
-			progressScores.put(task, 0d);
-		}
-	}
-
-    private void computeProgressScore(Task task) {
-		double actualProgressScore = (double) (task.getCloudletFinishedSoFar())
-				/ (double) (task.getCloudletLength());
-		// the distortion is higher if task is really close to finish or just
-		// started recently
-		double distortionIntensity = 1d - Math
-				.abs(1d - actualProgressScore * 2d);
-		double distortion = Parameters.numGen.nextGaussian()
-				* Parameters.distortionCV * distortionIntensity;
-		double perceivedProgressScore = actualProgressScore + distortion;
-		progressScores.put(task,
-				(perceivedProgressScore > 1) ? 0.99
-						: ((perceivedProgressScore < 0) ? 0.01
-								: perceivedProgressScore));
-	}
-
-	private void computeProgressRate(Task task) {
-		computeProgressScore(task);
-		timesTaskHasBeenRunning.put(task,
-				CloudSim.clock() - task.getExecStartTime());
-		progressRates.put(
-				task,
-				(timesTaskHasBeenRunning.get(task) == 0) ? Double.MAX_VALUE
-						: progressScores.get(task)
-								/ timesTaskHasBeenRunning.get(task));
-	}
-
-	public void computeEstimatedTimeToCompletion(Task task) {
-		computeProgressRate(task);
-		estimatedTimesToCompletion.put(
-				task,
-				(progressRates.get(task) == 0) ? Double.MAX_VALUE
-						: (1d - progressScores.get(task))
-								/ progressRates.get(task));
-	}
-	
-	
-
-	public void LateStractegy() {
-		// TODO Auto-generated method stub
-    	// compute candidates
-		// compute the sum of progress scores for all vms
-		Map<Integer, Double> vmIdToSumOfProgressScores = new HashMap<>();
-		for (Vm runningVm : nSucceededTasksPerVm.keySet()) {
-			vmIdToSumOfProgressScores.put(runningVm.getId(),
-					(double) nSucceededTasksPerVm.get(runningVm));
-		}
-
-		for (Integer key : tasks.keySet()) {
-			Task t = tasks.get(key);
-			computeEstimatedTimeToCompletion(t);
-			vmIdToSumOfProgressScores.put(
-					t.getVmId(),
-					vmIdToSumOfProgressScores.get(t.getVmId())
-							+ progressScores.get(t));
-		}
-
-		// compute the quantiles of task and node slowness
-		List<Vm> runningVms = new ArrayList<>(nSucceededTasksPerVm.keySet());
-		Collections.sort(runningVms, new VmSumOfProgressScoresComparator(
-				vmIdToSumOfProgressScores));
-		int quantileIndex = (int) (runningVms.size() * slowNodeThreshold - 0.5);
-		currentSlowNodeThreshold = vmIdToSumOfProgressScores.get(runningVms
-				.get(quantileIndex).getId());
-
-		List<Task> runningTasks = new ArrayList<>(tasks.values());
-		Collections.sort(runningTasks, new TaskProgressRateComparator());
-		quantileIndex = (int) (runningTasks.size() * slowTaskThreshold - 0.5);
-		currentSlowTaskThreshold = (runningTasks.size() > 0) ? progressRates
-				.get(runningTasks.get(quantileIndex)) : -1;
-
-		// determine a candidate for speculative execution
-		List<Task> candidates = new LinkedList<>();
-		for (Integer key : tasks.keySet()) {
-			Task candidate = tasks.get(key);
-			if (speculativeTasks.get(key).size() == 0 && progressRates.get(candidate) < currentSlowTaskThreshold) {
-				System.out.println(progressRates.get(candidate) + " "
-						+ currentSlowTaskThreshold);
-				candidates.add(candidate);
-			}
-		}
-		Collections.sort(candidates,
-				new TaskEstimatedTimeToCompletionComparator());
-		
-		// choose the best position for the candidate under the resource limitation
-		double[] SlotArray = new double[Parameters.numberOfDC];
-		double[] UpArray = new double[Parameters.numberOfDC];
-		double[] DownArray = new double[Parameters.numberOfDC];
-		int slotNum = 0;
-        //SlotArray UpArray DownArray
-		
-  		for(int dcindex = 0; dcindex < Parameters.numberOfDC; dcindex++) {
-  			if(healthyStateOfDC.get(dcindex + DCbase) == true) {
-  				SlotArray[dcindex] = idleTaskSlotsOfDC.get(dcindex + DCbase).size();
-  				slotNum += SlotArray[dcindex];
-  			}else {
-  				SlotArray[dcindex] = 0;
-  			}
-  			UpArray[dcindex] = getUplinkOfDC().get(dcindex + DCbase);
-  			DownArray[dcindex] = getDownlinkOfDC().get(dcindex + DCbase);
-  		}
-  		
-		for(int cindex = 0; cindex < candidates.size(); cindex++) {
-			if(sizeOfSpeculative() >= speculativeCapAbs) {
-				break;
-			}
-			Task task = candidates.get((candidates.size() - 1 - cindex));
-			// randome choose the vm
-			
-			// greedy choose the vm
-			int taskId = task.getCloudletId();
-			int datanumber = task.numberOfData;
-			boolean success = true;
-			int successDC = -1;
-			for(int listindex = 0; listindex < Parameters.numberOfDC; listindex++) {
-				int dcindex = task.orderedDClist[listindex];
-				if(task.uselessDC[dcindex] == 0) {
-					success = false;
-					continue;
-				}
-				
-				success = true;
-				// when the dc is not too far
-//				if(job.uselessDCforTask[xindex] != 0) {
-					// verify that the resource is enough
-					
-					// machines
-					if((SlotArray[dcindex]-1)<0) {
-						success = false;
-						continue;
-					}
-					
-					// downlink
-					if(task.TotalTransferDataSize[dcindex]>0) {
-						if((DownArray[dcindex]-Parameters.bwBaselineOfDC[dcindex])<0) {
-							success = false;
-							continue;
-						}
-					}
-					
-					// uplink
-					Map<Integer, Double> bwOfSrcPos = new HashMap<>();
-					if(task.TotalTransferDataSize[dcindex]>0) {
-						for(int dataindex = 0; dataindex < datanumber; dataindex++) {
-							double neededBw = task.bandwidth[dcindex][dataindex];
-							int srcPos = (int) task.positionOfData[dataindex];
-							if(bwOfSrcPos.containsKey(srcPos)) {
-								double oldvalue = bwOfSrcPos.get(srcPos);
-								bwOfSrcPos.put(srcPos, oldvalue + neededBw);
-							}else {
-								bwOfSrcPos.put(srcPos, 0 + neededBw);
-							}
-						}
-						for(int pos : bwOfSrcPos.keySet()) {
-							if((UpArray[pos]-bwOfSrcPos.get(pos))<0) {
-								success = false;
-								break;
-							}
-						}
-					}
-					if(success == true) {
-						SlotArray[dcindex] -= 1;
-						if(task.TotalTransferDataSize[dcindex]>0) {
-							DownArray[dcindex] -= Parameters.bwBaselineOfDC[dcindex];
-
-						}
-						for(int pos : bwOfSrcPos.keySet()) {
-							UpArray[pos]-=bwOfSrcPos.get(pos);
-						}
-						successDC = dcindex;
-						break;
-					}
-//				}
-			}
-			if(success == true) {
-				
-				// assign the speculative
-				Vm vm = idleTaskSlotsOfDC.get(successDC + DCbase).remove();
-				if (tasks.containsKey(task.getCloudletId())) {
-					Task speculativeTask = new Task(task);
-					cloneTask(speculativeTask,task);
-					speculativeTask.setAssignmentDCId(successDC + DCbase);
-					speculativeTask.assignmentDCindex = successDC;
-					speculativeTask.setSpeculativeCopy(true);
-					speculativeTasks.get(speculativeTask.getCloudletId()).add(speculativeTask);
-					submitSpeculativeTask(speculativeTask, vm);
-				}
-				
-			}
-			
-		}
-		
-
-	}
-
-	public int sizeOfSpeculative() {
-		// TODO Auto-generated method stub
-		int size = 0;
-		for(Integer key:speculativeTasks.keySet()) {
-			size += speculativeTasks.get(key).size();
-		}
-		return size;
-	}
-
-	private void cloneTask(Task speculativeTask, Task task) {
+    private void cloneTask(Task speculativeTask, Task task) {
 		speculativeTask.setDepth(task.getDepth());
 		speculativeTask.setImpact(task.getImpact());
 		speculativeTask.numberOfData = task.numberOfData;
@@ -2020,16 +1546,10 @@ public class WorkflowScheduler extends DatacenterBroker {
 		speculativeTask.numberOfTransferData = new int[Parameters.numberOfDC];
 		speculativeTask.TotalTransferDataSize = new double[Parameters.numberOfDC];
 		speculativeTask.transferDataSize = new double[Parameters.numberOfDC][Parameters.ubOfData];
-		speculativeTask.bandwidth = new double[Parameters.numberOfDC][Parameters.ubOfData];
-		speculativeTask.orderedDClist = new int[Parameters.numberOfDC];
-		speculativeTask.uselessDC = new int[Parameters.numberOfDC];
 		for(int dcindex = 0; dcindex < Parameters.numberOfDC; dcindex++) {
 			speculativeTask.numberOfTransferData[dcindex] = task.numberOfTransferData[dcindex];
 			speculativeTask.TotalTransferDataSize[dcindex] = task.TotalTransferDataSize[dcindex];
-			speculativeTask.orderedDClist[dcindex] = task.orderedDClist[dcindex];
-			speculativeTask.uselessDC[dcindex] = task.uselessDC[dcindex];
 			for(int dataindex = 0; dataindex < speculativeTask.numberOfData; dataindex++) {
-				speculativeTask.bandwidth[dcindex][dataindex] = task.bandwidth[dcindex][dataindex];
 				speculativeTask.transferDataSize[dcindex][dataindex] = task.transferDataSize[dcindex][dataindex];
 			}
 		}
@@ -2393,7 +1913,6 @@ public class WorkflowScheduler extends DatacenterBroker {
 
 			// free task slots occupied by finished / cancelled tasks
 			Vm originalVm = vms.get(originalTask.getVmId());
-			taskSucceeded(originalTask, originalVm);
 			idleTaskSlotsOfDC.get(originalVm.DCId).add(originalVm);
 			// return bandwidth
 			double Totaldown = 0;
@@ -2421,7 +1940,6 @@ public class WorkflowScheduler extends DatacenterBroker {
 				while(it.hasNext()) {
 					Task speculativeTask = it.next();
 					Vm speculativeVm = vms.get(speculativeTask.getVmId());
-					taskSucceeded(speculativeTask, speculativeVm);
 					idleTaskSlotsOfDC.get(speculativeVm.DCId).add(speculativeVm);
 					// return bandwidth
 					Totaldown = 0;
@@ -2532,7 +2050,6 @@ public class WorkflowScheduler extends DatacenterBroker {
 					collectAckTask(task);
 				}
 			}
-			taskFailed(task, vm);
 			idleTaskSlotsOfDC.get(vm.DCId).add(vm);
 		}
     }
@@ -2760,23 +2277,9 @@ public class WorkflowScheduler extends DatacenterBroker {
 				//idleTaskSlots.add(vm);
 			}
 		}
-    	rescheduleVms(vms.values());
         sendNow(this.workflowEngineId, CloudSimTags.CLOUDLET_SUBMIT, null);
     }
-    
-    
-	public void rescheduleVms(Collection<Vm> values) {
-		// TODO Auto-generated method stub
-		speculativeCapAbs = (int) (values.size() * taskSlotsPerVm * speculativeCap + 0.5);
-		for (Vm vm : values) {
-			if (!nSucceededTasksPerVm.containsKey(vm)) {
-				nSucceededTasksPerVm.put(vm, 0d);
-			}
-		}
-	}
-
-
-	/**
+    /**
      * A trick here. Assure that we just submit it once
      */
     private boolean processCloudletSubmitHasShown = false;
