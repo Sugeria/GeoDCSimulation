@@ -26,8 +26,15 @@
 	<classpathentry kind="lib" path="dynamiccloudsim/trunk/lib/log4j-1.2.17.jar"/>
 	<classpathentry kind="lib" path="dynamiccloudsim/trunk/lib/pegasus-4.4.0cvs.jar"/>
 	<classpathentry kind="lib" path="dynamiccloudsim/trunk/lib/xercesImpl-2.11.0.jar"/>
-	<classpathentry kind="lib" path="C:/Program Files/MATLAB/R2017b/toolbox/javabuilder/jar/javabuilder.jar"/>
-	<classpathentry kind="lib" path="C:/Users/han/git/GeoDCSimulation/dynamiccloudsim/trunk/lib/jmi.jar"/>
-	<classpathentry kind="lib" path="C:/Users/han/git/GeoDCSimulation/dynamiccloudsim/trunk/lib/matlabcontrol-4.0.0.jar"/>
+	<classpathentry kind="lib" path="C:/Users/han/git/GeoDCSimulation/dynamiccloudsim/trunk/lib/commons-jexl-2.0.jar"/>
+	<classpathentry kind="lib" path="C:/Users/han/git/GeoDCSimulation/dynamiccloudsim/trunk/lib/javabuilder.jar"/>
+	<classpathentry kind="lib" path="D:/seafile_data/Seafile/MATLAB/copyStrategy/for_redistribution_files_only/taskAssign.jar"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.USER_LIBRARY/cplex">
+		<attributes>
+			<attribute name="org.eclipse.jdt.launching.CLASSPATH_ATTR_LIBRARY_PATH_ENTRY" value="C:/Program Files/IBM/ILOG/CPLEX_Studio128/cplex/bin/x64_win64"/>
+		</attributes>
+	</classpathentry>
+	<classpathentry kind="lib" path="C:/Program Files/IBM/ILOG/CPLEX_Studio128/cplex/lib/cplex.jar"/>
+	<classpathentry kind="lib" path="C:/Users/han/git/GeoDCSimulation/dynamiccloudsim/trunk/lib/jdom-2.0.0.jar"/>
 	<classpathentry kind="output" path="dynamiccloudsim/bin"/>
 </classpath>
