@@ -318,6 +318,11 @@ public class BasicClustering implements ClusteringInterface {
 				task.orderedDClist = new int[Parameters.numberOfDC];
 				task.bandwidth = new double[Parameters.numberOfDC][Parameters.ubOfData];
 				task.uselessDC = new int[Parameters.numberOfDC];
+				task.usedVM = 0;
+				task.usedBandwidth = 0d;
+				task.usedVMxTime = 0d;
+				task.usedBandxTime = 0d;
+				task.earliestStartTime = -1.0d;
 				//}
                 getTask2Job().put(task, job);
                 for (FileItem file : fileList) {
@@ -346,6 +351,8 @@ public class BasicClustering implements ClusteringInterface {
             job.setPriority(priority);
             job.workflowId = taskList.get(0).workflowId;
             job.unscheduledTaskList.addAll(job.getTaskList());
+            job.arrivalTime = job.getTaskList().get(0).arrivalTime;
+            job.submitDCIndex = job.getTaskList().get(0).submitDCIndex;
             idIndex++;
             getJobList().add(job);
             return job;

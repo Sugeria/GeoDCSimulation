@@ -32,6 +32,8 @@ import com.mathworks.toolbox.javabuilder.MWClassID;
 import com.mathworks.toolbox.javabuilder.MWComplexity;
 import com.mathworks.toolbox.javabuilder.MWException;
 import com.mathworks.toolbox.javabuilder.MWNumericArray;
+import com.sun.prism.impl.Disposer.Record;
+
 import java.util.Collections;
 import java.util.Comparator;
 
@@ -54,6 +56,7 @@ import de.huberlin.wbi.dcs.workflow.scheduler.HEFTScheduler;
 import de.huberlin.wbi.dcs.workflow.scheduler.LATEScheduler;
 import de.huberlin.wbi.dcs.workflow.scheduler.StaticRoundRobinScheduler;
 import de.huberlin.wbi.dcs.workflow.scheduler.LATEScheduler.TaskProgressRateComparator;
+import edu.isi.pegasus.planner.classes.Data;
 import de.huberlin.wbi.dcs.workflow.scheduler.AbstractWorkflowScheduler;
 
 public class WorkflowExample {
@@ -175,6 +178,7 @@ public class WorkflowExample {
 				CloudSim.stopSimulation();
 				//Collections.sort(outputList0, new JobIdComparator());
 				sortJobId(outputList0);
+				record(outputList0);
 				Parameters.printJobList(outputList0);
 				int numberOfSuccessfulJob = outputList0.size();
 				double accumulatedRuntime = Parameters.sumOfJobExecutime/numberOfSuccessfulJob;
@@ -198,6 +202,51 @@ public class WorkflowExample {
 	
 
 
+
+	private static void record(List<Job> outputList0) {
+		File file = new File("./dynamiccloudsim/result/jobcompletioninfo.txt");
+		try {
+			FileWriter out = new FileWriter(file);
+			out.write(outputList0.size()+"\t");
+			out.write("\r\n");
+			for(int jobindex = 0; jobindex < outputList0.size(); jobindex++) {
+				Job job = outputList0.get(jobindex);
+				out.write(job.getCloudletId()+"\t");
+				out.write(job.arrivalTime+"\t");
+				out.write(job.earliestStartTime+"\t");
+				out.write(job.getFinishTime()+"\t");
+				out.write(job.getFlowTime()+"\t");
+				double DataSize = 0d;
+				for(int tindex = 0; tindex < job.getTaskList().size(); tindex++) {
+					Task task = job.getTaskList().get(tindex);
+					for(int dataindex = 0; dataindex < task.numberOfData; dataindex++) {
+						DataSize += task.sizeOfData[dataindex];
+					}
+				}
+				out.write(DataSize/1024+"\t");
+				out.write(job.getTaskList().size()+"\t");
+				out.write("\r\n");
+				for(int tindex = 0; tindex < job.getTaskList().size(); tindex++) {
+					Task task = job.getTaskList().get(tindex);
+					out.write(task.getCloudletId()+"\t");
+					out.write(task.getCloudletLength()+"\t");
+					out.write(task.earliestStartTime+"\t");
+					out.write(task.getFinishTime()+"\t");
+					out.write(task.getActualCPUTime()+"\t");
+					out.write(task.usedVM+"\t");
+					out.write(task.usedVMxTime+"\t");
+					out.write(task.usedBandwidth+"\t");
+					out.write(task.usedBandxTime+"\t");
+					out.write("\r\n");
+				}
+			}
+			out.close();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
+	}
 
 	public AbstractWorkflowScheduler createScheduler(int i) {
 		try {

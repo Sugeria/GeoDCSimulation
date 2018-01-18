@@ -172,6 +172,12 @@ public class Cloudlet {
 	public int[] orderedDClist;
 	public double[][] bandwidth;
 	public int[] uselessDC;
+	public double arrivalTime;
+	public int usedVM = 0;
+	public double usedBandwidth = 0d;
+	public double usedVMxTime = 0d;
+	public double usedBandxTime = 0d;
+	public double earliestStartTime = -1.0d;
 	
 	public int getAssignmentDCId() {
 		return assignmentDCId;
@@ -827,10 +833,13 @@ public class Cloudlet {
 	
 	
 	public void setExecStartTime(final double clockTime) {
-		execStartTime = clockTime;
-		if (record) {
-			write("Sets the execution start time to " + num.format(clockTime));
+		if(execStartTime == -1.0 || clockTime == -1.0d) {
+			execStartTime = clockTime;
+			if (record) {
+				write("Sets the execution start time to " + num.format(clockTime));
+			}
 		}
+		
 	}
 	
 	
@@ -1294,6 +1303,10 @@ public class Cloudlet {
 	 */
 	public double getActualCPUTime() {
 		return getFinishTime() - getExecStartTime();
+	}
+	
+	public double getFlowTime() {
+		return getFinishTime() - arrivalTime;
 	}
 
 	/**

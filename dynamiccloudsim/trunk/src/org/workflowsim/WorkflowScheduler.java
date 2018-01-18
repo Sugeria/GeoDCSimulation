@@ -519,7 +519,7 @@ public class WorkflowScheduler extends DatacenterBroker {
                 		}
                 	}
             		
-            		if(Parameters.copystrategy == 5) {
+            		if(Parameters.copystrategy == 5 || Parameters.copystrategy == 0) {
             			// directly assign
             			// Queue<Vm> taskSlotsKeptIdle = new LinkedList<>();
 						Queue<Task> taskSubmitted = new LinkedList<>();
@@ -1101,7 +1101,7 @@ public class WorkflowScheduler extends DatacenterBroker {
 						e.printStackTrace();
 					}
             		
-            		if(allzeroflag == false && Parameters.copystrategy == 5) {
+            		if(allzeroflag == false && (Parameters.copystrategy == 5 || Parameters.copystrategy == 0)) {
             			// Queue<Vm> taskSlotsKeptIdle = new LinkedList<>();
 						Queue<Task> taskSubmitted = new LinkedList<>();
 						// successful assignment
@@ -1445,7 +1445,7 @@ public class WorkflowScheduler extends DatacenterBroker {
 					}
 				}
 				
-				if(allzeroflag == false && Parameters.copystrategy == 5) {
+				if(allzeroflag == false && (Parameters.copystrategy == 5 || Parameters.copystrategy == 0)) {
 					// Queue<Vm> taskSlotsKeptIdle = new LinkedList<>();
 					Queue<Task> taskSubmitted = new LinkedList<>();
 					// successful assignment
@@ -2006,6 +2006,9 @@ public class WorkflowScheduler extends DatacenterBroker {
 		speculativeTask.numberOfData = task.numberOfData;
 		speculativeTask.jobId = task.jobId;
 		speculativeTask.setSpeculativeCopy(true);
+		speculativeTask.arrivalTime = task.arrivalTime;
+//		speculativeTask.setExecStartTime(task.getExecStartTime());
+		speculativeTask.earliestStartTime = task.earliestStartTime;
 		// initial
 		speculativeTask.positionOfData = new int[speculativeTask.numberOfData];
 		speculativeTask.sizeOfData = new int[speculativeTask.numberOfData];
@@ -2395,9 +2398,28 @@ public class WorkflowScheduler extends DatacenterBroker {
 			Vm originalVm = vms.get(originalTask.getVmId());
 			taskSucceeded(originalTask, originalVm);
 			idleTaskSlotsOfDC.get(originalVm.DCId).add(originalVm);
+			
+			originalTask.usedVM++;
+			originalTask.usedVMxTime = originalTask.usedVMxTime + (CloudSim.clock()-originalTask.getExecStartTime());
+			
+			double earliestStartTime = originalTask.earliestStartTime;
+			if(earliestStartTime == -1.0d) {
+				earliestStartTime = originalTask.getExecStartTime();
+			}else {
+				if(originalTask.getExecStartTime()<earliestStartTime) {
+					earliestStartTime = originalTask.getExecStartTime();
+				}
+			}
+			
 			// return bandwidth
 			double Totaldown = 0;
-			if(originalTask.numberOfData > 0) {
+			if(originalTask.numberOfTransferData[originalTask.assignmentDCindex] > 0) {
+				
+				originalTask.usedBandwidth = originalTask.usedBandwidth + Parameters.bwBaselineOfDC[originalTask.assignmentDCindex];
+				originalTask.usedBandxTime = originalTask.usedBandxTime +
+						Parameters.bwBaselineOfDC[originalTask.assignmentDCindex]*(
+								CloudSim.clock()-originalTask.getExecStartTime());
+				
 				for(int dataindex = 0; dataindex < originalTask.numberOfData; dataindex++ ) {
 					Totaldown += originalTask.requiredBandwidth[dataindex];
 					if (originalTask.requiredBandwidth[dataindex] > 0) {
@@ -2423,10 +2445,24 @@ public class WorkflowScheduler extends DatacenterBroker {
 					Vm speculativeVm = vms.get(speculativeTask.getVmId());
 					taskSucceeded(speculativeTask, speculativeVm);
 					idleTaskSlotsOfDC.get(speculativeVm.DCId).add(speculativeVm);
+					
+					originalTask.usedVM++;
+					originalTask.usedVMxTime = originalTask.usedVMxTime + (CloudSim.clock()-speculativeTask.getExecStartTime());
+					
+					if(speculativeTask.getExecStartTime() < earliestStartTime) {
+						earliestStartTime = speculativeTask.getExecStartTime();
+					}
+					
 					// return bandwidth
 					Totaldown = 0;
-					if(originalTask.numberOfData > 0) {
-						for(int dataindex = 0; dataindex < originalTask.numberOfData; dataindex++ ) {
+					if(speculativeTask.numberOfTransferData[speculativeTask.assignmentDCindex] > 0) {
+						
+						originalTask.usedBandwidth = originalTask.usedBandwidth + Parameters.bwBaselineOfDC[speculativeTask.assignmentDCindex];
+						originalTask.usedBandxTime = originalTask.usedBandxTime +
+								Parameters.bwBaselineOfDC[speculativeTask.assignmentDCindex]*(
+										CloudSim.clock()-speculativeTask.getExecStartTime());
+						
+						for(int dataindex = 0; dataindex < speculativeTask.numberOfData; dataindex++ ) {
 							Totaldown += speculativeTask.requiredBandwidth[dataindex];
 							if (speculativeTask.requiredBandwidth[dataindex] > 0) {
 								sendNow(speculativeTask.positionOfDataID[dataindex], CloudSimTags.UPLINK_RETURN,speculativeTask.requiredBandwidth[dataindex]);
@@ -2448,7 +2484,11 @@ public class WorkflowScheduler extends DatacenterBroker {
 				}
 				//speculativeTasks.remove(originalTask.getCloudletId());
 			}
-			
+			task.usedVM = originalTask.usedVM;
+			task.usedBandwidth = originalTask.usedBandwidth;
+			task.usedVMxTime = originalTask.usedVMxTime;
+			task.usedBandxTime = originalTask.usedBandxTime;
+			task.earliestStartTime = earliestStartTime;
 			collectAckTask(task);
 
 			// if the task finished unsuccessfully,
@@ -2456,8 +2496,12 @@ public class WorkflowScheduler extends DatacenterBroker {
 			// otherwise, -- if it exists -- the speculative task becomes the
 			// new original
 		}else {
+			
 			LinkedList<Task> speculativeTaskOfTask = (LinkedList<Task>)speculativeTasks.remove(task.getCloudletId());
+			
+			
 			if (task.isSpeculativeCopy()) {
+				Task originalTask = tasks.get(task.getCloudletId());
 				Log.printLine(CloudSim.clock()
 						+ ": "
 						+ getName()
@@ -2469,8 +2513,28 @@ public class WorkflowScheduler extends DatacenterBroker {
 				for(int index = 0; index < speculativeTaskOfTask.size(); index++ ) {
 					if (speculativeTaskOfTask.get(index).getVmId() == task.getVmId()) {
 						Task speculativeTask = speculativeTaskOfTask.get(index);
+						idleTaskSlotsOfDC.get(vm.DCId).add(vm);
+						
+						originalTask.usedVM++;
+						originalTask.usedVMxTime = originalTask.usedVMxTime + (CloudSim.clock()-speculativeTask.getExecStartTime());
+						
+						if(originalTask.earliestStartTime == -1.0d) {
+							originalTask.earliestStartTime = speculativeTask.getExecStartTime();
+						}else {
+							if(speculativeTask.getExecStartTime() < originalTask.earliestStartTime) {
+								originalTask.earliestStartTime = speculativeTask.getExecStartTime();
+							}
+						}
+						
 						double Totaldown = 0;
-						if(speculativeTask.numberOfData > 0) {
+						if(speculativeTask.numberOfTransferData[speculativeTask.assignmentDCindex] > 0) {
+							
+							originalTask.usedBandwidth = 
+									originalTask.usedBandwidth + Parameters.bwBaselineOfDC[speculativeTask.assignmentDCindex];
+							originalTask.usedBandxTime = originalTask.usedBandxTime + 
+									Parameters.bwBaselineOfDC[speculativeTask.assignmentDCindex]*
+									(CloudSim.clock()-speculativeTask.getExecStartTime());
+							
 							for(int dataindex = 0; dataindex < speculativeTask.numberOfData; dataindex++ ) {
 								Totaldown += speculativeTask.requiredBandwidth[dataindex];
 								if (speculativeTask.requiredBandwidth[dataindex] > 0) {
@@ -2503,9 +2567,31 @@ public class WorkflowScheduler extends DatacenterBroker {
 				
 				
 				Task originalTask = tasks.remove(task.getCloudletId());
+				idleTaskSlotsOfDC.get(vm.DCId).add(vm);
+				
+				originalTask.usedVM++;
+				originalTask.usedVMxTime = originalTask.usedVMxTime + (CloudSim.clock()-originalTask.getExecStartTime());
+
+				if(originalTask.earliestStartTime == -1.0d) {
+					originalTask.earliestStartTime = originalTask.getExecStartTime();
+				}else {
+					if(originalTask.getExecStartTime() < originalTask.earliestStartTime) {
+						originalTask.earliestStartTime = originalTask.getExecStartTime();
+					}
+				}
+				
+				
 				double Totaldown = 0;
-				if(originalTask.numberOfData > 0) {
+				if(originalTask.numberOfTransferData[originalTask.assignmentDCindex] > 0) {
 					for(int dataindex = 0; dataindex < originalTask.numberOfData; dataindex++ ) {
+						
+						originalTask.usedBandwidth = originalTask.usedBandwidth +
+								Parameters.bwBaselineOfDC[originalTask.assignmentDCindex];
+						originalTask.usedBandxTime = originalTask.usedBandxTime +
+								Parameters.bwBaselineOfDC[originalTask.assignmentDCindex] * 
+								(CloudSim.clock()-originalTask.getExecStartTime());
+
+						
 						Totaldown += originalTask.requiredBandwidth[dataindex];
 						if (originalTask.requiredBandwidth[dataindex] > 0) {
 							sendNow(originalTask.positionOfDataID[dataindex], CloudSimTags.UPLINK_RETURN,originalTask.requiredBandwidth[dataindex]);
@@ -2522,18 +2608,27 @@ public class WorkflowScheduler extends DatacenterBroker {
 				}
 				if (speculativeTaskOfTask.size() != 0) {
 					Task speculativeTask = speculativeTaskOfTask.remove();
-					
+					speculativeTask.usedVM = originalTask.usedVM;
+					speculativeTask.usedBandwidth = originalTask.usedBandwidth;
+					speculativeTask.usedVMxTime = originalTask.usedVMxTime;
+					speculativeTask.usedBandxTime = originalTask.usedBandxTime;
+					speculativeTask.earliestStartTime = originalTask.earliestStartTime;
 					speculativeTask.setSpeculativeCopy(false);
 					
 					tasks.put(speculativeTask.getCloudletId(), speculativeTask);
 					speculativeTasks.put(speculativeTask.getCloudletId(), speculativeTaskOfTask);
 				} else {
-					
+					taskFailed(task, vm);
+					task.usedVM = originalTask.usedVM;
+					task.usedVMxTime = originalTask.usedVMxTime;
+					task.usedBandwidth = originalTask.usedBandwidth;
+					task.usedBandxTime = originalTask.usedBandxTime;
+					task.earliestStartTime = originalTask.earliestStartTime;
 					collectAckTask(task);
 				}
 			}
-			taskFailed(task, vm);
-			idleTaskSlotsOfDC.get(vm.DCId).add(vm);
+//			taskFailed(task, vm);
+//			idleTaskSlotsOfDC.get(vm.DCId).add(vm);
 		}
     }
     
@@ -2543,8 +2638,8 @@ public class WorkflowScheduler extends DatacenterBroker {
 			double taskExecStarttime = task.getExecStartTime();
 			double taskFinishTime = task.getFinishTime();
 			task.setCloudletStatus(Cloudlet.CREATED);
-			task.setExecStartTime(taskExecStarttime);
-			task.setFinishTime(taskFinishTime);
+			task.setExecStartTime(-1.0d);
+			task.setFinishTime(-1.0d);
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -2623,6 +2718,7 @@ public class WorkflowScheduler extends DatacenterBroker {
                 return ;
         	}
         	boolean successflag = true;
+        	// jobExeStartTime is the earliest Execution time among tasks
         	double JobExeStartTime = Double.MAX_VALUE;
         	if(completeJob.getExecStartTime() != -1) {
         		JobExeStartTime = completeJob.getExecStartTime();
@@ -2634,7 +2730,8 @@ public class WorkflowScheduler extends DatacenterBroker {
         	for (int taskindex = 0; taskindex < completeTaskList.size(); taskindex++) {
         		Task completeTask = completeTaskList.get(taskindex);
         		if(completeTask.getStatus() == Cloudlet.SUCCESS) {
-        			double taskstarttime = completeTask.getExecStartTime();
+        			//double taskstarttime = completeTask.getExecStartTime();
+        			double taskstarttime = completeTask.earliestStartTime;
             		double taskfinishtime = completeTask.getFinishTime();
             		if(taskstarttime < JobExeStartTime) {
             			JobExeStartTime = taskstarttime;
@@ -2671,6 +2768,7 @@ public class WorkflowScheduler extends DatacenterBroker {
         	}
         	if(JobExeStartTime != Double.MAX_VALUE) {
         		completeJob.setExecStartTime(JobExeStartTime);
+        		completeJob.earliestStartTime = JobExeStartTime;
         	}
         	if(JobFinishedTime != Double.MIN_VALUE) {
         		completeJob.setFinishTime(JobFinishedTime);

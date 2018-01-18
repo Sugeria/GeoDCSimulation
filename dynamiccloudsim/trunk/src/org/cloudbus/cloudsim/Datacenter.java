@@ -1082,23 +1082,23 @@ public class Datacenter extends SimEntity {
 					CloudletTransferSuccessReq.put(cl.getCloudletId(), new ArrayList<>());
 					CloudletTransferFailReq.put(cl.getCloudletId(), new ArrayList<>());
 				}
-				double[] datasizeOfTask = new double[numberOfData];
-				double TotaldatasizeOfTask = 0;
-				for(int dataindex = 0; dataindex < numberOfData; dataindex++) {
-//					if (cl.positionOfData[dataindex] != cl.assignmentDCindex) {
-//						datasizeOfTask[dataindex] = cl.sizeOfData[dataindex];
-//						TotaldatasizeOfTask += datasizeOfTask[dataindex];
-//					} else {
-//						datasizeOfTask[dataindex] = 0;
-//					}
-					datasizeOfTask[dataindex] = cl.transferDataSize[cl.assignmentDCindex][dataindex];
-					TotaldatasizeOfTask += datasizeOfTask[dataindex];
-				}
+//				double[] datasizeOfTask = new double[numberOfData];
+//				double TotaldatasizeOfTask = 0;
+//				for(int dataindex = 0; dataindex < numberOfData; dataindex++) {
+////					if (cl.positionOfData[dataindex] != cl.assignmentDCindex) {
+////						datasizeOfTask[dataindex] = cl.sizeOfData[dataindex];
+////						TotaldatasizeOfTask += datasizeOfTask[dataindex];
+////					} else {
+////						datasizeOfTask[dataindex] = 0;
+////					}
+//					datasizeOfTask[dataindex] = cl.transferDataSize[cl.assignmentDCindex][dataindex];
+//					TotaldatasizeOfTask += datasizeOfTask[dataindex];
+//				}
 				
-				if ((downlink-TotaldatasizeOfTask) >= 0) {
+				if ((downlink-(double)characteristics.bwBaseline) >= 0) {
 				
 					for (int dataindex = 0; dataindex < numberOfData; dataindex++) {
-						double requiredbandwidth = (double)characteristics.bwBaseline * datasizeOfTask[dataindex] / TotaldatasizeOfTask;
+						double requiredbandwidth = cl.bandwidth[cl.assignmentDCindex][dataindex];
 						if (requiredbandwidth > 0) {
 							downlink = downlink - requiredbandwidth;
 							if ((downlink) > 0) {

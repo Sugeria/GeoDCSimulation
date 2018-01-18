@@ -100,7 +100,7 @@ public class Parameters {
     
     public static boolean isExtracte = true;
     // 1-4
-    public static int copystrategy = 4;
+    public static int copystrategy = 5;
     
     
     /**
@@ -1382,16 +1382,17 @@ public class Parameters {
                     Log.singleprint("Stage-in");
                 }
                 
-                for (Task task : job.successTaskList) {
-                    Log.singleprint(task.getCloudletId() + ",");
-                    sumOfJobExecutime += task.getActualCPUTime();
-                }
+//                for (Task task : job.successTaskList) {
+//                    Log.singleprint(task.getCloudletId() + ",");
+//                    sumOfJobExecutime += task.getActualCPUTime();
+//                }
+                sumOfJobExecutime += job.getFlowTime();
                 Log.singleprint(indent);
 
                 if (job.getCloudletStatus() == Cloudlet.SUCCESS) {
                     Log.singleprint("SUCCESS");
-                    Log.singleprintLine(indent + indent + indent + dft.format(job.getActualCPUTime())
-                            + indent + indent + dft.format(job.getExecStartTime()) + indent + indent + indent
+                    Log.singleprintLine(indent + indent + indent + dft.format(job.getFlowTime())
+                            + indent + indent + dft.format(job.earliestStartTime) + indent + indent + indent
                             + dft.format(job.getFinishTime()) + indent + indent + indent + job.getDepth());
                 } else if (job.getCloudletStatus() == Cloudlet.FAILED) {
                     Log.singleprint("FAILED");

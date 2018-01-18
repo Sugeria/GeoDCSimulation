@@ -27,6 +27,7 @@ import org.apache.commons.math3.analysis.function.Max;
 import org.cloudbus.cloudsim.Log;
 import org.cloudbus.cloudsim.UtilizationModel;
 import org.cloudbus.cloudsim.UtilizationModelFull;
+import org.cloudbus.cloudsim.core.CloudSim;
 import org.jdom2.Document;
 import org.jdom2.Element;
 import org.jdom2.JDOMException;
@@ -314,6 +315,7 @@ public final class WorkflowParser {
                         task.setType(nodeType);
                         task.setUserId(userId);
                         task.workflowId = workflowId;
+                        task.arrivalTime = CloudSim.clock();
                         mName2Task.put(nodeName, task);
                         for (FileItem file : mFileList) {
                             task.addRequiredFile(file.getName());
