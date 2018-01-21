@@ -92,6 +92,8 @@ public class DatacenterBroker extends SimEntity {
 	public Map<Integer, Boolean> healthyStateOfDC;
 	
 	public int DCbase;
+	
+	public double lastProcessTime;
 
 	/**
 	 * Created a new DatacenterBroker object.
@@ -104,7 +106,8 @@ public class DatacenterBroker extends SimEntity {
 	 */
 	public DatacenterBroker(String name) throws Exception {
 		super(name);
-
+		CloudSim.brokerIdList.add(this.getId());
+		CloudSim.brokerIdSet.add(this.getId());
 		setVmList(new ArrayList<Vm>());
 		setVmsCreatedList(new ArrayList<Vm>());
 		setCloudletList(new ArrayList<Cloudlet>());
@@ -154,6 +157,32 @@ public class DatacenterBroker extends SimEntity {
 	 */
 	public void submitCloudletList(List<? extends Cloudlet> list) {
 		getCloudletList().addAll(list);
+	}
+
+	@Override
+	public void run() {
+		SimEvent ev = evbuf != null ? evbuf : getNextEventNoCloudletUpdate();
+
+		if (state != RUNNABLE) {
+			ev = null;
+			return ;
+		}
+		while (ev != null) {
+			processEvent(ev);
+			ev = getNextEventNoCloudletUpdate();
+		}
+		ev = getNextEvent();
+		if(ev != null) {
+			processEvent(ev);
+			ev = getNextEvent();
+		}
+		while (ev != null) {
+//			processEvent(ev);
+			ev = getNextEvent();
+		}
+		
+		evbuf = null;
+		
 	}
 
 	/**
@@ -232,6 +261,7 @@ public class DatacenterBroker extends SimEntity {
 			case CloudSimTags.DC_RESUME:
 				int resumeDCId = (int)ev.getData();
 				healthyStateOfDC.put(resumeDCId,true);
+				processCloudletUpdate(ev);
 				break;
 			// other unknown tags are processed by this method
 			default:

@@ -37,6 +37,8 @@ public class Cloudlet {
 	 * The size of this Cloudlet to be executed in a CloudResource (unit: in MI).
 	 */
 	private long cloudletLength;
+	
+	public long oriCloudletLength;
 
 	/**
 	 * The input file size of this Cloudlet before execution (unit: in byte). in byte = program +
@@ -178,6 +180,7 @@ public class Cloudlet {
 	public double usedVMxTime = 0d;
 	public double usedBandxTime = 0d;
 	public double earliestStartTime = -1.0d;
+    public int submitDCIndex;
 	
 	public int getAssignmentDCId() {
 		return assignmentDCId;

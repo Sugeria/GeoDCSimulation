@@ -101,8 +101,10 @@ public class Parameters {
     
     public static boolean isExtracte = true;
     // 1-4
-    public static int copystrategy = 5;
+    public static int copystrategy = 4;
     
+    public static int numberOfStrategy = 5;
+    public static int numberOfRun = 10;
     
     /**
      * Scheduling mode

@@ -288,23 +288,54 @@ public class CloudletSchedulerGreedyDivided extends CloudletSchedulerTimeShared 
 		if (totalMi > 0 && miSeconds >= Math.max(ioSeconds, bwSeconds)) {
 			mips.set(taskSlot,
 					Math.min(mips.get(0), rcl.getNumberOfPes() * miPerVMPe));
-			iops.set(taskSlot, totalIo * mips.get(0) / totalMi);
-			bwps.set(taskSlot, totalBw * mips.get(0) / totalMi);
+			iops.set(taskSlot, Math.min(iops.get(0), totalIo * mips.get(0) / totalMi));
+			bwps.set(taskSlot, Math.min(bwps.get(0), totalBw * mips.get(0) / totalMi));
 		} else if (totalIo > 0 && ioSeconds >= Math.max(miSeconds, bwSeconds)) {
 			iops.set(taskSlot, iops.get(0));
-			mips.set(taskSlot, totalMi * iops.get(0) / totalIo);
-			bwps.set(taskSlot, totalBw * iops.get(0) / totalIo);
+			mips.set(taskSlot, Math.min(mips.get(0), totalMi * iops.get(0) / totalIo));
+			bwps.set(taskSlot, Math.min(bwps.get(0), totalBw * iops.get(0) / totalIo));
 		} else if (totalBw > 0 && bwSeconds >= Math.max(miSeconds, ioSeconds)) {
 			bwps.set(taskSlot, bwps.get(0));
-			mips.set(taskSlot, totalMi * bwps.get(0) / totalBw);
-			iops.set(taskSlot, totalIo * bwps.get(0) / totalBw);
+			mips.set(taskSlot, Math.min(mips.get(0), totalMi * bwps.get(0) / totalBw));
+			iops.set(taskSlot, Math.min(iops.get(0), totalIo * bwps.get(0) / totalBw));
 		}
-
+		
 		mips.set(0, mips.get(0) - mips.get(taskSlot));
 		iops.set(0, iops.get(0) - iops.get(taskSlot));
 		bwps.set(0, bwps.get(0) - bwps.get(taskSlot));
-
-		return mips.get(taskSlot) + iops.get(taskSlot) + bwps.get(taskSlot);
+		
+		int datanumber = cl.numberOfData;
+		double band = 0d;
+		double band_delayOfData = 0d;
+		double band_delay = 0d;
+		double bw_mu = bwps.get(taskSlot);
+		
+		if(cl.TotalTransferDataSize[cl.assignmentDCindex]>0) {
+			// compute bandwidth delay
+			for(int dataindex = 0; dataindex < datanumber; dataindex++) {
+				if(cl.transferDataSize[cl.assignmentDCindex][dataindex]>0) {
+					band = bw_mu*cl.transferDataSize[cl.assignmentDCindex][dataindex]
+							/cl.TotalTransferDataSize[cl.assignmentDCindex];
+					double dataDelay = Parameters.delayAmongDCIndex[cl.positionOfData[dataindex]][cl.assignmentDCindex];
+					band_delayOfData = band * 
+							(cl.transferDataSize[cl.assignmentDCindex][dataindex]
+									/(cl.transferDataSize[cl.assignmentDCindex][dataindex]+dataDelay*band));
+					band_delay += band_delayOfData;
+				}
+			}
+		}
+		
+		double resource = mips.get(taskSlot) + iops.get(taskSlot) + band_delay;
+		double delay_para = (double)Parameters.delayAmongDCIndex[cl.submitDCIndex][cl.assignmentDCindex];
+		if(delay_para > 1e20d) {
+			int a = 1;
+			a = a + 1;
+		}
+		double task_workload = cl.getCloudletLength();
+		double resource_delay = resource * 
+				(task_workload/(task_workload + resource * delay_para));
+		
+		return resource_delay;
 	}
 
 	private double getTotalMips(List<Double> mipsShare) {

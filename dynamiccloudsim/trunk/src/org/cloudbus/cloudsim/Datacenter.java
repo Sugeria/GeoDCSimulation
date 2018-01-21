@@ -65,9 +65,9 @@ public class Datacenter extends SimEntity {
 	private double avaUplink;
 	private double avaDownlink;
 	
-	private Map<Integer, Integer> CloudletTransferRequest;
-	private Map<Integer, ArrayList<UplinkRequest>> CloudletTransferSuccessReq;
-	private Map<Integer, ArrayList<UplinkRequest>> CloudletTransferFailReq;
+	private Map<String, Integer> CloudletTransferRequest;
+	private Map<String, ArrayList<UplinkRequest>> CloudletTransferSuccessReq;
+	private Map<String, ArrayList<UplinkRequest>> CloudletTransferFailReq;
 
 	
 	private boolean isFail = false;
@@ -183,7 +183,7 @@ public class Datacenter extends SimEntity {
 			// New Cloudlet arrives, but the sender asks for an ack
 			case CloudSimTags.CLOUDLET_SUBMIT_ACK:
 				// judge whether the DC is fail to connect with the Broker
-				if(!isFail) {
+				if(!isFail && CloudSim.clock() != getLastProcessTime()) {
 					DCfailprob = Math.random();
 					DCfailduration = characteristics.lbOfDCFailureDuration + Math.random()*(characteristics.ubOfDCFailureDuration - characteristics.lbOfDCFailureDuration);
 					if (DCfailprob < characteristics.getLikelihoodOfDCFailure()) {
@@ -192,6 +192,8 @@ public class Datacenter extends SimEntity {
 						data[0] = getId();
 						data[1] = DCfailduration;
 						sendNow(attributedBrokerId, CloudSimTags.DC_FAIL,data);
+						failCloudletProcessing();
+						setLastProcessTime(CloudSim.clock());
 					}
 				}
 				
@@ -304,7 +306,7 @@ public class Datacenter extends SimEntity {
 				break;
 
 			case CloudSimTags.VM_DATACENTER_EVENT:
-				if(!isFail) {
+				if(!isFail && CloudSim.clock() != getLastProcessTime()) {
 					DCfailprob = Math.random();
 					DCfailduration = characteristics.lbOfDCFailureDuration + Math.random()*(characteristics.ubOfDCFailureDuration - characteristics.lbOfDCFailureDuration);
 					if (DCfailprob < characteristics.getLikelihoodOfDCFailure()) {
@@ -313,6 +315,7 @@ public class Datacenter extends SimEntity {
 						data[0] = getId();
 						data[1] = DCfailduration;
 						sendNow(attributedBrokerId,CloudSimTags.DC_FAIL,data);
+						setLastProcessTime(CloudSim.clock());
 					}
 				}
 				if(!isFail) {
@@ -351,6 +354,27 @@ public class Datacenter extends SimEntity {
 	
 	
 
+	@Override
+	public void run() {
+		SimEvent ev = evbuf != null ? evbuf : getNextEventNoCloudletSubmitAck();
+
+		if (state != RUNNABLE) {
+			ev = null;
+			return ;
+		}
+		while (ev != null) {
+			processEvent(ev);
+			ev = getNextEventNoCloudletSubmitAck();
+		}
+		ev = getNextEvent();
+		while (ev != null) {
+			processEvent(ev);
+			ev = getNextEvent();
+		}
+		
+		evbuf = null;
+	}
+
 	private void failCloudletProcessing() {
 		List<? extends Host> list = getVmAllocationPolicy().getHostList();
 		for (int i = 0; i < list.size(); i++) {
@@ -365,14 +389,15 @@ public class Datacenter extends SimEntity {
 	private void failCloudletTransferACK(SimEvent ev) {
 		UplinkRequest upr = (UplinkRequest)ev.getData();
 		Task task = upr.task;
+		String task_vm = String.valueOf(task.getCloudletId())+"-"+String.valueOf(task.vmId);
 		boolean isSuccess = upr.isSuccess;
-		int ack = CloudletTransferRequest.get(task.getCloudletId());
+		int ack = CloudletTransferRequest.get(task_vm);
 		ack = ack + 1;
-		CloudletTransferRequest.put(task.getCloudletId(), ack);
+		CloudletTransferRequest.put(task_vm, ack);
 		if (isSuccess) {
-			CloudletTransferSuccessReq.get(task.getCloudletId()).add(upr);
+			CloudletTransferSuccessReq.get(task_vm).add(upr);
 		} else {
-			CloudletTransferFailReq.get(task.getCloudletId()).add(upr);
+			CloudletTransferFailReq.get(task_vm).add(upr);
 			
 		}
 		if (ack == task.numberOfTransferData[task.assignmentDCindex]) {
@@ -380,24 +405,24 @@ public class Datacenter extends SimEntity {
 			
 			// return the up bandwidth for each successful transfer request
 			
-			int sizeOfsuccess = CloudletTransferSuccessReq.get(task.getCloudletId()).size();
+			int sizeOfsuccess = CloudletTransferSuccessReq.get(task_vm).size();
 			for (int sindex = 0; sindex < sizeOfsuccess; sindex++) {
-				UplinkRequest successUpr = CloudletTransferSuccessReq.get(task.getCloudletId()).get(sindex);
+				UplinkRequest successUpr = CloudletTransferSuccessReq.get(task_vm).get(sindex);
 				
 				sendNow(successUpr.task.positionOfDataID[successUpr.dataindex], CloudSimTags.UPLINK_RETURN,successUpr.requestedUpbandwidth);
 				downlink += successUpr.requestedUpbandwidth;
 			}
 			
-			int sizeOffail = CloudletTransferFailReq.get(task.getCloudletId()).size();
+			int sizeOffail = CloudletTransferFailReq.get(task_vm).size();
 			for (int sindex = 0; sindex < sizeOffail; sindex++ ) {
-				UplinkRequest failUpr = CloudletTransferFailReq.get(task.getCloudletId()).get(sindex);
+				UplinkRequest failUpr = CloudletTransferFailReq.get(task_vm).get(sindex);
 				downlink +=  failUpr.requestedUpbandwidth;
 			}
 			try {
 				task.setCloudletStatus(Cloudlet.FAILED);
-				CloudletTransferRequest.remove(task.getCloudletId());
-				CloudletTransferSuccessReq.remove(task.getCloudletId());
-				CloudletTransferFailReq.remove(task.getCloudletId());
+				CloudletTransferRequest.remove(task_vm);
+				CloudletTransferSuccessReq.remove(task_vm);
+				CloudletTransferFailReq.remove(task_vm);
 				sendNow(task.getUserId(), CloudSimTags.CLOUDLET_RETURN, task);
 			} catch (Exception e) {
 				e.printStackTrace();
@@ -469,14 +494,21 @@ public class Datacenter extends SimEntity {
 		// the datacenter now is the destination of data transfer
 		UplinkRequest upr = (UplinkRequest)ev.getData();
 		Task task = upr.task;
+		String task_vm = String.valueOf(task.getCloudletId())+"-"+String.valueOf(task.vmId);
 		boolean isSuccess = upr.isSuccess;
-		int ack = CloudletTransferRequest.get(task.getCloudletId());
+		int ack = 0;
+		try {
+			ack = CloudletTransferRequest.get(task_vm);
+		} catch (Exception e) {
+			// TODO: handle exception
+			e.printStackTrace();
+		}
 		ack = ack + 1;
-		CloudletTransferRequest.put(task.getCloudletId(), ack);
+		CloudletTransferRequest.put(task_vm, ack);
 		if (isSuccess) {
-			CloudletTransferSuccessReq.get(task.getCloudletId()).add(upr);
+			CloudletTransferSuccessReq.get(task_vm).add(upr);
 		} else {
-			CloudletTransferFailReq.get(task.getCloudletId()).add(upr);
+			CloudletTransferFailReq.get(task_vm).add(upr);
 			// deal the already decrease uplink and resume downlink
 			
 			
@@ -494,27 +526,27 @@ public class Datacenter extends SimEntity {
 		}
 		if (ack == task.numberOfTransferData[task.assignmentDCindex]) {
 			
-			if (CloudletTransferFailReq.get(task.getCloudletId()).size()!=0) {
+			if (CloudletTransferFailReq.get(task_vm).size()!=0) {
 				// return the up bandwidth for each successful transfer request
 				
-				int sizeOfsuccess = CloudletTransferSuccessReq.get(task.getCloudletId()).size();
+				int sizeOfsuccess = CloudletTransferSuccessReq.get(task_vm).size();
 				for (int sindex = 0; sindex < sizeOfsuccess; sindex++) {
-					UplinkRequest successUpr = CloudletTransferSuccessReq.get(task.getCloudletId()).get(sindex);
+					UplinkRequest successUpr = CloudletTransferSuccessReq.get(task_vm).get(sindex);
 					
 					sendNow(successUpr.task.positionOfDataID[successUpr.dataindex], CloudSimTags.UPLINK_RETURN,successUpr.requestedUpbandwidth);
 					downlink += successUpr.requestedUpbandwidth;
 				}
 				
-				int sizeOffail = CloudletTransferFailReq.get(task.getCloudletId()).size();
+				int sizeOffail = CloudletTransferFailReq.get(task_vm).size();
 				for (int sindex = 0; sindex < sizeOffail; sindex++ ) {
-					UplinkRequest failUpr = CloudletTransferFailReq.get(task.getCloudletId()).get(sindex);
+					UplinkRequest failUpr = CloudletTransferFailReq.get(task_vm).get(sindex);
 					downlink +=  failUpr.requestedUpbandwidth;
 				}
 				try {
 					task.setCloudletStatus(Cloudlet.FAILED);
-					CloudletTransferRequest.remove(task.getCloudletId());
-					CloudletTransferSuccessReq.remove(task.getCloudletId());
-					CloudletTransferFailReq.remove(task.getCloudletId());
+					CloudletTransferRequest.remove(task_vm);
+					CloudletTransferSuccessReq.remove(task_vm);
+					CloudletTransferFailReq.remove(task_vm);
 					sendNow(task.getUserId(), CloudSimTags.CLOUDLET_RETURN, task);
 				} catch (Exception e) {
 					e.printStackTrace();
@@ -553,9 +585,9 @@ public class Datacenter extends SimEntity {
 			
 			
 			double Totaldown = 0;
-			int sizeOfsuccess = CloudletTransferSuccessReq.get(task.getCloudletId()).size();
+			int sizeOfsuccess = CloudletTransferSuccessReq.get(task_vm).size();
 			for (int sindex = 0; sindex < sizeOfsuccess; sindex++) {
-				UplinkRequest successUpr = CloudletTransferSuccessReq.get(task.getCloudletId()).get(sindex);
+				UplinkRequest successUpr = CloudletTransferSuccessReq.get(task_vm).get(sindex);
 				double[] data = new double[3];
 				data[0] = task.positionOfDataID[successUpr.dataindex];
 				data[1] = successUpr.requestedUpbandwidth;
@@ -571,11 +603,11 @@ public class Datacenter extends SimEntity {
 			data[2] = Totaldown;
 			sendNow(task.getUserId(), CloudSimTags.BANDWIDTH_MINUS,data);
 			
-			sendNow(task.getUserId(), CloudSimTags.UPDATE_TASK_USED_BANDWIDTH,task);
+//			sendNow(task.getUserId(), CloudSimTags.UPDATE_TASK_USED_BANDWIDTH,task);
 			
-//			CloudletTransferRequest.remove(task.getCloudletId());
-//			CloudletTransferSuccessReq.remove(task.getCloudletId());
-//			CloudletTransferFailReq.remove(task.getCloudletId());
+			CloudletTransferRequest.remove(task_vm);
+			CloudletTransferSuccessReq.remove(task_vm);
+			CloudletTransferFailReq.remove(task_vm);
 			
 			checkCloudletCompletion();
 		}
@@ -1043,7 +1075,7 @@ public class Datacenter extends SimEntity {
 		try {
 			// gets the Cloudlet object
 			Cloudlet cl = (Cloudlet) ev.getData();
-			
+			String cl_vm = String.valueOf(cl.getCloudletId())+"-"+String.valueOf(cl.vmId);
 			// checks whether this Cloudlet has finished or not
 			if (cl.isFinished()) {
 				String name = CloudSim.getEntityName(cl.getUserId());
@@ -1077,10 +1109,10 @@ public class Datacenter extends SimEntity {
 			int numberOfData = cl.numberOfData;
 			boolean noneedtransfer = false;
 			if (numberOfData > 0 && cl.numberOfTransferData[cl.assignmentDCindex] > 0) {
-				if (!CloudletTransferRequest.containsKey(cl.getCloudletId())) {
-					CloudletTransferRequest.put(cl.getCloudletId(),0);
-					CloudletTransferSuccessReq.put(cl.getCloudletId(), new ArrayList<>());
-					CloudletTransferFailReq.put(cl.getCloudletId(), new ArrayList<>());
+				if (!CloudletTransferRequest.containsKey(cl_vm)) {
+					CloudletTransferRequest.put(cl_vm,0);
+					CloudletTransferSuccessReq.put(cl_vm, new ArrayList<>());
+					CloudletTransferFailReq.put(cl_vm, new ArrayList<>());
 				}
 //				double[] datasizeOfTask = new double[numberOfData];
 //				double TotaldatasizeOfTask = 0;
@@ -1094,25 +1126,40 @@ public class Datacenter extends SimEntity {
 //					datasizeOfTask[dataindex] = cl.transferDataSize[cl.assignmentDCindex][dataindex];
 //					TotaldatasizeOfTask += datasizeOfTask[dataindex];
 //				}
-				
-				if ((downlink-(double)characteristics.bwBaseline) >= 0) {
+				double totalBandwidth = 0d;
+				for (int dataindex = 0; dataindex < numberOfData; dataindex++) {
+					double requiredbandwidth = cl.bandwidth[cl.assignmentDCindex][dataindex];
+					totalBandwidth += requiredbandwidth;
+				}
+				if ((downlink-totalBandwidth) >= 0) {
 				
 					for (int dataindex = 0; dataindex < numberOfData; dataindex++) {
 						double requiredbandwidth = cl.bandwidth[cl.assignmentDCindex][dataindex];
 						if (requiredbandwidth > 0) {
 							downlink = downlink - requiredbandwidth;
-							if ((downlink) > 0) {
-								if (cl instanceof Task) {
-									Task task = (Task)cl;
-									UplinkRequest upr = new UplinkRequest(task,requiredbandwidth,dataindex);
-									sendNow(cl.positionOfDataID[dataindex], CloudSimTags.CLOUDLET_TRANSFER,upr);
-								}
-								
+							
+							if (cl instanceof Task) {
+								Task task = (Task)cl;
+								UplinkRequest upr = new UplinkRequest(task,requiredbandwidth,dataindex);
+								sendNow(cl.positionOfDataID[dataindex], CloudSimTags.CLOUDLET_TRANSFER,upr);
 							}
+							
+							
 						}
 					}
 				} else {
-					noneedtransfer = true;
+					// task fail
+					try {
+						cl.setCloudletStatus(Cloudlet.FAILED);
+						CloudletTransferRequest.remove(cl_vm);
+						CloudletTransferSuccessReq.remove(cl_vm);
+						CloudletTransferFailReq.remove(cl_vm);
+						sendNow(cl.getUserId(), CloudSimTags.CLOUDLET_RETURN, cl);
+					} catch (Exception e) {
+						e.printStackTrace();
+					}
+					
+					return ;
 				}
 			} else {
 				noneedtransfer = true;
@@ -1151,6 +1198,9 @@ public class Datacenter extends SimEntity {
 //					
 //					
 //				}
+				CloudletTransferRequest.remove(cl_vm);
+				CloudletTransferSuccessReq.remove(cl_vm);
+				CloudletTransferFailReq.remove(cl_vm);
 				checkCloudletCompletion();
 			}
 			

@@ -205,7 +205,7 @@ public class MinRateSchedulingAlgorithm extends BaseSchedulingAlgorithm{
 						
 						for(int dataindex = 0; dataindex < datanumber; dataindex++) {
 							
-							if (TotaldatasizeOfTask > 0) {
+							if (datasizeOfTask[dataindex] > 0) {
 								bandwidth[xindex][dataindex] = bw_mu*datasizeOfTask[dataindex]/TotaldatasizeOfTask;
 								task.bandwidth[dcindex][dataindex] = bandwidth[xindex][dataindex];
 							}else {
@@ -314,19 +314,20 @@ public class MinRateSchedulingAlgorithm extends BaseSchedulingAlgorithm{
 	        			
 	        			double miSeconds = task.getMi()/mi_mu;
 	        			double ioSeconds = task.getIo()/io_mu;
-	        			double bwSeconds = TotalTransferDataSize[xindex]/bw_mu;
+	        			double bwlength = TotalTransferDataSize[xindex]/1024d;
+	        			double bwSeconds = TotalTransferDataSize[xindex]/(bw_mu*1024d);
 	        			
 	        			if (task.getMi() > 0 && miSeconds >= Math.max(ioSeconds, bwSeconds)) {
 	        				
 	        				io_mu = Math.min(io_mu_ori, task.getIo()*mi_mu/task.getMi());
-	        				bw_mu = Math.min(bw_mu_ori, TotalTransferDataSize[xindex]*mi_mu/task.getMi());
+	        				bw_mu = Math.min(bw_mu_ori, bwlength*mi_mu/task.getMi());
 	        			} else if (task.getIo() > 0 && ioSeconds >= Math.max(miSeconds, bwSeconds)) {
 	        				mi_mu = Math.min(mi_mu_ori, task.getMi()*io_mu/task.getIo());
-	        				bw_mu = Math.min(bw_mu_ori, TotalTransferDataSize[xindex]*io_mu/task.getIo());
+	        				bw_mu = Math.min(bw_mu_ori, bwlength*io_mu/task.getIo());
 	        				
 	        			} else if (TotalTransferDataSize[xindex] > 0 && bwSeconds >= Math.max(miSeconds, ioSeconds)) {
-	        				mi_mu = Math.min(mi_mu_ori, task.getMi()*bw_mu/TotalTransferDataSize[xindex]);
-	        				io_mu = Math.min(io_mu_ori, task.getIo()*bw_mu/TotalTransferDataSize[xindex]);
+	        				mi_mu = Math.min(mi_mu_ori, task.getMi()*bw_mu/bwlength);
+	        				io_mu = Math.min(io_mu_ori, task.getIo()*bw_mu/bwlength);
 	        				
 	        			}
 	        			
@@ -337,6 +338,7 @@ public class MinRateSchedulingAlgorithm extends BaseSchedulingAlgorithm{
 							
 							if (TotalTransferDataSize[xindex] > 0) {
 								bandwidth[xindex][dataindex] *= bandwidthco;
+								task.bandwidth[dcindex][dataindex] *= bandwidthco;
 								// wait for compute
 								int dataindex_pos = (int) datapos[taskindex][dataindex];
 								double dataDelay = Parameters.delayAmongDCIndex[dataindex_pos][dcindex];
@@ -344,7 +346,7 @@ public class MinRateSchedulingAlgorithm extends BaseSchedulingAlgorithm{
 									bandwidth_dataDelay_co[xindex][dataindex] = 0;
 								}else {
 									bandwidth_dataDelay_co[xindex][dataindex] = transferDataSize[xindex][dataindex]
-											/(transferDataSize[xindex][dataindex]+dataDelay*bandwidth[xindex][dataindex]);
+											/(transferDataSize[xindex][dataindex]+dataDelay*bandwidth[xindex][dataindex]*1024d);
 
 								}
 								
@@ -366,7 +368,7 @@ public class MinRateSchedulingAlgorithm extends BaseSchedulingAlgorithm{
 	        					+Math.pow(io_sigma, 2)+Math.pow((bw_mu_dataDelay*bw_sigmaco), 2));
 	        			double delay_para = (double)Parameters.delayAmongDCIndex[task.submitDCIndex][dcindex];
 	        			// allRateMuArray allRateSigmaArray
-	        			double task_workload = task.getMi() + task.getIo() + TotalTransferDataSize[xindex];
+	        			double task_workload = task.getMi() + task.getIo() + bwlength;
 	        			double delay_co = task_workload/(task_workload + muParaOfTaskInDC[xindex] * delay_para);
 	        			allRateMuArray[0][xindex] = muParaOfTaskInDC[xindex] * delay_co;
 	        			allRateSigmaArray[0][xindex] = sigmaParaOfTaskInDC[xindex] * delay_co;
@@ -375,6 +377,7 @@ public class MinRateSchedulingAlgorithm extends BaseSchedulingAlgorithm{
 	        					+ Parameters.r * allRateSigmaArray[0][xindex]); 
 	        			
 					}
+					tasklist.set(taskindex, task);
 				}
 				
 				
@@ -747,18 +750,14 @@ public class MinRateSchedulingAlgorithm extends BaseSchedulingAlgorithm{
 									resourceEnough = false;
 								}
 								
-								// downlink
-								if(TotalTransferDataSize[xindex]>0 && resourceEnough == true) {
-									if((tempDownArray[dcindex]-Parameters.bwBaselineOfDC[dcindex])<0) {
-										resourceEnough = false;
-									}
-								}
 								
+								double totalBandwidth = 0d;
 								// uplink
 								Map<Integer, Double> bwOfSrcPos = new HashMap<>();
 								if(TotalTransferDataSize[xindex]>0 && resourceEnough == true) {
 									for(int dataindex = 0; dataindex < datanumber; dataindex++) {
 										double neededBw = bandwidth[xindex][dataindex];
+										totalBandwidth+=neededBw;
 										int srcPos = (int) datapos[tindex][dataindex];
 										if(bwOfSrcPos.containsKey(srcPos)) {
 											double oldvalue = bwOfSrcPos.get(srcPos);
@@ -775,10 +774,17 @@ public class MinRateSchedulingAlgorithm extends BaseSchedulingAlgorithm{
 									}
 								}
 								
+								// downlink
+								if(TotalTransferDataSize[xindex]>0 && resourceEnough == true) {
+									if((tempDownArray[dcindex]-totalBandwidth)<0) {
+										resourceEnough = false;
+									}
+								}
+								
 								if(resourceEnough == true) {
 									tempSlotArray[dcindex] -= 1;
 									if(TotalTransferDataSize[xindex]>0) {
-										tempDownArray[dcindex] -= Parameters.bwBaselineOfDC[dcindex];
+										tempDownArray[dcindex] -= totalBandwidth;
 
 									}
 									for(int pos : bwOfSrcPos.keySet()) {
@@ -853,59 +859,68 @@ public class MinRateSchedulingAlgorithm extends BaseSchedulingAlgorithm{
 							int datanumber = data[tindex];
 							int xindex = tindex * Parameters.numberOfDC + dcindex;
 							success = true;
-							// when the dc is not too far
-//							if(uselessDCforTask[xindex] != 0) {
-								// verify that the resource is enough
-								
-								// machines
-							if((tempSlotArray[dcindex]-1)<0) {
+							
+							if(uselessDCforTask[xindex] == 0) {
 								success = false;
-								continue;
+								break;
 							}
 							
-							// downlink
-							if(TotalTransferDataSize[xindex]>0) {
-								if((tempDownArray[dcindex]-Parameters.bwBaselineOfDC[dcindex])<0) {
+							// when the dc is not too far
+							if(uselessDCforTask[xindex] != 0) {
+								// verify that the resource is enough
+									
+									// machines
+								if((tempSlotArray[dcindex]-1)<0) {
 									success = false;
 									continue;
 								}
-							}
-							
-							// uplink
-							Map<Integer, Double> bwOfSrcPos = new HashMap<>();
-							if(TotalTransferDataSize[xindex]>0) {
-								for(int dataindex = 0; dataindex < datanumber; dataindex++) {
-									double neededBw = bandwidth[xindex][dataindex];
-									int srcPos = (int) datapos[tindex][dataindex];
-									if(bwOfSrcPos.containsKey(srcPos)) {
-										double oldvalue = bwOfSrcPos.get(srcPos);
-										bwOfSrcPos.put(srcPos, oldvalue + neededBw);
-									}else {
-										bwOfSrcPos.put(srcPos, 0 + neededBw);
-									}
-								}
-								for(int pos : bwOfSrcPos.keySet()) {
-									if((tempUpArray[pos]-bwOfSrcPos.get(pos))<0) {
-										success = false;
-										break;
-									}
-								}
-							}
-							if(success == true) {
-								tempSlotArray[dcindex] -= 1;
+								
+								
+								double totalBandwidth = 0d;
+								// uplink
+								Map<Integer, Double> bwOfSrcPos = new HashMap<>();
 								if(TotalTransferDataSize[xindex]>0) {
-									tempDownArray[dcindex] -= Parameters.bwBaselineOfDC[dcindex];
+									for(int dataindex = 0; dataindex < datanumber; dataindex++) {
+										double neededBw = bandwidth[xindex][dataindex];
+										totalBandwidth += neededBw;
+										int srcPos = (int) datapos[tindex][dataindex];
+										if(bwOfSrcPos.containsKey(srcPos)) {
+											double oldvalue = bwOfSrcPos.get(srcPos);
+											bwOfSrcPos.put(srcPos, oldvalue + neededBw);
+										}else {
+											bwOfSrcPos.put(srcPos, 0 + neededBw);
+										}
+									}
+									for(int pos : bwOfSrcPos.keySet()) {
+										if((tempUpArray[pos]-bwOfSrcPos.get(pos))<0) {
+											success = false;
+											break;
+										}
+									}
 								}
 								
-								for(int pos : bwOfSrcPos.keySet()) {
-									tempUpArray[pos] -= bwOfSrcPos.get(pos);
+								// downlink
+								if(TotalTransferDataSize[xindex]>0 && success == true) {
+									if((tempDownArray[dcindex]-totalBandwidth)<0) {
+										success = false;
+										continue;
+									}
 								}
-								successDC = dcindex;
-								break;
+								if(success == true) {
+									tempSlotArray[dcindex] -= 1;
+									if(TotalTransferDataSize[xindex]>0) {
+										tempDownArray[dcindex] -= totalBandwidth;
+									}
+									
+									for(int pos : bwOfSrcPos.keySet()) {
+										tempUpArray[pos] -= bwOfSrcPos.get(pos);
+									}
+									successDC = dcindex;
+									break;
+								}
 							}
-//							}
 						}
-						if(success == true) {
+						if(success == true && successDC != -1) {
 							// store the greatest assignment info in the job with the current resource
 							int xindex = tindex * Parameters.numberOfDC + successDC;
 							job.currentGreateRate.put(taskId, allRateMuArray[0][xindex]

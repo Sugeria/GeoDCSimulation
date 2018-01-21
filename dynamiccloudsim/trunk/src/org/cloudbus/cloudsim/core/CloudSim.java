@@ -12,15 +12,19 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.ConcurrentModificationException;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.cloudbus.cloudsim.Log;
 import org.cloudbus.cloudsim.core.predicates.Predicate;
 import org.cloudbus.cloudsim.core.predicates.PredicateAny;
+import org.cloudbus.cloudsim.core.predicates.PredicateNoCloudletSubmitAck;
+import org.cloudbus.cloudsim.core.predicates.PredicateNoCloudletUpdate;
 import org.cloudbus.cloudsim.core.predicates.PredicateNone;
 
 /**
@@ -292,6 +296,9 @@ public class CloudSim {
 
 	/** The abrupt terminate. */
 	private static boolean abruptTerminate = false;
+	
+	public static List<Integer> brokerIdList;
+	public static Set<Integer> brokerIdSet;
 
 	/**
 	 * Initialise the simulation for stand alone simulations. This function should be called at the
@@ -306,12 +313,18 @@ public class CloudSim {
 		waitPredicates = new HashMap<Integer, Predicate>();
 		clock = 0;
 		running = false;
+		brokerIdList = new ArrayList<>();
+		brokerIdSet = new HashSet<>();
 	}
 
 	// The two standard predicates
 
 	/** A standard predicate that matches any event. */
 	public final static PredicateAny SIM_ANY = new PredicateAny();
+	
+	public final static PredicateNoCloudletUpdate SIM_NO_UPDATE = new PredicateNoCloudletUpdate();
+	
+	public final static PredicateNoCloudletSubmitAck SIM_NO_SUBMIT_ACK = new PredicateNoCloudletSubmitAck();
 
 	/** A standard predicate that does not match any events. */
 	public final static PredicateNone SIM_NONE = new PredicateNone();
@@ -465,12 +478,23 @@ public class CloudSim {
 		SimEntity ent;
 		boolean queue_empty;
 		int entities_size = entities.size();
-
+		List<SimEntity> brokers = new ArrayList<>();
 		for (int i = 0; i < entities_size; i++) {
 			ent = entities.get(i);
+			if(brokerIdSet.contains(ent.getId())) {
+				brokers.add(ent);
+				continue;
+			}
 			if (ent.getState() == SimEntity.RUNNABLE) {
 				ent.run();
 			}
+		}
+		for(int i = 0; i < brokers.size(); i++) {
+			 ent = brokers.get(i);
+			 if (ent.getState() == SimEntity.RUNNABLE) {
+					ent.run();
+				}
+			 
 		}
 
 		// If there are more future events then deal with them

@@ -37,10 +37,10 @@ public abstract class SimEntity implements Cloneable {
 	private int id;
 
 	/** The buffer for selected incoming events. */
-	private SimEvent evbuf;
+	protected SimEvent evbuf;
 
 	/** The entity's current state. */
-	private int state;
+	protected int state;
 
 	/**
 	 * Creates a new entity.
@@ -390,6 +390,16 @@ public abstract class SimEntity implements Cloneable {
 		return getNextEvent(CloudSim.SIM_ANY);
 	}
 
+	
+	public SimEvent getNextEventNoCloudletUpdate() {
+		return getNextEvent(CloudSim.SIM_NO_UPDATE);
+	}
+	
+	public SimEvent getNextEventNoCloudletSubmitAck() {
+		return getNextEvent(CloudSim.SIM_NO_SUBMIT_ACK);
+	}
+	
+	
 	/**
 	 * This method is invoked by the {@link Simulation} class when the simulation is started. This
 	 * method should be responsible for starting the entity up.

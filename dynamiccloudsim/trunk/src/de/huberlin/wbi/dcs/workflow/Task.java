@@ -68,7 +68,7 @@ public class Task extends HeterogeneousCloudlet implements Comparable<Task> {
     
     public int jobId;
 	
-    public int submitDCIndex;
+
     
     public int workflowId;
 	

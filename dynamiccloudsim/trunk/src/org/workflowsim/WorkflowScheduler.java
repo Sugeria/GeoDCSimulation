@@ -56,7 +56,6 @@ import com.mathworks.toolbox.javabuilder.MWClassID;
 import com.mathworks.toolbox.javabuilder.MWComplexity;
 import com.mathworks.toolbox.javabuilder.MWException;
 import com.mathworks.toolbox.javabuilder.MWNumericArray;
-import com.sun.xml.internal.ws.api.streaming.XMLStreamReaderFactory.Default;
 
 import de.huberlin.wbi.dcs.DynamicVm;
 import de.huberlin.wbi.dcs.examples.Parameters;
@@ -169,13 +168,14 @@ public class WorkflowScheduler extends DatacenterBroker {
 	// A threshold that a task's progress rate is compared with to determine
 	// whether it is slow enough to be speculated upon
 	// default: 25th percentile of task progress rates
-	protected final double slowTaskThreshold = 0.25;
+	// 0.25
+	protected final double slowTaskThreshold = 0.3;
 	protected double currentSlowTaskThreshold;
 
 	// a cap on the number of speculative tasks that can be running at once
 	// (given as a percentage of task slots)
 	// default: 10% of available task slots
-	protected final double speculativeCap = 0.1;
+	protected final double speculativeCap = 0.3;
 	protected int speculativeCapAbs;
 
 	protected Map<Vm, Double> nSucceededTasksPerVm;
@@ -207,7 +207,7 @@ public class WorkflowScheduler extends DatacenterBroker {
 		scheduledTaskOfJob = new HashMap<>();
 		JobFactory = new HashMap<>();
 		
-		nSucceededTasksPerVm = new HashMap<>();
+//		nSucceededTasksPerVm = new HashMap<>();
 		
 		progressScores = new HashMap<>();
 		timesTaskHasBeenRunning = new HashMap<>();
@@ -231,14 +231,14 @@ public class WorkflowScheduler extends DatacenterBroker {
 	}
 
 	public void taskSucceeded(Task task, Vm vm) {
-		nSucceededTasksPerVm.put(vm, nSucceededTasksPerVm.get(vm)
-				+ progressScores.get(task));
+//		nSucceededTasksPerVm.put(vm, nSucceededTasksPerVm.get(vm)
+//				+ progressScores.get(task));
 	}
 	
 	public void taskFailed(Task task, Vm vm) {
 		
-		nSucceededTasksPerVm.put(vm, nSucceededTasksPerVm.get(vm)
-				+ progressScores.get(task));
+//		nSucceededTasksPerVm.put(vm, nSucceededTasksPerVm.get(vm)
+//				+ progressScores.get(task));
 	}
 	
     
@@ -348,7 +348,12 @@ public class WorkflowScheduler extends DatacenterBroker {
      */
     @Override
     protected void processCloudletUpdate(SimEvent ev) {
-
+    	
+    	
+    	
+//    if (CloudSim.clock() != lastProcessTime) 
+    if(true){
+    	
     	TaskAssign taskAssign = null;
         BaseSchedulingAlgorithm scheduler = getScheduler(Parameters.getSchedulingAlgorithm());
         scheduler.DCbase = DCbase;
@@ -364,7 +369,7 @@ public class WorkflowScheduler extends DatacenterBroker {
             Log.printLine("Error in configuring scheduler_method");
             e.printStackTrace();
         }
-
+        
         List<Cloudlet> rankedList = scheduler.getRankedList();
         double[][] SlotArray = new double[1][Parameters.numberOfDC];
 		double[][] UpArray = new double[1][Parameters.numberOfDC];
@@ -387,6 +392,10 @@ public class WorkflowScheduler extends DatacenterBroker {
         
         int jobNumInOneLoop = rankedList.size();
         // each job weight equal 1
+        
+        Log.printLine("original resource:");
+        Log.printLine(DownArray[0][0]+" "+DownArray[0][1]+" "+DownArray[0][2]);
+        Log.printLine(UpArray[0][0]+" "+UpArray[0][1]+" "+UpArray[0][2]);
         
         for (int jobindex = 0; jobindex < jobNumInOneLoop; jobindex++) {
         	Job job = (Job)rankedList.get(jobindex);
@@ -414,6 +423,7 @@ public class WorkflowScheduler extends DatacenterBroker {
         	// whether preAssigned slots is enough for the original tasks in the job
         	double[] singlex = null;
         	Map<Integer, Double> bwOfSrcPos = null;
+        	double totalBandwidth = 0d;
         	boolean allzeroflag = true;
         	int vnum = unscheduledTaskNum*Parameters.numberOfDC;
         	if(greatAssignedTaskNum <= preAssignedSlots) {
@@ -442,20 +452,13 @@ public class WorkflowScheduler extends DatacenterBroker {
 							tempSlotArray[pos]-=1;
 						}
 						
-						// downlink
-						if(job.TotalTransferDataSize[xindex]>0) {
-							if((tempDownArray[pos]-Parameters.bwBaselineOfDC[pos])<0) {
-								resourceEnough = false;
-							}else {
-								tempDownArray[pos]-=Parameters.bwBaselineOfDC[pos];
-							}
-						}
-						
+						totalBandwidth = 0d;
 						// uplink
 						bwOfSrcPos = new HashMap<>();
 						if(job.TotalTransferDataSize[xindex]>0) {
 							for(int dataindex = 0; dataindex < datanumber; dataindex++) {
 								double neededBw = job.bandwidth[xindex][dataindex];
+								totalBandwidth += neededBw;
 								int srcPos = (int) job.datapos[tindex][dataindex];
 								if(bwOfSrcPos.containsKey(srcPos)) {
 									double oldvalue = bwOfSrcPos.get(srcPos);
@@ -474,6 +477,16 @@ public class WorkflowScheduler extends DatacenterBroker {
 							}
 						}
 						
+						// downlink
+						if(job.TotalTransferDataSize[xindex]>0 && resourceEnough == true) {
+							if((tempDownArray[pos]-totalBandwidth)<0) {
+								resourceEnough = false;
+							}else {
+								tempDownArray[pos]-=totalBandwidth;
+							}
+						}
+						
+						
             		}
             		if(resourceEnough == false) {
             			break;
@@ -483,6 +496,7 @@ public class WorkflowScheduler extends DatacenterBroker {
             	if(resourceEnough == true) {
             	// if yes
             		// cut down the corresponding resource
+            		Log.printLine("great resource is enough for job"+job.getCloudletId());
             		for(int tindex = 0; tindex < unscheduledTaskNum; tindex++) {
                 		int taskId = job.unscheduledTaskList.get(tindex).getCloudletId();
                 		int datanumber = job.data[tindex];
@@ -491,16 +505,15 @@ public class WorkflowScheduler extends DatacenterBroker {
                 			int xindex = tindex * Parameters.numberOfDC + pos;
                 			SlotArray[0][pos] -= 1;
                 			preAssignedSlots -= 1;
-    						// downlink
-    						if(job.TotalTransferDataSize[xindex]>0) {
-    							DownArray[0][pos] -= Parameters.bwBaselineOfDC[pos];
-    						}
     						
+    						totalBandwidth = 0d;
     						// uplink
     						bwOfSrcPos = new HashMap<>();
     						if(job.TotalTransferDataSize[xindex]>0) {
     							for(int dataindex = 0; dataindex < datanumber; dataindex++) {
+    								
     								double neededBw = job.bandwidth[xindex][dataindex];
+    								totalBandwidth += neededBw;
     								int srcPos = (int) job.datapos[tindex][dataindex];
     								if(bwOfSrcPos.containsKey(srcPos)) {
     									double oldvalue = bwOfSrcPos.get(srcPos);
@@ -516,10 +529,17 @@ public class WorkflowScheduler extends DatacenterBroker {
     							}
     						}
     						
+    						// downlink
+    						if(job.TotalTransferDataSize[xindex]>0) {
+    							DownArray[0][pos] -= totalBandwidth;
+    						}
+    						
                 		}
                 	}
-            		
-            		if(Parameters.copystrategy == 5 || Parameters.copystrategy == 0) {
+                    Log.printLine("updated resource-job"+job.getCloudletId()+":");
+                    Log.printLine(DownArray[0][0]+" "+DownArray[0][1]+" "+DownArray[0][2]);
+                    Log.printLine(UpArray[0][0]+" "+UpArray[0][1]+" "+UpArray[0][2]);
+            		if(Parameters.copystrategy == 5 || Parameters.copystrategy == 0 || preAssignedSlots <= 0) {
             			// directly assign
             			// Queue<Vm> taskSlotsKeptIdle = new LinkedList<>();
 						Queue<Task> taskSubmitted = new LinkedList<>();
@@ -528,7 +548,7 @@ public class WorkflowScheduler extends DatacenterBroker {
 							Task task = job.unscheduledTaskList.get(tindex);
 							boolean submitflag = false;
 							for (int dcindex = 0; dcindex < Parameters.numberOfDC; dcindex++) {
-								if (job.greatX[tindex*Parameters.numberOfDC + dcindex] != 0) {
+								if (job.greatX[tindex*Parameters.numberOfDC + dcindex] > 0) {
 									if(submitflag == false) {
 										submitflag = true;
 									}
@@ -541,11 +561,13 @@ public class WorkflowScheduler extends DatacenterBroker {
 											speculativeTask.setAssignmentDCId(dcindex + DCbase);
 											speculativeTask.assignmentDCindex = dcindex;
 											speculativeTask.setSpeculativeCopy(true);
+											speculativeTask.incBw((long)(task.TotalTransferDataSize[dcindex]/1024d));
 											speculativeTasks.get(speculativeTask.getCloudletId()).add(speculativeTask);
 											submitSpeculativeTask(speculativeTask, vm);
 										} else {
 											task.setAssignmentDCId(dcindex + DCbase);
 											task.assignmentDCindex = dcindex;
+											task.incBw((long)(task.TotalTransferDataSize[dcindex]/1024d));
 											tasks.put(task.getCloudletId(), task);
 											submitTask(task, vm);
 											speculativeTasks.put(task.getCloudletId(), new LinkedList<>());
@@ -702,7 +724,10 @@ public class WorkflowScheduler extends DatacenterBroker {
 							DownArray[0][dcindex] = down[dcindex];
 						}
 						
-						
+	                    Log.printLine("updated resource-copy-job"+job.getCloudletId()+":");
+	                    Log.printLine(DownArray[0][0]+" "+DownArray[0][1]+" "+DownArray[0][2]);
+	                    Log.printLine(UpArray[0][0]+" "+UpArray[0][1]+" "+UpArray[0][2]);
+	            		
 						
 						// Queue<Vm> taskSlotsKeptIdle = new LinkedList<>();
 						Queue<Task> taskSubmitted = new LinkedList<>();
@@ -711,7 +736,7 @@ public class WorkflowScheduler extends DatacenterBroker {
 							Task task = job.unscheduledTaskList.get(tindex);
 							boolean submitflag = false;
 							for (int dcindex = 0; dcindex < Parameters.numberOfDC; dcindex++) {
-								if (x[tindex*Parameters.numberOfDC + dcindex] != 0) {
+								if (x[tindex*Parameters.numberOfDC + dcindex] > 0) {
 									if(submitflag == false) {
 										submitflag = true;
 									}
@@ -724,11 +749,13 @@ public class WorkflowScheduler extends DatacenterBroker {
 											speculativeTask.setAssignmentDCId(dcindex + DCbase);
 											speculativeTask.assignmentDCindex = dcindex;
 											speculativeTask.setSpeculativeCopy(true);
+											speculativeTask.incBw((long)(task.TotalTransferDataSize[dcindex]/1024d));
 											speculativeTasks.get(speculativeTask.getCloudletId()).add(speculativeTask);
 											submitSpeculativeTask(speculativeTask, vm);
 										} else {
 											task.setAssignmentDCId(dcindex + DCbase);
 											task.assignmentDCindex = dcindex;
+											task.incBw((long)(task.TotalTransferDataSize[dcindex]/1024d));
 											tasks.put(task.getCloudletId(), task);
 											submitTask(task, vm);
 											speculativeTasks.put(task.getCloudletId(), new LinkedList<>());
@@ -935,6 +962,7 @@ public class WorkflowScheduler extends DatacenterBroker {
 						
 						if(cplex.solve()) {
 							
+							Log.printLine("recompute greate resource for job"+job.getCloudletId());
 							singlex = new double[vnum];
 							double[] vresult = cplex.getValues(var);
 							for(int vindex = 0; vindex < vnum; vindex++) {
@@ -947,8 +975,15 @@ public class WorkflowScheduler extends DatacenterBroker {
 							//verify x
 							
 							for(int tindex = 0; tindex < unscheduledTaskNum; tindex++) {
+								if(preAssignedSlots <= 0) {
+									for(int dcindex = 0; dcindex < Parameters.numberOfDC; dcindex++) {
+										int xindex = tindex * Parameters.numberOfDC + dcindex;
+										singlex[xindex] = 0;
+									}
+								}
 								boolean success = false;
 								int datanumber = job.data[tindex];
+								
 								for(int dcindex = 0; dcindex < Parameters.numberOfDC; dcindex++) {
 									int xindex = tindex * Parameters.numberOfDC + dcindex;
 									
@@ -959,18 +994,14 @@ public class WorkflowScheduler extends DatacenterBroker {
 											inter_resourceEnough = false;
 										}
 										
-										// downlink
-										if(job.TotalTransferDataSize[xindex]>0) {
-											if((DownArray[0][dcindex]-Parameters.bwBaselineOfDC[dcindex])<0) {
-												inter_resourceEnough = false;
-											}
-										}
 										
+										totalBandwidth = 0d;
 										// uplink
 										bwOfSrcPos = new HashMap<>();
 										if(job.TotalTransferDataSize[xindex]>0) {
 											for(int dataindex = 0; dataindex < datanumber; dataindex++) {
 												double neededBw = job.bandwidth[xindex][dataindex];
+												totalBandwidth += neededBw;
 												int srcPos = (int) job.datapos[tindex][dataindex];
 												if(bwOfSrcPos.containsKey(srcPos)) {
 													double oldvalue = bwOfSrcPos.get(srcPos);
@@ -986,10 +1017,17 @@ public class WorkflowScheduler extends DatacenterBroker {
 												}
 											}
 										}
+										// downlink
+										if(job.TotalTransferDataSize[xindex]>0 && inter_resourceEnough == true) {
+											if((DownArray[0][dcindex]-totalBandwidth)<0) {
+												inter_resourceEnough = false;
+											}
+										}
 										
 										if(inter_resourceEnough == true) {
 											success = true;
 											singlex[xindex] = 1;
+											preAssignedSlots -= 1;
 											allzeroflag = false;
 											// cut down resource
 											// machines
@@ -997,7 +1035,7 @@ public class WorkflowScheduler extends DatacenterBroker {
 											
 											// downlink
 											if(job.TotalTransferDataSize[xindex]>0) {
-												DownArray[0][dcindex] -= Parameters.bwBaselineOfDC[dcindex];
+												DownArray[0][dcindex] -= totalBandwidth;
 											}
 											
 											// uplink
@@ -1018,13 +1056,20 @@ public class WorkflowScheduler extends DatacenterBroker {
 							}
 							cplex.end();
 							
+		                    Log.printLine("updated resource-job"+job.getCloudletId()+":");
+		                    Log.printLine(DownArray[0][0]+" "+DownArray[0][1]+" "+DownArray[0][2]);
+		                    Log.printLine(UpArray[0][0]+" "+UpArray[0][1]+" "+UpArray[0][2]);
+		            		
+							
 						}else {
 							// greedy assign for the tasks in the job as well as its copy
 							// when there is some tasks do not be assigned then the copy is not needed
 							// use the matlab jar
-							
+							Log.printLine("recompute with the greedy when cplex is unsolvable for job"+job.getCloudletId());
 							singlex = new double[vnum];
 							for(int tindex = 0; tindex < unscheduledTaskNum; tindex++) {
+								if(preAssignedSlots <= 0)
+									break;
 								Task task = job.unscheduledTaskList.get(tindex);
 								int taskId = task.getCloudletId();
 								int datanumber = task.numberOfData;
@@ -1034,6 +1079,11 @@ public class WorkflowScheduler extends DatacenterBroker {
 									int dcindex = iterm.getKey();
 									int xindex = tindex * Parameters.numberOfDC + dcindex;
 									success = true;
+									if(job.uselessDCforTask[xindex] == 0) {
+										success = false;
+										break;
+									}
+									
 									// when the dc is not too far
 //									if(job.uselessDCforTask[xindex] != 0) {
 										// verify that the resource is enough
@@ -1044,19 +1094,14 @@ public class WorkflowScheduler extends DatacenterBroker {
 											continue;
 										}
 										
-										// downlink
-										if(job.TotalTransferDataSize[xindex]>0) {
-											if((DownArray[0][dcindex]-Parameters.bwBaselineOfDC[dcindex])<0) {
-												success = false;
-												continue;
-											}
-										}
 										
+										totalBandwidth = 0d;
 										// uplink
 										bwOfSrcPos = new HashMap<>();
 										if(job.TotalTransferDataSize[xindex]>0) {
 											for(int dataindex = 0; dataindex < datanumber; dataindex++) {
 												double neededBw = job.bandwidth[xindex][dataindex];
+												totalBandwidth += neededBw;
 												int srcPos = (int) job.datapos[tindex][dataindex];
 												if(bwOfSrcPos.containsKey(srcPos)) {
 													double oldvalue = bwOfSrcPos.get(srcPos);
@@ -1072,10 +1117,20 @@ public class WorkflowScheduler extends DatacenterBroker {
 												}
 											}
 										}
+										
+										
+										// downlink
+										if(job.TotalTransferDataSize[xindex]>0 && success == true) {
+											if((DownArray[0][dcindex]-totalBandwidth)<0) {
+												success = false;
+												continue;
+											}
+										}
 										if(success == true) {
 											SlotArray[0][dcindex] -= 1;
+											
 											if(job.TotalTransferDataSize[xindex]>0) {
-												DownArray[0][dcindex] -= Parameters.bwBaselineOfDC[dcindex];
+												DownArray[0][dcindex] -= totalBandwidth;
 
 											}
 											for(int pos : bwOfSrcPos.keySet()) {
@@ -1086,14 +1141,20 @@ public class WorkflowScheduler extends DatacenterBroker {
 										}
 //									}
 								}
-								if(success == true) {
+								if(success == true && successDC != -1) {
 									
 									// store the greatest assignment info in the job with the current resource
 									int xindex = tindex * Parameters.numberOfDC + successDC;
 									allzeroflag = false;
 									singlex[xindex] = 1;
+									preAssignedSlots -= 1;
 								}
 							}
+							
+		                    Log.printLine("updated resource-job"+job.getCloudletId()+":");
+		                    Log.printLine(DownArray[0][0]+" "+DownArray[0][1]+" "+DownArray[0][2]);
+		                    Log.printLine(UpArray[0][0]+" "+UpArray[0][1]+" "+UpArray[0][2]);
+		            		
 							
 						}	
 					} catch (IloException e) {
@@ -1101,7 +1162,7 @@ public class WorkflowScheduler extends DatacenterBroker {
 						e.printStackTrace();
 					}
             		
-            		if(allzeroflag == false && (Parameters.copystrategy == 5 || Parameters.copystrategy == 0)) {
+            		if(allzeroflag == false && (Parameters.copystrategy == 5 || Parameters.copystrategy == 0 || preAssignedSlots <= 0)) {
             			// Queue<Vm> taskSlotsKeptIdle = new LinkedList<>();
 						Queue<Task> taskSubmitted = new LinkedList<>();
 						// successful assignment
@@ -1123,11 +1184,13 @@ public class WorkflowScheduler extends DatacenterBroker {
 											speculativeTask.setAssignmentDCId(dcindex + DCbase);
 											speculativeTask.assignmentDCindex = dcindex;
 											speculativeTask.setSpeculativeCopy(true);
+											speculativeTask.incBw((long)(task.TotalTransferDataSize[dcindex]/1024d));
 											speculativeTasks.get(speculativeTask.getCloudletId()).add(speculativeTask);
 											submitSpeculativeTask(speculativeTask, vm);
 										} else {
 											task.setAssignmentDCId(dcindex + DCbase);
 											task.assignmentDCindex = dcindex;
+											task.incBw((long)(task.TotalTransferDataSize[dcindex]/1024d));
 											tasks.put(task.getCloudletId(), task);
 											submitTask(task, vm);
 											speculativeTasks.put(task.getCloudletId(), new LinkedList<>());
@@ -1239,6 +1302,7 @@ public class WorkflowScheduler extends DatacenterBroker {
     								allRateMuArray.set(pos, job.allRateMuArray[0][xindex]);
     								allRateSigmaArray.set(pos, job.allRateSigmaArray[0][xindex]);
     								uselessDCforTask.set(pos, job.uselessDCforTask[xindex]);
+    								TotalTransferDataSize.set(pos, job.TotalTransferDataSize[xindex]);
     								for(int dataindex = 0; dataindex < Parameters.ubOfData; dataindex++) {
     									pos[0] = xindex + 1;
     									pos[1] = dataindex + 1;
@@ -1287,7 +1351,10 @@ public class WorkflowScheduler extends DatacenterBroker {
     							DownArray[0][dcindex] = down[dcindex];
     						}
     						
-    						
+    	                    Log.printLine("updated resource-copy-job"+job.getCloudletId()+":");
+    	                    Log.printLine(DownArray[0][0]+" "+DownArray[0][1]+" "+DownArray[0][2]);
+    	                    Log.printLine(UpArray[0][0]+" "+UpArray[0][1]+" "+UpArray[0][2]);
+    	            		
     						// Queue<Vm> taskSlotsKeptIdle = new LinkedList<>();
     						Queue<Task> taskSubmitted = new LinkedList<>();
     						// successful assignment
@@ -1296,7 +1363,7 @@ public class WorkflowScheduler extends DatacenterBroker {
     							Task task = job.unscheduledTaskList.get(tindex);
     							boolean submitflag = false;
     							for (int dcindex = 0; dcindex < Parameters.numberOfDC; dcindex++) {
-    								if (x[tindex*Parameters.numberOfDC + dcindex] != 0) {
+    								if (x[tindex*Parameters.numberOfDC + dcindex] > 0) {
     									if(submitflag == false) {
     										submitflag = true;
     									}
@@ -1309,11 +1376,13 @@ public class WorkflowScheduler extends DatacenterBroker {
     											speculativeTask.setAssignmentDCId(dcindex + DCbase);
     											speculativeTask.assignmentDCindex = dcindex;
     											speculativeTask.setSpeculativeCopy(true);
+    											speculativeTask.incBw((long)(task.TotalTransferDataSize[dcindex]/1024d));
     											speculativeTasks.get(speculativeTask.getCloudletId()).add(speculativeTask);
     											submitSpeculativeTask(speculativeTask, vm);
     										} else {
     											task.setAssignmentDCId(dcindex + DCbase);
     											task.assignmentDCindex = dcindex;
+    											task.incBw((long)(task.TotalTransferDataSize[dcindex]/1024d));
     											tasks.put(task.getCloudletId(), task);
     											submitTask(task, vm);
     											speculativeTasks.put(task.getCloudletId(), new LinkedList<>());
@@ -1373,8 +1442,11 @@ public class WorkflowScheduler extends DatacenterBroker {
         	}else {
         	// if no
             	// greedy assign for the tasks one by one
+        		Log.printLine("preslots is not enough so using greedy for job"+job.getCloudletId());
 				singlex = new double[vnum];
 				for(int tindex = 0; tindex < unscheduledTaskNum; tindex++) {
+					if(preAssignedSlots <= 0)
+						break;
 					Task task = job.unscheduledTaskList.get(tindex);
 					int taskId = task.getCloudletId();
 					int datanumber = task.numberOfData;
@@ -1383,6 +1455,10 @@ public class WorkflowScheduler extends DatacenterBroker {
 					for(Map.Entry<Integer, Double> iterm:job.sortedListOfTask.get(taskId)) {
 						int dcindex = iterm.getKey();
 						int xindex = tindex * Parameters.numberOfDC + dcindex;
+						if(job.uselessDCforTask[xindex] == 0) {
+							success = false;
+							break;
+						}
 						success = true;
 						// when the dc is not too far
 //						if(job.uselessDCforTask[xindex] != 0) {
@@ -1394,19 +1470,14 @@ public class WorkflowScheduler extends DatacenterBroker {
 								continue;
 							}
 							
-							// downlink
-							if(job.TotalTransferDataSize[xindex]>0) {
-								if((DownArray[0][dcindex]-Parameters.bwBaselineOfDC[dcindex])<0) {
-									success = false;
-									continue;
-								}
-							}
 							
+							totalBandwidth = 0d;
 							// uplink
 							bwOfSrcPos = new HashMap<>();
 							if(job.TotalTransferDataSize[xindex]>0) {
 								for(int dataindex = 0; dataindex < datanumber; dataindex++) {
 									double neededBw = job.bandwidth[xindex][dataindex];
+									totalBandwidth += neededBw;
 									int srcPos = (int) job.datapos[tindex][dataindex];
 									if(bwOfSrcPos.containsKey(srcPos)) {
 										double oldvalue = bwOfSrcPos.get(srcPos);
@@ -1422,10 +1493,19 @@ public class WorkflowScheduler extends DatacenterBroker {
 									}
 								}
 							}
+							
+							// downlink
+							if(job.TotalTransferDataSize[xindex]>0 && success == true) {
+								if((DownArray[0][dcindex]-totalBandwidth)<0) {
+									success = false;
+									continue;
+								}
+							}
+							
 							if(success == true) {
 								SlotArray[0][dcindex] -= 1;
 								if(job.TotalTransferDataSize[xindex]>0) {
-									DownArray[0][dcindex] -= Parameters.bwBaselineOfDC[dcindex];
+									DownArray[0][dcindex] -= totalBandwidth;
 
 								}
 								for(int pos : bwOfSrcPos.keySet()) {
@@ -1436,16 +1516,19 @@ public class WorkflowScheduler extends DatacenterBroker {
 							}
 //						}
 					}
-					if(success == true) {
+					if(success == true && successDC != -1) {
 						
 						// store the greatest assignment info in the job with the current resource
 						int xindex = tindex * Parameters.numberOfDC + successDC;
 						allzeroflag = false;
 						singlex[xindex] = 1;
+						preAssignedSlots -= 1;
 					}
 				}
-				
-				if(allzeroflag == false && (Parameters.copystrategy == 5 || Parameters.copystrategy == 0)) {
+				Log.printLine("updated resource-job"+job.getCloudletId()+":");
+                Log.printLine(DownArray[0][0]+" "+DownArray[0][1]+" "+DownArray[0][2]);
+                Log.printLine(UpArray[0][0]+" "+UpArray[0][1]+" "+UpArray[0][2]);
+				if(allzeroflag == false && (Parameters.copystrategy == 5 || Parameters.copystrategy == 0 || preAssignedSlots <= 0)) {
 					// Queue<Vm> taskSlotsKeptIdle = new LinkedList<>();
 					Queue<Task> taskSubmitted = new LinkedList<>();
 					// successful assignment
@@ -1467,11 +1550,13 @@ public class WorkflowScheduler extends DatacenterBroker {
 										speculativeTask.setAssignmentDCId(dcindex + DCbase);
 										speculativeTask.assignmentDCindex = dcindex;
 										speculativeTask.setSpeculativeCopy(true);
+										speculativeTask.incBw((long)(task.TotalTransferDataSize[dcindex]/1024d));
 										speculativeTasks.get(speculativeTask.getCloudletId()).add(speculativeTask);
 										submitSpeculativeTask(speculativeTask, vm);
 									} else {
 										task.setAssignmentDCId(dcindex + DCbase);
 										task.assignmentDCindex = dcindex;
+										task.incBw((long)(task.TotalTransferDataSize[dcindex]/1024d));
 										tasks.put(task.getCloudletId(), task);
 										submitTask(task, vm);
 										speculativeTasks.put(task.getCloudletId(), new LinkedList<>());
@@ -1580,6 +1665,7 @@ public class WorkflowScheduler extends DatacenterBroker {
 								allRateMuArray.set(pos, job.allRateMuArray[0][xindex]);
 								allRateSigmaArray.set(pos, job.allRateSigmaArray[0][xindex]);
 								uselessDCforTask.set(pos, job.uselessDCforTask[xindex]);
+								TotalTransferDataSize.set(pos, job.TotalTransferDataSize[xindex]);
 								for(int dataindex = 0; dataindex < Parameters.ubOfData; dataindex++) {
 									pos[0] = xindex + 1;
 									pos[1] = dataindex + 1;
@@ -1627,7 +1713,9 @@ public class WorkflowScheduler extends DatacenterBroker {
 							UpArray[0][dcindex] = up[dcindex];
 							DownArray[0][dcindex] = down[dcindex];
 						}
-						
+						Log.printLine("updated resource-copy-job"+job.getCloudletId()+":");
+	                    Log.printLine(DownArray[0][0]+" "+DownArray[0][1]+" "+DownArray[0][2]);
+	                    Log.printLine(UpArray[0][0]+" "+UpArray[0][1]+" "+UpArray[0][2]);
 						
 						// Queue<Vm> taskSlotsKeptIdle = new LinkedList<>();
 						Queue<Task> taskSubmitted = new LinkedList<>();
@@ -1650,11 +1738,13 @@ public class WorkflowScheduler extends DatacenterBroker {
 											speculativeTask.setAssignmentDCId(dcindex + DCbase);
 											speculativeTask.assignmentDCindex = dcindex;
 											speculativeTask.setSpeculativeCopy(true);
+											speculativeTask.incBw((long)(task.TotalTransferDataSize[dcindex]/1024d));
 											speculativeTasks.get(speculativeTask.getCloudletId()).add(speculativeTask);
 											submitSpeculativeTask(speculativeTask, vm);
 										} else {
 											task.setAssignmentDCId(dcindex + DCbase);
 											task.assignmentDCindex = dcindex;
+											task.incBw((long)(task.TotalTransferDataSize[dcindex]/1024d));
 											tasks.put(task.getCloudletId(), task);
 											submitTask(task, vm);
 											speculativeTasks.put(task.getCloudletId(), new LinkedList<>());
@@ -1715,7 +1805,7 @@ public class WorkflowScheduler extends DatacenterBroker {
         
         if(Parameters.copystrategy == 5) {
         	// assign speculative for the running tasks
-        	LateStractegy();
+        	LateStrategy(SlotArray[0],UpArray[0],DownArray[0]);
         }
         getCloudletList().removeAll(scheduler.getScheduledList());
         for(int sindex = 0; sindex < scheduler.getScheduledList().size(); sindex++) {
@@ -1726,7 +1816,10 @@ public class WorkflowScheduler extends DatacenterBroker {
         	}
         	
         }
-        
+        lastProcessTime = CloudSim.clock();
+
+    }
+
         
         
         
@@ -1834,36 +1927,36 @@ public class WorkflowScheduler extends DatacenterBroker {
 	
 	
 
-	public void LateStractegy() {
+	public void LateStrategy(double[] SlotArray,double[] UpArray,double[] DownArray) {
 		// TODO Auto-generated method stub
     	// compute candidates
 		// compute the sum of progress scores for all vms
-		Map<Integer, Double> vmIdToSumOfProgressScores = new HashMap<>();
-		for (Vm runningVm : nSucceededTasksPerVm.keySet()) {
-			vmIdToSumOfProgressScores.put(runningVm.getId(),
-					(double) nSucceededTasksPerVm.get(runningVm));
-		}
+		// Map<Integer, Double> vmIdToSumOfProgressScores = new HashMap<>();
+//		for (Vm runningVm : nSucceededTasksPerVm.keySet()) {
+//			vmIdToSumOfProgressScores.put(runningVm.getId(),
+//					(double) nSucceededTasksPerVm.get(runningVm));
+//		}
 
 		for (Integer key : tasks.keySet()) {
 			Task t = tasks.get(key);
 			computeEstimatedTimeToCompletion(t);
-			vmIdToSumOfProgressScores.put(
-					t.getVmId(),
-					vmIdToSumOfProgressScores.get(t.getVmId())
-							+ progressScores.get(t));
+//			vmIdToSumOfProgressScores.put(
+//					t.getVmId(),
+//					vmIdToSumOfProgressScores.get(t.getVmId())
+//							+ progressScores.get(t));
 		}
 
-		// compute the quantiles of task and node slowness
-		List<Vm> runningVms = new ArrayList<>(nSucceededTasksPerVm.keySet());
-		Collections.sort(runningVms, new VmSumOfProgressScoresComparator(
-				vmIdToSumOfProgressScores));
-		int quantileIndex = (int) (runningVms.size() * slowNodeThreshold - 0.5);
-		currentSlowNodeThreshold = vmIdToSumOfProgressScores.get(runningVms
-				.get(quantileIndex).getId());
+//		// compute the quantiles of task and node slowness
+//		List<Vm> runningVms = new ArrayList<>(nSucceededTasksPerVm.keySet());
+//		Collections.sort(runningVms, new VmSumOfProgressScoresComparator(
+//				vmIdToSumOfProgressScores));
+//		int quantileIndex = (int) (runningVms.size() * slowNodeThreshold - 0.5);
+//		currentSlowNodeThreshold = vmIdToSumOfProgressScores.get(runningVms
+//				.get(quantileIndex).getId());
 
 		List<Task> runningTasks = new ArrayList<>(tasks.values());
 		Collections.sort(runningTasks, new TaskProgressRateComparator());
-		quantileIndex = (int) (runningTasks.size() * slowTaskThreshold - 0.5);
+		int quantileIndex = (int) (runningTasks.size() * slowTaskThreshold - 0.5);
 		currentSlowTaskThreshold = (runningTasks.size() > 0) ? progressRates
 				.get(runningTasks.get(quantileIndex)) : -1;
 
@@ -1880,23 +1973,7 @@ public class WorkflowScheduler extends DatacenterBroker {
 		Collections.sort(candidates,
 				new TaskEstimatedTimeToCompletionComparator());
 		
-		// choose the best position for the candidate under the resource limitation
-		double[] SlotArray = new double[Parameters.numberOfDC];
-		double[] UpArray = new double[Parameters.numberOfDC];
-		double[] DownArray = new double[Parameters.numberOfDC];
-		int slotNum = 0;
-        //SlotArray UpArray DownArray
 		
-  		for(int dcindex = 0; dcindex < Parameters.numberOfDC; dcindex++) {
-  			if(healthyStateOfDC.get(dcindex + DCbase) == true) {
-  				SlotArray[dcindex] = idleTaskSlotsOfDC.get(dcindex + DCbase).size();
-  				slotNum += SlotArray[dcindex];
-  			}else {
-  				SlotArray[dcindex] = 0;
-  			}
-  			UpArray[dcindex] = getUplinkOfDC().get(dcindex + DCbase);
-  			DownArray[dcindex] = getDownlinkOfDC().get(dcindex + DCbase);
-  		}
   		
 		for(int cindex = 0; cindex < candidates.size(); cindex++) {
 			if(sizeOfSpeculative() >= speculativeCapAbs) {
@@ -1928,19 +2005,14 @@ public class WorkflowScheduler extends DatacenterBroker {
 						continue;
 					}
 					
-					// downlink
-					if(task.TotalTransferDataSize[dcindex]>0) {
-						if((DownArray[dcindex]-Parameters.bwBaselineOfDC[dcindex])<0) {
-							success = false;
-							continue;
-						}
-					}
 					
+					double totalBandwidth = 0d;
 					// uplink
 					Map<Integer, Double> bwOfSrcPos = new HashMap<>();
 					if(task.TotalTransferDataSize[dcindex]>0) {
 						for(int dataindex = 0; dataindex < datanumber; dataindex++) {
 							double neededBw = task.bandwidth[dcindex][dataindex];
+							totalBandwidth += totalBandwidth;
 							int srcPos = (int) task.positionOfData[dataindex];
 							if(bwOfSrcPos.containsKey(srcPos)) {
 								double oldvalue = bwOfSrcPos.get(srcPos);
@@ -1956,10 +2028,20 @@ public class WorkflowScheduler extends DatacenterBroker {
 							}
 						}
 					}
+					
+					// downlink
+					if(task.TotalTransferDataSize[dcindex]>0 && success == true) {
+						if((DownArray[dcindex]-totalBandwidth)<0) {
+							success = false;
+							continue;
+						}
+					}
+					
+					
 					if(success == true) {
 						SlotArray[dcindex] -= 1;
 						if(task.TotalTransferDataSize[dcindex]>0) {
-							DownArray[dcindex] -= Parameters.bwBaselineOfDC[dcindex];
+							DownArray[dcindex] -= totalBandwidth;
 
 						}
 						for(int pos : bwOfSrcPos.keySet()) {
@@ -1970,7 +2052,7 @@ public class WorkflowScheduler extends DatacenterBroker {
 					}
 //				}
 			}
-			if(success == true) {
+			if(success == true && successDC != -1) {
 				
 				// assign the speculative
 				Vm vm = idleTaskSlotsOfDC.get(successDC + DCbase).remove();
@@ -1980,6 +2062,7 @@ public class WorkflowScheduler extends DatacenterBroker {
 					speculativeTask.setAssignmentDCId(successDC + DCbase);
 					speculativeTask.assignmentDCindex = successDC;
 					speculativeTask.setSpeculativeCopy(true);
+					speculativeTask.incBw((long)(task.TotalTransferDataSize[successDC]/1024d));
 					speculativeTasks.get(speculativeTask.getCloudletId()).add(speculativeTask);
 					submitSpeculativeTask(speculativeTask, vm);
 				}
@@ -2009,6 +2092,7 @@ public class WorkflowScheduler extends DatacenterBroker {
 		speculativeTask.arrivalTime = task.arrivalTime;
 //		speculativeTask.setExecStartTime(task.getExecStartTime());
 		speculativeTask.earliestStartTime = task.earliestStartTime;
+		speculativeTask.oriCloudletLength = task.oriCloudletLength;
 		// initial
 		speculativeTask.positionOfData = new int[speculativeTask.numberOfData];
 		speculativeTask.sizeOfData = new int[speculativeTask.numberOfData];
@@ -2017,7 +2101,7 @@ public class WorkflowScheduler extends DatacenterBroker {
 		for(int dataindex = 0; dataindex < speculativeTask.numberOfData; dataindex++) {
 			speculativeTask.positionOfData[dataindex] = task.positionOfData[dataindex];
 			speculativeTask.sizeOfData[dataindex] = task.sizeOfData[dataindex];
-			speculativeTask.requiredBandwidth[dataindex] = task.requiredBandwidth[dataindex];
+//			speculativeTask.requiredBandwidth[dataindex] = task.requiredBandwidth[dataindex];
 			speculativeTask.positionOfDataID[dataindex] = task.positionOfDataID[dataindex];
 		}
 		speculativeTask.numberOfTransferData = new int[Parameters.numberOfDC];
@@ -2415,10 +2499,7 @@ public class WorkflowScheduler extends DatacenterBroker {
 			double Totaldown = 0;
 			if(originalTask.numberOfTransferData[originalTask.assignmentDCindex] > 0) {
 				
-				originalTask.usedBandwidth = originalTask.usedBandwidth + Parameters.bwBaselineOfDC[originalTask.assignmentDCindex];
-				originalTask.usedBandxTime = originalTask.usedBandxTime +
-						Parameters.bwBaselineOfDC[originalTask.assignmentDCindex]*(
-								CloudSim.clock()-originalTask.getExecStartTime());
+				
 				
 				for(int dataindex = 0; dataindex < originalTask.numberOfData; dataindex++ ) {
 					Totaldown += originalTask.requiredBandwidth[dataindex];
@@ -2429,6 +2510,11 @@ public class WorkflowScheduler extends DatacenterBroker {
 					}
 					
 				}
+				
+				originalTask.usedBandwidth = originalTask.usedBandwidth + Totaldown;
+				originalTask.usedBandxTime = originalTask.usedBandxTime +
+						Totaldown*(CloudSim.clock()-originalTask.getExecStartTime());
+				
 				if (Totaldown > 0) {
 					sendNow(originalTask.getAssignmentDCId(), CloudSimTags.DOWNLINK_RETURN, Totaldown);
 					double downbandwidth = getDownlinkOfDC().get(originalTask.getAssignmentDCId()) + Totaldown;
@@ -2457,10 +2543,7 @@ public class WorkflowScheduler extends DatacenterBroker {
 					Totaldown = 0;
 					if(speculativeTask.numberOfTransferData[speculativeTask.assignmentDCindex] > 0) {
 						
-						originalTask.usedBandwidth = originalTask.usedBandwidth + Parameters.bwBaselineOfDC[speculativeTask.assignmentDCindex];
-						originalTask.usedBandxTime = originalTask.usedBandxTime +
-								Parameters.bwBaselineOfDC[speculativeTask.assignmentDCindex]*(
-										CloudSim.clock()-speculativeTask.getExecStartTime());
+						
 						
 						for(int dataindex = 0; dataindex < speculativeTask.numberOfData; dataindex++ ) {
 							Totaldown += speculativeTask.requiredBandwidth[dataindex];
@@ -2471,6 +2554,10 @@ public class WorkflowScheduler extends DatacenterBroker {
 							}
 							
 						}
+						originalTask.usedBandwidth = originalTask.usedBandwidth + Totaldown;
+						originalTask.usedBandxTime = originalTask.usedBandxTime +
+								Totaldown*(CloudSim.clock()-speculativeTask.getExecStartTime());
+						
 						if(Totaldown > 0) {
 							sendNow(speculativeTask.getAssignmentDCId(), CloudSimTags.DOWNLINK_RETURN, Totaldown);
 							double downbandwidth = getDownlinkOfDC().get(speculativeTask.getAssignmentDCId()) + Totaldown;
@@ -2529,11 +2616,7 @@ public class WorkflowScheduler extends DatacenterBroker {
 						double Totaldown = 0;
 						if(speculativeTask.numberOfTransferData[speculativeTask.assignmentDCindex] > 0) {
 							
-							originalTask.usedBandwidth = 
-									originalTask.usedBandwidth + Parameters.bwBaselineOfDC[speculativeTask.assignmentDCindex];
-							originalTask.usedBandxTime = originalTask.usedBandxTime + 
-									Parameters.bwBaselineOfDC[speculativeTask.assignmentDCindex]*
-									(CloudSim.clock()-speculativeTask.getExecStartTime());
+							
 							
 							for(int dataindex = 0; dataindex < speculativeTask.numberOfData; dataindex++ ) {
 								Totaldown += speculativeTask.requiredBandwidth[dataindex];
@@ -2544,6 +2627,12 @@ public class WorkflowScheduler extends DatacenterBroker {
 								}
 								
 							}
+							
+							originalTask.usedBandwidth = 
+									originalTask.usedBandwidth + Totaldown;
+							originalTask.usedBandxTime = originalTask.usedBandxTime + 
+									Totaldown*(CloudSim.clock()-speculativeTask.getExecStartTime());
+							
 							if(Totaldown > 0) {
 								sendNow(speculativeTask.getAssignmentDCId(), CloudSimTags.DOWNLINK_RETURN, Totaldown);
 								double downbandwidth = getDownlinkOfDC().get(speculativeTask.getAssignmentDCId()) + Totaldown;
@@ -2585,11 +2674,7 @@ public class WorkflowScheduler extends DatacenterBroker {
 				if(originalTask.numberOfTransferData[originalTask.assignmentDCindex] > 0) {
 					for(int dataindex = 0; dataindex < originalTask.numberOfData; dataindex++ ) {
 						
-						originalTask.usedBandwidth = originalTask.usedBandwidth +
-								Parameters.bwBaselineOfDC[originalTask.assignmentDCindex];
-						originalTask.usedBandxTime = originalTask.usedBandxTime +
-								Parameters.bwBaselineOfDC[originalTask.assignmentDCindex] * 
-								(CloudSim.clock()-originalTask.getExecStartTime());
+						
 
 						
 						Totaldown += originalTask.requiredBandwidth[dataindex];
@@ -2600,6 +2685,13 @@ public class WorkflowScheduler extends DatacenterBroker {
 						}
 						
 					}
+					
+					originalTask.usedBandwidth = originalTask.usedBandwidth +
+							Totaldown;
+					originalTask.usedBandxTime = originalTask.usedBandxTime +
+							Totaldown * (CloudSim.clock()-originalTask.getExecStartTime());
+					
+					
 					if(Totaldown > 0) {
 						sendNow(originalTask.getAssignmentDCId(), CloudSimTags.DOWNLINK_RETURN, Totaldown);
 						double downbandwidth = getDownlinkOfDC().get(originalTask.getAssignmentDCId()) + Totaldown;
@@ -2637,9 +2729,28 @@ public class WorkflowScheduler extends DatacenterBroker {
 		try {
 			double taskExecStarttime = task.getExecStartTime();
 			double taskFinishTime = task.getFinishTime();
+			
+			task.setScheduledToFail(false);
+			task.setCloudletLength(task.oriCloudletLength);
 			task.setCloudletStatus(Cloudlet.CREATED);
 			task.setExecStartTime(-1.0d);
 			task.setFinishTime(-1.0d);
+			task.setBw(0l);
+			for(int dcindex = 0; dcindex < Parameters.numberOfDC; dcindex++) {
+				task.uselessDC[dcindex] = -1;
+				task.numberOfTransferData[dcindex] = 0;
+				task.TotalTransferDataSize[dcindex] = 0d;
+				for(int dataindex = 0; dataindex < task.numberOfData; dataindex++) {
+					task.bandwidth[dcindex][dataindex] = 0d;
+					task.transferDataSize[dcindex][dataindex] = 0d;
+				}
+			}
+			for(int dataindex = 0; dataindex < task.numberOfData; dataindex++) {
+				task.requiredBandwidth[dataindex] = 0d;
+				task.positionOfDataID[dataindex] = 0;
+			}
+			progressScores.put(task, 0d);
+			
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -2659,17 +2770,31 @@ public class WorkflowScheduler extends DatacenterBroker {
     			int numOfScheduledTask = scheduledTaskOfJob.get(job.getCloudletId());
     			scheduledTaskOfJob.put(job.getCloudletId(), numOfScheduledTask - 1);
     			job.unscheduledTaskList.add(task);
+    	    	if(ackTaskOfJob.get(attributedJobId).equals(scheduledTaskOfJob.get(attributedJobId))) {
+    	    		//not really update right now, should wait 1 s until many jobs have returned
+    	            schedule(this.getId(), 0.0, WorkflowSimTags.CLOUDLET_UPDATE);
+    	    	}
     		}else {
     			int numOfScheduledTask = scheduledTaskOfJob.get(job.getCloudletId());
     			scheduledTaskOfJob.put(job.getCloudletId(), numOfScheduledTask - 1);
     			job.unscheduledTaskList.add(task);
     			getCloudletList().add(job);
+    	    	if(ackTaskOfJob.get(attributedJobId).equals(scheduledTaskOfJob.get(attributedJobId))) {
+    	    		//not really update right now, should wait 1 s until many jobs have returned
+    	            schedule(this.getId(), 0.0, WorkflowSimTags.CLOUDLET_UPDATE);
+    	    	}
     		}
-    		schedule(this.getId(), 0.0, WorkflowSimTags.CLOUDLET_UPDATE);
+//    		schedule(this.getId(), 0.0, WorkflowSimTags.CLOUDLET_UPDATE);
     		return ;
     	}
         int alreadyAckTaskNumber = ackTaskOfJob.get(attributedJobId);
         ackTaskOfJob.put(attributedJobId, alreadyAckTaskNumber + 1);
+        
+        progressScores.remove(task);
+        progressRates.remove(task);
+        timesTaskHasBeenRunning.remove(task);
+        estimatedTimesToCompletion.remove(task);
+        
         
     	List<Task> originalTaskList = job.getTaskList();
     	for(int taskindex = 0; taskindex < originalTaskList.size(); taskindex++) {
@@ -2779,6 +2904,9 @@ public class WorkflowScheduler extends DatacenterBroker {
             
             schedule(this.workflowEngineId, 0.0, CloudSimTags.CLOUDLET_RETURN, completeJob);
 
+//            for(int tindex = 0; tindex < completeJob.getTaskList().size(); tindex++) {
+//            	progressScores.remove(completeJob.getTaskList().get(tindex));
+//            }
             taskOfJob.remove(attributedJobId);
             ackTaskOfJob.remove(attributedJobId);
             JobFactory.remove(attributedJobId);
@@ -2858,7 +2986,7 @@ public class WorkflowScheduler extends DatacenterBroker {
 				//idleTaskSlots.add(vm);
 			}
 		}
-    	rescheduleVms(vms.values());
+//    	rescheduleVms(vms.values());
         sendNow(this.workflowEngineId, CloudSimTags.CLOUDLET_SUBMIT, null);
     }
     

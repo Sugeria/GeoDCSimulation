@@ -255,9 +255,18 @@ public class BasicClustering implements ClusteringInterface {
 				
 			}
 			
+			
+			
 			// choose the one milength of task to replace all the mi in the same taskset
 			int representTaskIndex = (int)(Math.random()*(taskList.size()-1));
 			long representMiLength = taskList.get(representTaskIndex).getMi();
+			
+			List<Integer> dataSrcCandidates = new ArrayList<>();
+			for(int dcindex = 0; dcindex < Parameters.numberOfDC; dcindex++) {
+				if(Parameters.delayAmongDCIndex[dcindex][taskList.get(0).submitDCIndex] < 1e20d) {
+					dataSrcCandidates.add(dcindex);
+				}
+			}
 			
 			
 			
@@ -275,7 +284,9 @@ public class BasicClustering implements ClusteringInterface {
                 	try {
                     	if(!Parameters.isExtracte) {
                     		for (int dataindex = 0; dataindex < numberofData; dataindex++) {
-            					positionOfData[dataindex] = ((int)((Math.random()*Parameters.numberOfDC)) % Parameters.numberOfDC);
+                    			int datasrcindex = (int)(Math.random()*(dataSrcCandidates.size()-1));
+                    			positionOfData[dataindex] = dataSrcCandidates.get(datasrcindex);
+            					//positionOfData[dataindex] = ((int)((Math.random()*Parameters.numberOfDC)) % Parameters.numberOfDC);
             					ClusteringEngine.out.write(positionOfData[dataindex]+"\t");
                     		}
                     		ClusteringEngine.out.write("\r\n");
@@ -283,7 +294,9 @@ public class BasicClustering implements ClusteringInterface {
                     		line = ClusteringEngine.in.readLine();
                     		para_string = line.split("\t");
                     		for (int dataindex = 0; dataindex < numberofData; dataindex++) {
-                    			positionOfData[dataindex] = Integer.parseInt(para_string[dataindex]);
+                    			//positionOfData[dataindex] = Integer.parseInt(para_string[dataindex]);
+                    			int datasrcindex = (int)(Math.random()*(dataSrcCandidates.size()-1));
+                    			positionOfData[dataindex] = dataSrcCandidates.get(datasrcindex);
                     		}
                     	}
     					
@@ -300,8 +313,9 @@ public class BasicClustering implements ClusteringInterface {
                 
                 
                 //if (numberofData != 0) {
-            	task.incBw(remoteInputSize/1024);
+//            	task.incBw(remoteInputSize/1024);
             	task.incIo(remoteInputSize/1024);
+            	task.oriCloudletLength = task.getCloudletLength();
 				task.numberOfData = numberofData;
 				task.positionOfData = new int[numberofData];
 				task.sizeOfData = new int[numberofData];
