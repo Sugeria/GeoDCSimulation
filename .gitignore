@@ -1,5 +1,10 @@
 /dynamiccloudsim/bin/de/
 /dynamiccloudsim/bin/org/
 /dynamiccloudsim/bin/wtt/
+/dynamiccloudsim/model/
+/dynamiccloudsim/result/
+/dynamiccloudsim/.classpath
+/dynamiccloudsim/.svn/
 .classpath
 .project
+*.log

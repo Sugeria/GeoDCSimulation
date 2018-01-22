@@ -1,6 +1,0 @@
-2	
-8.0	1	
-./dynamiccloudsim/config/dax/Montage_1000.xml
-9.0	2	
-./dynamiccloudsim/config/dax/Inspiral_1000.xml
-./dynamiccloudsim/config/dax/Inspiral_1000.xml
