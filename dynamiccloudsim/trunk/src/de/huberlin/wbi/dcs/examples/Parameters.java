@@ -827,7 +827,7 @@ public class Parameters {
 		GraphReaderBrite brite = new GraphReaderBrite();
 		TopologicalGraph topograph = null;
 		try {
-			topograph = brite.readGraphFile("./dynamiccloudsim/10.brite");
+			topograph = brite.readGraphFile(BriteFileName);
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -1265,8 +1265,11 @@ public class Parameters {
 	
 	
 	// datacenter number
-	public static int numberOfDC = 10;
-	
+	public static int numberOfDC = 3;
+	public static String BriteFileName = "./dynamiccloudsim/3.brite";
+	// upperbound of inputdata
+	public static int ubOfData = 3;
+		
 	
 	// number of machineType in each datacenter
 	public static int[][] nOpteronOfMachineTypeOfDC = new int[numberOfDC][machineType];
@@ -1300,8 +1303,6 @@ public class Parameters {
 	public static long lbOfDataSize = 128L * 1024L; // 128K
 	
 	
-	// upperbound of inputdata
-	public static int ubOfData = 10;
 	
 	
 	
