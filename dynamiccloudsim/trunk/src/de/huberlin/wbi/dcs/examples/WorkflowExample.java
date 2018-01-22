@@ -182,9 +182,10 @@ public class WorkflowExample {
 				Parameters.printJobList(outputList0);
 				int numberOfSuccessfulJob = outputList0.size();
 				double accumulatedRuntime = Parameters.sumOfJobExecutime/numberOfSuccessfulJob;
-				totalRuntime += wfEngine.getScheduler(0).getRuntime();
+//				totalRuntime += wfEngine.getScheduler(0).getRuntime();
+				totalRuntime += accumulatedRuntime;
 				//Log.printLine(wfEngine.getScheduler(0).getRuntime() / 60);
-				Log.printLine(accumulatedRuntime / 60);
+//				Log.printLine(accumulatedRuntime / 60);
 			}
 
 			Log.printLine("Average runtime in minutes: " + totalRuntime
@@ -203,8 +204,9 @@ public class WorkflowExample {
 
 
 
-	private static void record(List<Job> outputList0) {
-		File file = new File("./dynamiccloudsim/result/jobcompletioninfo.txt");
+	public static void record(List<Job> outputList0) {
+		File file = new File("./dynamiccloudsim/result/jobcompletioninfo-"+Parameters.copystrategy
+				+"-"+Parameters.runIndex+".txt");
 		try {
 			FileWriter out = new FileWriter(file);
 			out.write(outputList0.size()+"\t");

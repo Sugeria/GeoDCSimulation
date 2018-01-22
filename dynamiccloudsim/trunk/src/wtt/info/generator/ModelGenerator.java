@@ -5,6 +5,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 
 import de.huberlin.wbi.dcs.examples.Parameters;
+import wtt.info.WorkflowInfo;
 
 public class ModelGenerator {
 	
@@ -19,11 +20,13 @@ public class ModelGenerator {
 		out.write("\r\n");
 		for(Double key:Parameters.workflowArrival.keySet()) {
 			out.write(key+"\t");
-			int workflowNum = Parameters.workflowArrival.get(key).size();
+			WorkflowInfo workflowInfo = Parameters.workflowArrival.get(key);
+			out.write(workflowInfo.submittedDCindex+"\t");
+			int workflowNum = workflowInfo.workflowFileName.size();
 			out.write(workflowNum+"\t");
 			out.write("\r\n");
 			for(int listindex = 0; listindex < workflowNum; listindex++) {
-				out.write(Parameters.workflowArrival.get(key).get(listindex));
+				out.write(workflowInfo.workflowFileName.get(listindex));
 				out.write("\r\n");
 			}
 		}

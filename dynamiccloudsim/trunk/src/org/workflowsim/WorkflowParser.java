@@ -72,7 +72,7 @@ public final class WorkflowParser {
     /**
      * current job id. In case multiple workflow submission
      */
-    private int jobIdStartsFrom;
+    public int jobIdStartsFrom;
 
     /**
      * Gets the task list
@@ -117,15 +117,15 @@ public final class WorkflowParser {
     /**
      * Start to parse a workflow which is a xml file(s).
      */
-    public void parse() {
+    public void parse(int submittedDCindex) {
     	taskListOfWorkflow.clear();
         if (this.daxPath != null) {
         	workflowId++;
-            parseXmlFile(this.daxPath,workflowId);
+            parseXmlFile(this.daxPath,workflowId,submittedDCindex);
         } else if (this.daxPaths != null) {
             for (String path : this.daxPaths) {
             	workflowId++;
-                parseXmlFile(path,workflowId);
+                parseXmlFile(path,workflowId,submittedDCindex);
             }
         }
     }
@@ -148,7 +148,7 @@ public final class WorkflowParser {
     /**
      * Parse a DAX file with jdom
      */
-    private void parseXmlFile(String path,int workflowId) {
+    private void parseXmlFile(String path,int workflowId,int submittedDCindex) {
     	List<Task> taskListInWorkflow  = new ArrayList<>();
         try {
 
@@ -157,8 +157,8 @@ public final class WorkflowParser {
             Document dom = builder.build(new File(path));
             Element root = dom.getRootElement();
             List<Element> list = root.getChildren();
-            // each workflow has one submittedPos
-            int submittedPos = ((int)((Math.random()*Parameters.numberOfDC)) % Parameters.numberOfDC);
+//            // each workflow has one submittedPos
+            int submittedPos = submittedDCindex;
             for (Element node : list) {
                 switch (node.getName().toLowerCase()) {
                     case "job":

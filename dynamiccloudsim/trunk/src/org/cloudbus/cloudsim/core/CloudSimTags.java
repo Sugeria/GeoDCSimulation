@@ -299,6 +299,10 @@ public class CloudSimTags {
 	public static final int WORKFLOW_INFO = BASE + 59;
 	
 	public static final int WORKFLOW_ARRIVAL = BASE + 60;
+	
+	public static final int RUN_INITIAL = BASE + 61;
+	
+	public static final int INITIAL_LASTTIME = BASE + 62;
 
 	public static String TagText(int tagValue) {
 		switch (tagValue) {
@@ -436,6 +440,10 @@ public class CloudSimTags {
 			return "WORKFLOW_INFO";
 		case 60:
 			return "WORKFLOW_ARRIVAL";
+		case 61:
+			return "RUN_INITIAL";
+		case 62:
+			return "INITIAL_LASTTIME";
 		case 1002:
 			return "VM_STATUS_READY";
 		case 1003:

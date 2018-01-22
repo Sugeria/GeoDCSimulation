@@ -344,6 +344,9 @@ public class Datacenter extends SimEntity {
 				int data = getId();
 				sendNow(attributedBrokerId, CloudSimTags.DC_RESUME,data);
 				break;
+			case CloudSimTags.INITIAL_LASTTIME:
+				setLastProcessTime(0.0);
+				break;
 			// other unknown tags are processed by this method
 			default:
 				processOtherEvent(ev);

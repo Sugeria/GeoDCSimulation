@@ -10,6 +10,7 @@ import java.util.List;
 
 import de.huberlin.wbi.dcs.examples.Parameters;
 import de.huberlin.wbi.dcs.examples.Parameters.Distribution;
+import wtt.info.WorkflowInfo;
 
 public class ModelExtractor {
 	
@@ -25,16 +26,18 @@ public class ModelExtractor {
 		dim[0] = Integer.parseInt(para_string[0]);
 		Parameters.workflowArrival = new HashMap<>();
 		for(int rowindex = 0; rowindex < dim[0]; rowindex++) {
+			WorkflowInfo workflowInfo = new WorkflowInfo();
 			line = in.readLine();
 			para_string = line.split("\t");
 			double timeslot = Double.parseDouble(para_string[0]);
-			double listlength = Integer.parseInt(para_string[1]);
-			List<String> workflowFileName = new ArrayList<>();
+			workflowInfo.submittedDCindex = Integer.parseInt(para_string[1]);
+			double listlength = Integer.parseInt(para_string[2]);
+//			List<String> workflowFileName = new ArrayList<>();
 			for(int listindex = 0; listindex < listlength; listindex++) {
 				line = in.readLine();
-				workflowFileName.add(line);
+				workflowInfo.workflowFileName.add(line);
 			}
-			Parameters.workflowArrival.put(timeslot, workflowFileName);
+			Parameters.workflowArrival.put(timeslot, workflowInfo);
 		}
 		in.close();
 	}

@@ -8,6 +8,10 @@
 
 package org.cloudbus.cloudsim.core;
 
+import java.io.BufferedReader;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.ConcurrentModificationException;
@@ -26,6 +30,13 @@ import org.cloudbus.cloudsim.core.predicates.PredicateAny;
 import org.cloudbus.cloudsim.core.predicates.PredicateNoCloudletSubmitAck;
 import org.cloudbus.cloudsim.core.predicates.PredicateNoCloudletUpdate;
 import org.cloudbus.cloudsim.core.predicates.PredicateNone;
+import org.workflowsim.ClusteringEngine;
+import org.workflowsim.Job;
+import org.workflowsim.WorkflowEngine;
+
+import de.huberlin.wbi.cuneiform.core.semanticmodel.Param;
+import de.huberlin.wbi.dcs.examples.Parameters;
+import de.huberlin.wbi.dcs.examples.WorkflowExample;
 
 /**
  * This class extends the CloudSimCore to enable network simulation in CloudSim. Also, it disables
@@ -66,6 +77,8 @@ public class CloudSim {
 
 	/** The termination time. */
 	private static double terminateAt = -1;
+	
+	public static int totalRunIndex = 0;
 
 	/**
 	 * Initialises all the common attributes.
@@ -276,7 +289,7 @@ public class CloudSim {
 	protected static DeferredQueue deferred;
 
 	/** The simulation clock. */
-	private static double clock;
+	public static double clock;
 
 	/** Flag for checking if the simulation is running. */
 	private static boolean running;
@@ -532,9 +545,52 @@ public class CloudSim {
 			future.removeAll(toRemove);
 
 		} else {
-			queue_empty = true;
-			running = false;
-			printMessage("Simulation: No more future events");
+			
+			if(CloudSim.totalRunIndex < (Parameters.numberOfStrategy * Parameters.numberOfRun - 1)) {
+				List<Job> outputList0 = WorkflowEngine.getJobsReceivedList();
+        		WorkflowExample.sortJobId(outputList0);
+				WorkflowExample.record(outputList0);
+				Parameters.printJobList(outputList0);
+				int numberOfSuccessfulJob = outputList0.size();
+				double accumulatedRuntime = Parameters.sumOfJobExecutime/numberOfSuccessfulJob;
+				Log.printLine("Average runtime in minutes: " + accumulatedRuntime / 60);
+				
+				try {
+					if(!Parameters.isExtracte) {
+						ClusteringEngine.out.close();
+					}else {
+						ClusteringEngine.in.close();
+					}
+				} catch (IOException e) {
+					// TODO: handle exception
+					e.printStackTrace();
+				}
+				
+				// each datacenter initial lastprocessingtime
+				
+				
+				Parameters.isExtracte = true;
+				queue_empty = false;
+				CloudSim.totalRunIndex = CloudSim.totalRunIndex + 1;
+				int strategyIndex = (int)Math.floor(((double)CloudSim.totalRunIndex)/((double)Parameters.numberOfRun));
+				int runIndex = (int)(((double)CloudSim.totalRunIndex)%((double)Parameters.numberOfRun));
+				Parameters.copystrategy = strategyIndex;
+				Parameters.runIndex = runIndex;
+				clock = 0.1d;
+				SimEvent ev = new SimEvent(SimEvent.SEND, clock(), -1,entitiesByName.get("planner_0").getId(),CloudSimTags.RUN_INITIAL,null);
+				future.addEvent(ev);
+				
+				for (int dcindex = 0;dcindex < Parameters.numberOfDC; dcindex++) {
+					SimEvent dcev = new SimEvent(SimEvent.SEND, clock(), -1,entitiesByName.get("Datacenter_"+dcindex).getId(),CloudSimTags.INITIAL_LASTTIME,null);
+					future.addEvent(dcev);
+				}
+				
+			}else {
+				queue_empty = true;
+				running = false;
+				printMessage("Simulation: No more future events");
+			}
+			
 		}
 
 		return queue_empty;

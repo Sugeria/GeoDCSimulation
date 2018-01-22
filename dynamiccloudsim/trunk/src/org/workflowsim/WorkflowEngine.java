@@ -15,6 +15,7 @@
  */
 package org.workflowsim;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -31,6 +32,7 @@ import org.workflowsim.reclustering.ReclusteringEngine;
 
 
 import de.huberlin.wbi.dcs.examples.Parameters;
+import de.huberlin.wbi.dcs.examples.WorkflowExample;
 //import matlabcontrol.MatlabInvocationException;
 
 /**
@@ -55,7 +57,7 @@ public final class WorkflowEngine extends SimEntity {
     /**
      * The job received list.
      */
-    protected List<? extends Cloudlet> jobsReceivedList;
+    public static List<? extends Cloudlet> jobsReceivedList;
     /**
      * The job submitted.
      */
@@ -287,17 +289,57 @@ public final class WorkflowEngine extends SimEntity {
         
         
         if (getJobsList().isEmpty() && jobsSubmitted == 0 && isAllDCFail == false && CloudSim.futureSize() == 0) {
-            //send msg to all the schedulers
-            for (int i = 0; i < getSchedulerIds().size(); i++) {
-            	getScheduler(i).clearDatacenters();
-//            	try {
-//    				getScheduler(i).proxy.exit();
-//    			} catch (MatlabInvocationException e) {
-//    				e.printStackTrace();
-//    			}
-                sendNow(getSchedulerId(i), CloudSimTags.END_OF_SIMULATION, null);
-            }
             
+        	
+        	if(CloudSim.totalRunIndex < (Parameters.numberOfStrategy * Parameters.numberOfRun - 1)) {
+        		List<Job> outputList0 = getJobsReceivedList();
+        		WorkflowExample.sortJobId(outputList0);
+				WorkflowExample.record(outputList0);
+				Parameters.printJobList(outputList0);
+				int numberOfSuccessfulJob = outputList0.size();
+				double accumulatedRuntime = Parameters.sumOfJobExecutime/numberOfSuccessfulJob;
+        		
+				Log.printLine("Average runtime in minutes: " + accumulatedRuntime / 60);
+				
+				
+				try {
+					if(!Parameters.isExtracte) {
+						ClusteringEngine.out.close();
+					}else {
+						ClusteringEngine.in.close();
+					}
+				} catch (IOException e) {
+					// TODO: handle exception
+					e.printStackTrace();
+				}
+				
+				Parameters.isExtracte = true;
+				CloudSim.totalRunIndex = CloudSim.totalRunIndex + 1;
+				int strategyIndex = (int)Math.floor(((double)CloudSim.totalRunIndex)/((double)Parameters.numberOfRun));
+				int runIndex = (int)(((double)CloudSim.totalRunIndex)%((double)Parameters.numberOfRun));
+				Parameters.copystrategy = strategyIndex;
+				Parameters.runIndex = runIndex;
+				CloudSim.clock = 0.1d;
+				// clear cloudsim.future
+				sendNow(CloudSim.getEntity("planner_0").getId(), CloudSimTags.RUN_INITIAL,null);
+				
+				for (int dcindex = 0;dcindex < Parameters.numberOfDC; dcindex++) {
+					sendNow(CloudSim.getEntity("Datacenter_"+dcindex).getId(),CloudSimTags.INITIAL_LASTTIME,null);
+				}
+				
+			}else {
+				//send msg to all the schedulers
+	            for (int i = 0; i < getSchedulerIds().size(); i++) {
+	            	getScheduler(i).clearDatacenters();
+//	            	try {
+//	    				getScheduler(i).proxy.exit();
+//	    			} catch (MatlabInvocationException e) {
+//	    				e.printStackTrace();
+//	    			}
+	                sendNow(getSchedulerId(i), CloudSimTags.END_OF_SIMULATION, null);
+	            }
+			}
+        	 
         } else {
             sendNow(this.getId(), CloudSimTags.CLOUDLET_SUBMIT, null);
         }
@@ -454,7 +496,7 @@ public final class WorkflowEngine extends SimEntity {
      * @param <T> the generic type
      * @param cloudletList the new job list
      */
-    private <T extends Cloudlet> void setJobsList(List<T> jobsList) {
+    public <T extends Cloudlet> void setJobsList(List<T> jobsList) {
         this.jobsList = jobsList;
     }
 
@@ -475,7 +517,7 @@ public final class WorkflowEngine extends SimEntity {
      * @param <T> the generic type
      * @param jobsSubmittedList the new job submitted list
      */
-    private <T extends Cloudlet> void setJobsSubmittedList(List<T> jobsSubmittedList) {
+    public <T extends Cloudlet> void setJobsSubmittedList(List<T> jobsSubmittedList) {
         this.jobsSubmittedList = jobsSubmittedList;
     }
 
@@ -486,7 +528,7 @@ public final class WorkflowEngine extends SimEntity {
      * @return the job received list
      */
     @SuppressWarnings("unchecked")
-    public <T extends Cloudlet> List<T> getJobsReceivedList() {
+    public static <T extends Cloudlet> List<T> getJobsReceivedList() {
         return (List<T>) jobsReceivedList;
     }
 
@@ -496,7 +538,7 @@ public final class WorkflowEngine extends SimEntity {
      * @param <T> the generic type
      * @param cloudletReceivedList the new job received list
      */
-    private <T extends Cloudlet> void setJobsReceivedList(List<T> jobsReceivedList) {
+    public <T extends Cloudlet> void setJobsReceivedList(List<T> jobsReceivedList) {
         this.jobsReceivedList = jobsReceivedList;
     }
 

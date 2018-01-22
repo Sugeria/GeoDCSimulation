@@ -138,18 +138,18 @@ public class WorkflowScheduler extends DatacenterBroker {
      * The workflow engine id associated with this workflow algorithm.
      */
     private int workflowEngineId;
-    private Map<Integer, Vm> vms;
-    protected LinkedList<Task> taskQueue; 
+    public Map<Integer, Vm> vms;
+    public LinkedList<Task> taskQueue; 
     private int taskSlotsPerVm;
     // two collections of tasks, which are currently running;
  	// note that the second collections is a subset of the first collection
- 	private Map<Integer, Task> tasks;
- 	private Map<Integer, Queue<Task>> speculativeTasks;
-	private Map<Integer, LinkedList<Vm>> idleTaskSlotsOfDC;
-	private Map<Integer, Integer> taskOfJob;
-	private Map<Integer, Integer> ackTaskOfJob;
-	private Map<Integer, Integer> scheduledTaskOfJob;
-	private Map<Integer, Job> JobFactory;
+    public Map<Integer, Task> tasks;
+    public Map<Integer, Queue<Task>> speculativeTasks;
+    public Map<Integer, LinkedList<Vm>> idleTaskSlotsOfDC;
+    public Map<Integer, Integer> taskOfJob;
+    public Map<Integer, Integer> ackTaskOfJob;
+    public Map<Integer, Integer> scheduledTaskOfJob;
+    public Map<Integer, Job> JobFactory;
 	private double runtime;
 	
 //	private MatlabProxyFactory factory;
@@ -180,10 +180,10 @@ public class WorkflowScheduler extends DatacenterBroker {
 
 	protected Map<Vm, Double> nSucceededTasksPerVm;
 
-	private Map<Task, Double> progressScores;
-	private Map<Task, Double> timesTaskHasBeenRunning;
-	private Map<Task, Double> progressRates;
-	private Map<Task, Double> estimatedTimesToCompletion;
+	public Map<Task, Double> progressScores;
+	public Map<Task, Double> timesTaskHasBeenRunning;
+	public Map<Task, Double> progressRates;
+	public Map<Task, Double> estimatedTimesToCompletion;
 	
     /**
      * Created a new WorkflowScheduler object.

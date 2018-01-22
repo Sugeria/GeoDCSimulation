@@ -33,6 +33,7 @@ import com.mathworks.toolbox.javabuilder.*;
 import de.huberlin.wbi.dcs.distributions.NormalDistribution;
 import de.huberlin.wbi.dcs.workflow.Task;
 import taskAssign.TaskAssign;
+import wtt.info.WorkflowInfo;
 import wtt.info.extractor.ModelExtractor;
 import wtt.info.generator.ModelGenerator;
 
@@ -99,12 +100,15 @@ public class Parameters {
     
     public static final int BASE = 0;
     
-    public static boolean isExtracte = true;
+    public static boolean isExtracte = false;
     // 1-4
-    public static int copystrategy = 4;
+    public static int copystrategy = 0;
     
-    public static int numberOfStrategy = 5;
-    public static int numberOfRun = 10;
+    public static int numberOfStrategy = 6;
+
+    public static int numberOfRun = 5;
+    
+    public static int runIndex = 0;
     
     /**
      * Scheduling mode
@@ -531,12 +535,12 @@ public class Parameters {
 	
 	// workflow
     // default 5 workflows each minutes
-    public static double lambda = 0.083;
+    public static double lambda = 5;
     // default 3 days workflow
     // defend time exceed INT.MAX_VALUE
-    public static double seconds = 10d;
+    public static double seconds = 3d * 24 * 60 * 60;
     
-    public static Map<Double, List<String>> workflowArrival;
+    public static Map<Double, WorkflowInfo> workflowArrival;
     
     private static void generateWorkflow() {
     	TaskAssign taskassign = null;
@@ -560,22 +564,30 @@ public class Parameters {
 				if(x[timeindex] == 0) {
 					continue;
 				}else {
-					List<String> workflowFileName = new ArrayList<>();
+					
+					WorkflowInfo workflowInfo = new WorkflowInfo();
+					
+					// submitted DC index
+					// each workflow has one submittedPos
+		            int submittedPos = ((int)((Math.random()*Parameters.numberOfDC)) % Parameters.numberOfDC);
+		            
+		            workflowInfo.submittedDCindex = submittedPos;
+//					List<String> workflowFileName = new ArrayList<>();
 					for (int workflowindex = 0; workflowindex < x[timeindex]; workflowindex++) {
 						// generate workflows from candidate
-						//double workflowSizeProb = Math.random();
-						double workflowSizeProb = 0.92d;
+						double workflowSizeProb = Math.random();
+						// double workflowSizeProb = 0.92d;
 						if(workflowSizeProb < 0.89) {
 							// 0-13
 							int candidateIndex = (int)(Math.random() * 13);
-							workflowFileName.add(workflow_relative_Candidate[candidateIndex]);
+							workflowInfo.workflowFileName.add(workflow_relative_Candidate[candidateIndex]);
 						}else if(workflowSizeProb <= 1) {
 							// 14-18
 							int candidateIndex = (int)(Math.random() * 4 + 14);
-							workflowFileName.add(workflow_relative_Candidate[candidateIndex]);
+							workflowInfo.workflowFileName.add(workflow_relative_Candidate[candidateIndex]);
 						}
 					} 
-					workflowArrival.put((double)timeindex, workflowFileName);
+					workflowArrival.put((double)timeindex, workflowInfo);
 					
 				}
 			}
@@ -815,7 +827,7 @@ public class Parameters {
 		GraphReaderBrite brite = new GraphReaderBrite();
 		TopologicalGraph topograph = null;
 		try {
-			topograph = brite.readGraphFile("./dynamiccloudsim/world.brite");
+			topograph = brite.readGraphFile("./dynamiccloudsim/10.brite");
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -1253,7 +1265,7 @@ public class Parameters {
 	
 	
 	// datacenter number
-	public static int numberOfDC = 3;
+	public static int numberOfDC = 10;
 	
 	
 	// number of machineType in each datacenter
