@@ -538,7 +538,7 @@ public class Parameters {
     public static double lambda = 5;
     // default 3 days workflow
     // defend time exceed INT.MAX_VALUE
-    public static double seconds = 3d * 24 * 60 * 60;
+    public static double seconds = 12d * 60 * 60;
     
     public static Map<Double, WorkflowInfo> workflowArrival;
     
