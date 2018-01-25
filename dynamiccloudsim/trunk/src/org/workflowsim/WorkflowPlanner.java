@@ -198,7 +198,7 @@ public final class WorkflowPlanner extends SimEntity {
 		
 		// initial ClusterEngine
 		BasicClustering.idIndex = 0;
-		File file = new File("./dynamiccloudsim/model/modelInfo-jobinfo.txt");
+		File file = new File("./model/modelInfo-jobinfo.txt");
 		try {
 			if(!Parameters.isExtracte) {
 				ClusteringEngine.out = new FileWriter(file);
@@ -209,6 +209,9 @@ public final class WorkflowPlanner extends SimEntity {
 			// TODO: handle exception
 			e.printStackTrace();
 		}
+		
+		
+		
 		clusteringEngine.setJobList(new ArrayList<>());
 		clusteringEngine.setTaskList(new ArrayList<>());
 		clusteringEngine.setTaskSubmittedList(new ArrayList<>());
@@ -229,6 +232,17 @@ public final class WorkflowPlanner extends SimEntity {
 		clusteringEngine.getWorkflowEngine().startTimeOfWorkflow = new HashMap<>();
 		clusteringEngine.getWorkflowEngine().finishTimeOfWorkflow = new HashMap<>();
 		clusteringEngine.getWorkflowEngine().executionTimeOfWorkflow = new HashMap<>();
+		
+//		File file2 = new File("./result/jobcompletioninfo-"+Parameters.copystrategy
+//				+"-"+Parameters.runIndex+".txt");
+//        try {
+//        	clusteringEngine.getWorkflowEngine().out = new FileWriter(file2);
+//        }catch (IOException e) {
+//			// TODO: handle exception
+//        	e.printStackTrace();
+//		}
+		
+		
 		
 		// workflowScheduler
 

@@ -106,7 +106,7 @@ public final class ClusteringEngine extends SimEntity {
      */
     public ClusteringEngine(String name, int schedulers) throws Exception {
         super(name);
-        File file = new File("./dynamiccloudsim/model/modelInfo-jobinfo.txt");
+        File file = new File("./model/modelInfo-jobinfo.txt");
         if(!Parameters.isExtracte) {
         	out = new FileWriter(file);
         }else {
@@ -210,7 +210,7 @@ public final class ClusteringEngine extends SimEntity {
         engine.run();
         
         setJobList(engine.getJobList());
-        Parameters.printJobListInput(getJobList());
+//        Parameters.printJobListInput(getJobList());
     }
 
     /**

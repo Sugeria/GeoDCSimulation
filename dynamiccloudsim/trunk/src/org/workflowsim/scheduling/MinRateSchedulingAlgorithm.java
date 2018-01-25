@@ -836,7 +836,7 @@ public class MinRateSchedulingAlgorithm extends BaseSchedulingAlgorithm{
 					// greedy assign for the tasks in the job as well as its copy
 					// when there is some tasks do not be assigned then the copy is not needed
 					// use the matlab jar
-					
+					cplex.end();
 					double[] x = new double[vnum];
 					double[] tempSlotArray = new double[Parameters.numberOfDC];
 					double[] tempUpArray = new double[Parameters.numberOfDC];

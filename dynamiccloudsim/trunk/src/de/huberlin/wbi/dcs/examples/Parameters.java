@@ -100,13 +100,15 @@ public class Parameters {
     
     public static final int BASE = 0;
     
+    public static final boolean isDebug = false;
+    
     public static boolean isExtracte = false;
     // 1-4
     public static int copystrategy = 0;
     
     public static int numberOfStrategy = 6;
 
-    public static int numberOfRun = 5;
+    public static int numberOfRun = 1;
     
     public static int runIndex = 0;
     
@@ -510,35 +512,35 @@ public class Parameters {
     		"C:/Users/han/git/GeoDCSimulation/dynamiccloudsim/config/dax/Sipht_1000.xml"
     };
     public static String[] workflow_relative_Candidate = {
-    		"./dynamiccloudsim/config/dax/CyberShake_50.xml",
-    		"./dynamiccloudsim/config/dax/CyberShake_100.xml",
-    		"./dynamiccloudsim/config/dax/Epigenomics_24.xml",
-    		"./dynamiccloudsim/config/dax/Epigenomics_46.xml",
-    		"./dynamiccloudsim/config/dax/Epigenomics_100.xml",
-    		"./dynamiccloudsim/config/dax/Inspiral_30.xml",
-    		"./dynamiccloudsim/config/dax/Inspiral_50.xml",
-    		"./dynamiccloudsim/config/dax/Inspiral_100.xml",
-    		"./dynamiccloudsim/config/dax/Montage_25.xml",
-    		"./dynamiccloudsim/config/dax/Montage_50.xml",
-    		"./dynamiccloudsim/config/dax/Montage_100.xml",
-    		"./dynamiccloudsim/config/dax/Sipht_30.xml",
-    		"./dynamiccloudsim/config/dax/Sipht_60.xml",
-    		"./dynamiccloudsim/config/dax/Sipht_100.xml",
-    		"./dynamiccloudsim/config/dax/CyberShake_1000.xml",
-    		"./dynamiccloudsim/config/dax/Epigenomics_997.xml",
-    		"./dynamiccloudsim/config/dax/Inspiral_1000.xml",
-    		"./dynamiccloudsim/config/dax/Montage_1000.xml",
-    		"./dynamiccloudsim/config/dax/Sipht_1000.xml"
+    		"./config/dax/CyberShake_50.xml",
+    		"./config/dax/CyberShake_100.xml",
+    		"./config/dax/Epigenomics_24.xml",
+    		"./config/dax/Epigenomics_46.xml",
+    		"./config/dax/Epigenomics_100.xml",
+    		"./config/dax/Inspiral_30.xml",
+    		"./config/dax/Inspiral_50.xml",
+    		"./config/dax/Inspiral_100.xml",
+    		"./config/dax/Montage_25.xml",
+    		"./config/dax/Montage_50.xml",
+    		"./config/dax/Montage_100.xml",
+    		"./config/dax/Sipht_30.xml",
+    		"./config/dax/Sipht_60.xml",
+    		"./config/dax/Sipht_100.xml",
+    		"./config/dax/CyberShake_1000.xml",
+    		"./config/dax/Epigenomics_997.xml",
+    		"./config/dax/Inspiral_1000.xml",
+    		"./config/dax/Montage_1000.xml",
+    		"./config/dax/Sipht_1000.xml"
     };
     
     
 	
 	// workflow
     // default 5 workflows each minutes
-    public static double lambda = 5;
+    public static double lambda = 0.016;
     // default 3 days workflow
     // defend time exceed INT.MAX_VALUE
-    public static double seconds = 3d * 24 * 60 * 60;
+    public static double seconds = 12d * 60 * 60;
     
     public static Map<Double, WorkflowInfo> workflowArrival;
     
@@ -1265,10 +1267,10 @@ public class Parameters {
 	
 	
 	// datacenter number
-	public static int numberOfDC = 3;
-	public static String BriteFileName = "./dynamiccloudsim/3.brite";
+	public static int numberOfDC = 5;
+	public static String BriteFileName = "./5.brite";
 	// upperbound of inputdata
-	public static int ubOfData = 3;
+	public static int ubOfData = 5;
 		
 	
 	// number of machineType in each datacenter

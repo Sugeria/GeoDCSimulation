@@ -393,9 +393,12 @@ public class WorkflowScheduler extends DatacenterBroker {
         int jobNumInOneLoop = rankedList.size();
         // each job weight equal 1
         
-        Log.printLine("original resource:");
-        Log.printLine(DownArray[0][0]+" "+DownArray[0][1]+" "+DownArray[0][2]);
-        Log.printLine(UpArray[0][0]+" "+UpArray[0][1]+" "+UpArray[0][2]);
+        if(Parameters.isDebug) {
+        	Log.printLine("original resource:");
+            Log.printLine(DownArray[0][0]+" "+DownArray[0][1]+" "+DownArray[0][2]);
+            Log.printLine(UpArray[0][0]+" "+UpArray[0][1]+" "+UpArray[0][2]);
+        }
+        
         
         for (int jobindex = 0; jobindex < jobNumInOneLoop; jobindex++) {
         	Job job = (Job)rankedList.get(jobindex);
@@ -496,7 +499,8 @@ public class WorkflowScheduler extends DatacenterBroker {
             	if(resourceEnough == true) {
             	// if yes
             		// cut down the corresponding resource
-            		Log.printLine("great resource is enough for job"+job.getCloudletId());
+            		if(Parameters.isDebug) 
+            			Log.printLine("great resource is enough for job"+job.getCloudletId());
             		for(int tindex = 0; tindex < unscheduledTaskNum; tindex++) {
                 		int taskId = job.unscheduledTaskList.get(tindex).getCloudletId();
                 		int datanumber = job.data[tindex];
@@ -536,9 +540,12 @@ public class WorkflowScheduler extends DatacenterBroker {
     						
                 		}
                 	}
-                    Log.printLine("updated resource-job"+job.getCloudletId()+":");
-                    Log.printLine(DownArray[0][0]+" "+DownArray[0][1]+" "+DownArray[0][2]);
-                    Log.printLine(UpArray[0][0]+" "+UpArray[0][1]+" "+UpArray[0][2]);
+            		if(Parameters.isDebug) {
+            			Log.printLine("updated resource-job"+job.getCloudletId()+":");
+                        Log.printLine(DownArray[0][0]+" "+DownArray[0][1]+" "+DownArray[0][2]);
+                        Log.printLine(UpArray[0][0]+" "+UpArray[0][1]+" "+UpArray[0][2]);
+            		}
+                    
             		if(Parameters.copystrategy == 5 || Parameters.copystrategy == 0 || preAssignedSlots <= 0) {
             			// directly assign
             			// Queue<Vm> taskSlotsKeptIdle = new LinkedList<>();
@@ -723,10 +730,12 @@ public class WorkflowScheduler extends DatacenterBroker {
 							UpArray[0][dcindex] = up[dcindex];
 							DownArray[0][dcindex] = down[dcindex];
 						}
-						
-	                    Log.printLine("updated resource-copy-job"+job.getCloudletId()+":");
-	                    Log.printLine(DownArray[0][0]+" "+DownArray[0][1]+" "+DownArray[0][2]);
-	                    Log.printLine(UpArray[0][0]+" "+UpArray[0][1]+" "+UpArray[0][2]);
+						if(Parameters.isDebug) {
+							Log.printLine("updated resource-copy-job"+job.getCloudletId()+":");
+		                    Log.printLine(DownArray[0][0]+" "+DownArray[0][1]+" "+DownArray[0][2]);
+		                    Log.printLine(UpArray[0][0]+" "+UpArray[0][1]+" "+UpArray[0][2]);
+						}
+	                    
 	            		
 						
 						// Queue<Vm> taskSlotsKeptIdle = new LinkedList<>();
@@ -961,8 +970,8 @@ public class WorkflowScheduler extends DatacenterBroker {
 						
 						
 						if(cplex.solve()) {
-							
-							Log.printLine("recompute greate resource for job"+job.getCloudletId());
+							if(Parameters.isDebug)
+								Log.printLine("recompute greate resource for job"+job.getCloudletId());
 							singlex = new double[vnum];
 							double[] vresult = cplex.getValues(var);
 							for(int vindex = 0; vindex < vnum; vindex++) {
@@ -1055,13 +1064,16 @@ public class WorkflowScheduler extends DatacenterBroker {
 								}
 							}
 							cplex.end();
-							
-		                    Log.printLine("updated resource-job"+job.getCloudletId()+":");
-		                    Log.printLine(DownArray[0][0]+" "+DownArray[0][1]+" "+DownArray[0][2]);
-		                    Log.printLine(UpArray[0][0]+" "+UpArray[0][1]+" "+UpArray[0][2]);
+							if(Parameters.isDebug) {
+								Log.printLine("updated resource-job"+job.getCloudletId()+":");
+			                    Log.printLine(DownArray[0][0]+" "+DownArray[0][1]+" "+DownArray[0][2]);
+			                    Log.printLine(UpArray[0][0]+" "+UpArray[0][1]+" "+UpArray[0][2]);
+							}
+		                    
 		            		
 							
 						}else {
+							cplex.end();
 							// greedy assign for the tasks in the job as well as its copy
 							// when there is some tasks do not be assigned then the copy is not needed
 							// use the matlab jar
@@ -1150,11 +1162,13 @@ public class WorkflowScheduler extends DatacenterBroker {
 									preAssignedSlots -= 1;
 								}
 							}
-							
-		                    Log.printLine("updated resource-job"+job.getCloudletId()+":");
-		                    Log.printLine(DownArray[0][0]+" "+DownArray[0][1]+" "+DownArray[0][2]);
-		                    Log.printLine(UpArray[0][0]+" "+UpArray[0][1]+" "+UpArray[0][2]);
-		            		
+							if(Parameters.isDebug) {
+								Log.printLine("updated resource-job"+job.getCloudletId()+":");
+			                    Log.printLine(DownArray[0][0]+" "+DownArray[0][1]+" "+DownArray[0][2]);
+			                    Log.printLine(UpArray[0][0]+" "+UpArray[0][1]+" "+UpArray[0][2]);
+			            		
+							}
+		                    
 							
 						}	
 					} catch (IloException e) {
@@ -1350,11 +1364,13 @@ public class WorkflowScheduler extends DatacenterBroker {
     							UpArray[0][dcindex] = up[dcindex];
     							DownArray[0][dcindex] = down[dcindex];
     						}
-    						
-    	                    Log.printLine("updated resource-copy-job"+job.getCloudletId()+":");
-    	                    Log.printLine(DownArray[0][0]+" "+DownArray[0][1]+" "+DownArray[0][2]);
-    	                    Log.printLine(UpArray[0][0]+" "+UpArray[0][1]+" "+UpArray[0][2]);
-    	            		
+    						if(Parameters.isDebug) {
+    							Log.printLine("updated resource-copy-job"+job.getCloudletId()+":");
+        	                    Log.printLine(DownArray[0][0]+" "+DownArray[0][1]+" "+DownArray[0][2]);
+        	                    Log.printLine(UpArray[0][0]+" "+UpArray[0][1]+" "+UpArray[0][2]);
+        	            		
+    						}
+    	                    
     						// Queue<Vm> taskSlotsKeptIdle = new LinkedList<>();
     						Queue<Task> taskSubmitted = new LinkedList<>();
     						// successful assignment
@@ -1442,7 +1458,8 @@ public class WorkflowScheduler extends DatacenterBroker {
         	}else {
         	// if no
             	// greedy assign for the tasks one by one
-        		Log.printLine("preslots is not enough so using greedy for job"+job.getCloudletId());
+        		if(Parameters.isDebug)
+        			Log.printLine("preslots is not enough so using greedy for job"+job.getCloudletId());
 				singlex = new double[vnum];
 				for(int tindex = 0; tindex < unscheduledTaskNum; tindex++) {
 					if(preAssignedSlots <= 0)
@@ -1525,9 +1542,11 @@ public class WorkflowScheduler extends DatacenterBroker {
 						preAssignedSlots -= 1;
 					}
 				}
-				Log.printLine("updated resource-job"+job.getCloudletId()+":");
-                Log.printLine(DownArray[0][0]+" "+DownArray[0][1]+" "+DownArray[0][2]);
-                Log.printLine(UpArray[0][0]+" "+UpArray[0][1]+" "+UpArray[0][2]);
+				if(Parameters.isDebug) {
+					Log.printLine("updated resource-job"+job.getCloudletId()+":");
+	                Log.printLine(DownArray[0][0]+" "+DownArray[0][1]+" "+DownArray[0][2]);
+	                Log.printLine(UpArray[0][0]+" "+UpArray[0][1]+" "+UpArray[0][2]);
+				}
 				if(allzeroflag == false && (Parameters.copystrategy == 5 || Parameters.copystrategy == 0 || preAssignedSlots <= 0)) {
 					// Queue<Vm> taskSlotsKeptIdle = new LinkedList<>();
 					Queue<Task> taskSubmitted = new LinkedList<>();
@@ -1713,9 +1732,12 @@ public class WorkflowScheduler extends DatacenterBroker {
 							UpArray[0][dcindex] = up[dcindex];
 							DownArray[0][dcindex] = down[dcindex];
 						}
-						Log.printLine("updated resource-copy-job"+job.getCloudletId()+":");
-	                    Log.printLine(DownArray[0][0]+" "+DownArray[0][1]+" "+DownArray[0][2]);
-	                    Log.printLine(UpArray[0][0]+" "+UpArray[0][1]+" "+UpArray[0][2]);
+						if(Parameters.isDebug) {
+							Log.printLine("updated resource-copy-job"+job.getCloudletId()+":");
+		                    Log.printLine(DownArray[0][0]+" "+DownArray[0][1]+" "+DownArray[0][2]);
+		                    Log.printLine(UpArray[0][0]+" "+UpArray[0][1]+" "+UpArray[0][2]);
+						}
+						
 						
 						// Queue<Vm> taskSlotsKeptIdle = new LinkedList<>();
 						Queue<Task> taskSubmitted = new LinkedList<>();
@@ -2140,10 +2162,10 @@ public class WorkflowScheduler extends DatacenterBroker {
 
 
 	private void submitTask(Task task, Vm vm) {
-		Log.printLine(CloudSim.clock() + ": " + getName() + ": VM # "
-				+ vm.getId() + " starts executing Task # "
-				+ task.getCloudletId() + " \"" + task.getName() + " "
-				+ task.getParams() + " \"");
+//		Log.printLine(CloudSim.clock() + ": " + getName() + ": VM # "
+//				+ vm.getId() + " starts executing Task # "
+//				+ task.getCloudletId() + " \"" + task.getName() + " "
+//				+ task.getParams() + " \"");
 		task.setVmId(vm.getId());
 		if (Parameters.numGen.nextDouble() < getLikelihoodOfFailureOfDC().get(task.getAssignmentDCId())) {
 			task.setScheduledToFail(true);
@@ -2156,10 +2178,10 @@ public class WorkflowScheduler extends DatacenterBroker {
 	}
 
 	private void submitSpeculativeTask(Task task, Vm vm) {
-		Log.printLine(CloudSim.clock() + ": " + getName() + ": VM # "
-				+ vm.getId() + " starts executing speculative copy of Task # "
-				+ task.getCloudletId() + " \"" + task.getName() + " "
-				+ task.getParams() + " \"");
+//		Log.printLine(CloudSim.clock() + ": " + getName() + ": VM # "
+//				+ vm.getId() + " starts executing speculative copy of Task # "
+//				+ task.getCloudletId() + " \"" + task.getName() + " "
+//				+ task.getParams() + " \"");
 		task.setVmId(vm.getId());
 		if (Parameters.numGen.nextDouble() < getLikelihoodOfFailureOfDC().get(task.getAssignmentDCId())) {
 			task.setScheduledToFail(true);
@@ -2428,49 +2450,49 @@ public class WorkflowScheduler extends DatacenterBroker {
 				while(it.hasNext()) {
 					Task speculativeTask = it.next();
 					if (speculativeTask.getVmId() == task.getVmId()) {
-						Log.printLine(CloudSim.clock() + ": " + getName() + ": VM # "
-								+ speculativeTask.getVmId()
-								+ " completed speculative copy of Task # "
-								+ speculativeTask.getCloudletId() + " \""
-								+ speculativeTask.getName() + " "
-								+ speculativeTask.getParams() + " \"");
+//						Log.printLine(CloudSim.clock() + ": " + getName() + ": VM # "
+//								+ speculativeTask.getVmId()
+//								+ " completed speculative copy of Task # "
+//								+ speculativeTask.getCloudletId() + " \""
+//								+ speculativeTask.getName() + " "
+//								+ speculativeTask.getParams() + " \"");
 					} else {
-						Log.printLine(CloudSim.clock() + ": " + getName()
-						+ ": VM # " + speculativeTask.getVmId()
-						+ " cancelled speculative copy of Task # "
-						+ speculativeTask.getCloudletId() + " \""
-						+ speculativeTask.getName() + " "
-						+ speculativeTask.getParams() + " \"");
+//						Log.printLine(CloudSim.clock() + ": " + getName()
+//						+ ": VM # " + speculativeTask.getVmId()
+//						+ " cancelled speculative copy of Task # "
+//						+ speculativeTask.getCloudletId() + " \""
+//						+ speculativeTask.getName() + " "
+//						+ speculativeTask.getParams() + " \"");
 						vms.get(speculativeTask.getVmId()).getCloudletScheduler()
 						.cloudletCancel(speculativeTask.getCloudletId());
 					}
 					
 				}
 				
-				Log.printLine(CloudSim.clock() + ": " + getName() + ": VM # "
-						+ originalTask.getVmId() + " cancelled Task # "
-						+ originalTask.getCloudletId() + " \""
-						+ originalTask.getName() + " "
-						+ originalTask.getParams() + " \"");
+//				Log.printLine(CloudSim.clock() + ": " + getName() + ": VM # "
+//						+ originalTask.getVmId() + " cancelled Task # "
+//						+ originalTask.getCloudletId() + " \""
+//						+ originalTask.getName() + " "
+//						+ originalTask.getParams() + " \"");
 				vms.get(originalTask.getVmId()).getCloudletScheduler()
 						.cloudletCancel(originalTask.getCloudletId());
 			} else {
-				Log.printLine(CloudSim.clock() + ": " + getName() + ": VM # "
-						+ originalTask.getVmId() + " completed Task # "
-						+ originalTask.getCloudletId() + " \""
-						+ originalTask.getName() + " "
-						+ originalTask.getParams() + " \"");
+//				Log.printLine(CloudSim.clock() + ": " + getName() + ": VM # "
+//						+ originalTask.getVmId() + " completed Task # "
+//						+ originalTask.getCloudletId() + " \""
+//						+ originalTask.getName() + " "
+//						+ originalTask.getParams() + " \"");
 				if (speculativeTaskOfTask.size() != 0) {
 					
 					Iterator<Task> it = speculativeTaskOfTask.iterator();
 					while(it.hasNext()) {
 						Task speculativeTask = it.next();
-						Log.printLine(CloudSim.clock() + ": " + getName()
-						+ ": VM # " + speculativeTask.getVmId()
-						+ " cancelled speculative copy of Task # "
-						+ speculativeTask.getCloudletId() + " \""
-						+ speculativeTask.getName() + " "
-						+ speculativeTask.getParams() + " \"");
+//						Log.printLine(CloudSim.clock() + ": " + getName()
+//						+ ": VM # " + speculativeTask.getVmId()
+//						+ " cancelled speculative copy of Task # "
+//						+ speculativeTask.getCloudletId() + " \""
+//						+ speculativeTask.getName() + " "
+//						+ speculativeTask.getParams() + " \"");
 						vms.get(speculativeTask.getVmId()).getCloudletScheduler()
 						.cloudletCancel(speculativeTask.getCloudletId());
 					}
@@ -2589,14 +2611,14 @@ public class WorkflowScheduler extends DatacenterBroker {
 			
 			if (task.isSpeculativeCopy()) {
 				Task originalTask = tasks.get(task.getCloudletId());
-				Log.printLine(CloudSim.clock()
-						+ ": "
-						+ getName()
-						+ ": VM # "
-						+ task.getVmId()
-						+ " encountered an error with speculative copy of Task # "
-						+ task.getCloudletId() + " \"" + task.getName() + " "
-						+ task.getParams() + " \"");
+//				Log.printLine(CloudSim.clock()
+//						+ ": "
+//						+ getName()
+//						+ ": VM # "
+//						+ task.getVmId()
+//						+ " encountered an error with speculative copy of Task # "
+//						+ task.getCloudletId() + " \"" + task.getName() + " "
+//						+ task.getParams() + " \"");
 				for(int index = 0; index < speculativeTaskOfTask.size(); index++ ) {
 					if (speculativeTaskOfTask.get(index).getVmId() == task.getVmId()) {
 						Task speculativeTask = speculativeTaskOfTask.get(index);
@@ -2648,10 +2670,10 @@ public class WorkflowScheduler extends DatacenterBroker {
 				speculativeTasks.put(task.getCloudletId(), speculativeTaskOfTask);
 				
 			} else {
-				Log.printLine(CloudSim.clock() + ": " + getName() + ": VM # "
-						+ task.getVmId() + " encountered an error with Task # "
-						+ task.getCloudletId() + " \"" + task.getName() + " "
-						+ task.getParams() + " \"");
+//				Log.printLine(CloudSim.clock() + ": " + getName() + ": VM # "
+//						+ task.getVmId() + " encountered an error with Task # "
+//						+ task.getCloudletId() + " \"" + task.getName() + " "
+//						+ task.getParams() + " \"");
 				
 				
 				

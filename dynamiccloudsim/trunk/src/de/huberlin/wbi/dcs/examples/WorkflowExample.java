@@ -96,7 +96,7 @@ public class WorkflowExample {
 				/**
 	             * Should change this based on real physical path
 	             */
-	            String daxPath = "./dynamiccloudsim/config/dax/Montage_1000.xml";
+	            String daxPath = "./config/dax/Montage_1000.xml";
 	            File daxFile = new File(daxPath);
 	            if (!daxFile.exists()) {
 	                Log.printLine("Warning: Please replace daxPath with the physical path in your working environment!");
@@ -205,7 +205,7 @@ public class WorkflowExample {
 
 
 	public static void record(List<Job> outputList0) {
-		File file = new File("./dynamiccloudsim/result/jobcompletioninfo-"+Parameters.copystrategy
+		File file = new File("./result/jobcompletioninfo-"+Parameters.copystrategy
 				+"-"+Parameters.runIndex+".txt");
 		try {
 			FileWriter out = new FileWriter(file);
@@ -330,7 +330,7 @@ public class WorkflowExample {
 	public List<Datacenter> createMulDatacenters(int numberOfDC) {
 		LinkedList<Datacenter> dcList = new LinkedList<>();
 		
-		File file = new File("./dynamiccloudsim/model/modelInfo-hostinfo.txt");
+		File file = new File("./model/modelInfo-hostinfo.txt");
 		try {
 			if(!Parameters.isExtracte) {
 				out = new FileWriter(file);

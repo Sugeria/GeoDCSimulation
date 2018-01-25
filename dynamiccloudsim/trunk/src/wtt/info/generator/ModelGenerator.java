@@ -10,7 +10,7 @@ import wtt.info.WorkflowInfo;
 public class ModelGenerator {
 	
 	public static void saveWorkflowInfo() throws IOException {
-		File file = new File("./dynamiccloudsim/model/modelInfo-workflow.txt");
+		File file = new File("./model/modelInfo-workflow.txt");
 		FileWriter out = new FileWriter(file);
 		// workflowArrival
 		int length = Parameters.workflowArrival.size();
@@ -34,7 +34,7 @@ public class ModelGenerator {
 	}
 
 	public static void saveDCInfo() throws IOException {
-		File file = new File("./dynamiccloudsim/model/modelInfo-dc.txt");
+		File file = new File("./model/modelInfo-dc.txt");
 		FileWriter out = new FileWriter(file);
 		// workflowArrival
 		int[] dim = new int[2];

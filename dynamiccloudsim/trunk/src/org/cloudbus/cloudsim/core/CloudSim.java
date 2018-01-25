@@ -566,6 +566,13 @@ public class CloudSim {
 					e.printStackTrace();
 				}
 				
+//				try {
+//					WorkflowEngine.out.close();
+//				}catch (IOException e) {
+//					// TODO: handle exception
+//					e.printStackTrace();
+//				}
+				
 				// each datacenter initial lastprocessingtime
 				
 				
@@ -646,7 +653,7 @@ public class CloudSim {
 		}
 
 		SimEvent e = new SimEvent(SimEvent.SEND, clock + delay, src, dest, tag, data);
-		e.CustomtoString("CloudSim(future queue event added)\n");
+//		e.CustomtoString("CloudSim(future queue event added)\n");
 		future.addEvent(e);
 	}
 

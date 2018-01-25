@@ -426,12 +426,18 @@ public class DatacenterBroker extends SimEntity {
 		if (result == CloudSimTags.TRUE) {
 			getVmsToDatacentersMap().put(vmId, datacenterId);
 			getVmsCreatedList().add(VmList.getById(getVmList(), vmId));
-			Log.printLine(CloudSim.clock() + ": " + getName() + ": VM #" + vmId
-					+ " has been created in Datacenter #" + datacenterId + ", Host #"
-					+ VmList.getById(getVmsCreatedList(), vmId).getHost().getId());
+			if(Parameters.isDebug) {
+				Log.printLine(CloudSim.clock() + ": " + getName() + ": VM #" + vmId
+						+ " has been created in Datacenter #" + datacenterId + ", Host #"
+						+ VmList.getById(getVmsCreatedList(), vmId).getHost().getId());
+			}
+			
 		} else {
-			Log.printLine(CloudSim.clock() + ": " + getName() + ": Creation of VM #" + vmId
-					+ " failed in Datacenter #" + datacenterId);
+			if(Parameters.isDebug) {
+				Log.printLine(CloudSim.clock() + ": " + getName() + ": Creation of VM #" + vmId
+						+ " failed in Datacenter #" + datacenterId);
+			}
+			
 		}
 
 		incrementVmsAcks();
@@ -523,8 +529,11 @@ public class DatacenterBroker extends SimEntity {
 			if (vm.DCindex == (datacenterId - DCbase)) {
 				if (!getVmsToDatacentersMap().containsKey(vm.getId())) {
 					vm.DCId = datacenterId;
-					Log.printLine(CloudSim.clock() + ": " + getName() + ": Trying to Create VM #" + vm.getId()
-							+ " in " + datacenterName);
+					if(Parameters.isDebug) {
+						Log.printLine(CloudSim.clock() + ": " + getName() + ": Trying to Create VM #" + vm.getId()
+						+ " in " + datacenterName);
+					}
+					
 					sendNow(datacenterId, CloudSimTags.VM_CREATE_ACK, vm);
 					requestedVms++;
 				}

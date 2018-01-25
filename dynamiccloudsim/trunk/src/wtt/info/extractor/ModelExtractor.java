@@ -15,7 +15,7 @@ import wtt.info.WorkflowInfo;
 public class ModelExtractor {
 	
 	public static void extracteWorkflowInfo() throws IOException{
-		File file = new File("./dynamiccloudsim/model/modelInfo-workflow.txt");
+		File file = new File("./model/modelInfo-workflow.txt");
 		BufferedReader in = new BufferedReader(new FileReader(file));
 		String line;
 		int[] dim = new int[2];
@@ -44,7 +44,7 @@ public class ModelExtractor {
 	
 
 	public static void extracteDCInfo() throws IOException {
-		File file = new File("./dynamiccloudsim/model/modelInfo-dc.txt");
+		File file = new File("./model/modelInfo-dc.txt");
 		BufferedReader in = new BufferedReader(new FileReader(file));
 		String line;
 		int[] dim = new int[2];

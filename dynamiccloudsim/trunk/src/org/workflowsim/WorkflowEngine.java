@@ -15,6 +15,9 @@
  */
 package org.workflowsim;
 
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -74,6 +77,8 @@ public final class WorkflowEngine extends SimEntity {
     public Map<Integer, Double> startTimeOfWorkflow;
     public Map<Integer, Double> finishTimeOfWorkflow;
     public Map<Integer, Double> executionTimeOfWorkflow;
+    
+    public static FileWriter out;
     /**
      * Created a new WorkflowEngine object.
      *
@@ -110,6 +115,14 @@ public final class WorkflowEngine extends SimEntity {
             getSchedulerIds().add(wfs.getId());
             wfs.setWorkflowEngineId(this.getId());
         }
+//        File file = new File("./result/jobcompletioninfo-"+Parameters.copystrategy
+//				+"-"+Parameters.runIndex+".txt");
+//        try {
+//        	out = new FileWriter(file);
+//        }catch (IOException e) {
+//			// TODO: handle exception
+//        	e.printStackTrace();
+//		}
     }
 
     /**
@@ -254,6 +267,14 @@ public final class WorkflowEngine extends SimEntity {
         }
 
         getJobsReceivedList().add(job);
+        getJobsSubmittedList().remove(job);
+        
+        // save job info
+        
+        
+        
+        
+        
         jobsSubmitted--;
         int attributedWorkflowId = job.workflowId;
         int jobAck = successJobSizeOfWorkflow.get(attributedWorkflowId);
@@ -312,6 +333,12 @@ public final class WorkflowEngine extends SimEntity {
 					// TODO: handle exception
 					e.printStackTrace();
 				}
+//				try {
+//					out.close();
+//				}catch (IOException e) {
+//					// TODO: handle exception
+//					e.printStackTrace();
+//				}
 				
 				Parameters.isExtracte = true;
 				CloudSim.totalRunIndex = CloudSim.totalRunIndex + 1;
