@@ -10,3 +10,5 @@
 *.log
 /model/
 /result/
+/config/
+/*.brite
