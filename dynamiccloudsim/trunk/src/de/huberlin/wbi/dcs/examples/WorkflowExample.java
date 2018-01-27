@@ -32,6 +32,7 @@ import com.mathworks.toolbox.javabuilder.MWClassID;
 import com.mathworks.toolbox.javabuilder.MWComplexity;
 import com.mathworks.toolbox.javabuilder.MWException;
 import com.mathworks.toolbox.javabuilder.MWNumericArray;
+import com.sun.corba.se.spi.orbutil.threadpool.Work;
 import com.sun.prism.impl.Disposer.Record;
 
 import java.util.Collections;
@@ -96,7 +97,7 @@ public class WorkflowExample {
 				/**
 	             * Should change this based on real physical path
 	             */
-	            String daxPath = "./config/dax/Montage_1000.xml";
+	            String daxPath = "./dynamiccloudsim/config/dax/Montage_1000.xml";
 	            File daxFile = new File(daxPath);
 	            if (!daxFile.exists()) {
 	                Log.printLine("Warning: Please replace daxPath with the physical path in your working environment!");
@@ -173,14 +174,17 @@ public class WorkflowExample {
 				
 				// Start the simulation
 				CloudSim.startSimulation();
-	            List<Job> outputList0 = wfEngine.getJobsReceivedList();
-	            
+//	            List<Job> outputList0 = wfEngine.getJobsReceivedList();
+				int numberOfSuccessfulJob = WorkflowEngine.jobsCompleted;
+				WorkflowEngine.out.write(numberOfSuccessfulJob+"\t");
+				WorkflowEngine.out.write("\r\n");
+				WorkflowEngine.out.close();
 				CloudSim.stopSimulation();
 				//Collections.sort(outputList0, new JobIdComparator());
-				sortJobId(outputList0);
-				record(outputList0);
-				Parameters.printJobList(outputList0);
-				int numberOfSuccessfulJob = outputList0.size();
+//				sortJobId(outputList0);
+//				record(outputList0);
+//				Parameters.printJobList(outputList0);
+				
 				double accumulatedRuntime = Parameters.sumOfJobExecutime/numberOfSuccessfulJob;
 //				totalRuntime += wfEngine.getScheduler(0).getRuntime();
 				totalRuntime += accumulatedRuntime;

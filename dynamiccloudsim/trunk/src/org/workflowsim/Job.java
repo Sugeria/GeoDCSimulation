@@ -118,7 +118,7 @@ public class Job extends Task {
 
 
     public double getJobUtility() {
-    	double utility = 0d;
+    	double utility = Double.MIN_VALUE;
     	for(int tindex = 0; tindex < unscheduledTaskList.size(); tindex++) {
     		Task task  = taskList.get(tindex);
     		double rate;
@@ -134,7 +134,7 @@ public class Job extends Task {
     		}
     		
     		double task_workload = task.getMi()+task.getIo()+task.TotalTransferDataSize[pos];
-    		utility += task_workload/rate;
+    		utility = Math.max(utility, task_workload/rate);
     	}
     	return utility;
     }

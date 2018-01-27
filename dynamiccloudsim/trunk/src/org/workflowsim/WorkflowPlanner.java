@@ -226,6 +226,7 @@ public final class WorkflowPlanner extends SimEntity {
 		clusteringEngine.getWorkflowEngine().setJobsReceivedList(new ArrayList<>());
 
 		clusteringEngine.getWorkflowEngine().jobsSubmitted = 0;
+		clusteringEngine.getWorkflowEngine().jobsCompleted = 0;
 
 		clusteringEngine.getWorkflowEngine().jobSizeOfWorkflow = new HashMap<>();
 		clusteringEngine.getWorkflowEngine().successJobSizeOfWorkflow = new HashMap<>();
@@ -233,14 +234,14 @@ public final class WorkflowPlanner extends SimEntity {
 		clusteringEngine.getWorkflowEngine().finishTimeOfWorkflow = new HashMap<>();
 		clusteringEngine.getWorkflowEngine().executionTimeOfWorkflow = new HashMap<>();
 		
-//		File file2 = new File("./result/jobcompletioninfo-"+Parameters.copystrategy
-//				+"-"+Parameters.runIndex+".txt");
-//        try {
-//        	clusteringEngine.getWorkflowEngine().out = new FileWriter(file2);
-//        }catch (IOException e) {
-//			// TODO: handle exception
-//        	e.printStackTrace();
-//		}
+		File file2 = new File("./result/jobcompletioninfo-"+Parameters.copystrategy
+				+"-"+Parameters.runIndex+".txt");
+        try {
+        	clusteringEngine.getWorkflowEngine().out = new FileWriter(file2);
+        }catch (IOException e) {
+			// TODO: handle exception
+        	e.printStackTrace();
+		}
 		
 		
 		

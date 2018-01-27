@@ -547,11 +547,11 @@ public class CloudSim {
 		} else {
 			
 			if(CloudSim.totalRunIndex < (Parameters.numberOfStrategy * Parameters.numberOfRun - 1)) {
-				List<Job> outputList0 = WorkflowEngine.getJobsReceivedList();
-        		WorkflowExample.sortJobId(outputList0);
-				WorkflowExample.record(outputList0);
-				Parameters.printJobList(outputList0);
-				int numberOfSuccessfulJob = outputList0.size();
+//				List<Job> outputList0 = WorkflowEngine.getJobsReceivedList();
+//        		WorkflowExample.sortJobId(outputList0);
+//				WorkflowExample.record(outputList0);
+//				Parameters.printJobList(outputList0);
+				int numberOfSuccessfulJob = WorkflowEngine.jobsCompleted;
 				double accumulatedRuntime = Parameters.sumOfJobExecutime/numberOfSuccessfulJob;
 				Log.printLine("Average runtime in minutes: " + accumulatedRuntime / 60);
 				
@@ -566,12 +566,14 @@ public class CloudSim {
 					e.printStackTrace();
 				}
 				
-//				try {
-//					WorkflowEngine.out.close();
-//				}catch (IOException e) {
-//					// TODO: handle exception
-//					e.printStackTrace();
-//				}
+				try {
+					WorkflowEngine.out.write(WorkflowEngine.jobsCompleted+"\t");
+					WorkflowEngine.out.write("\r\n");
+					WorkflowEngine.out.close();
+				}catch (IOException e) {
+					// TODO: handle exception
+					e.printStackTrace();
+				}
 				
 				// each datacenter initial lastprocessingtime
 				

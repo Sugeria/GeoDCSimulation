@@ -37,6 +37,7 @@ import org.workflowsim.reclustering.ReclusteringEngine;
 import de.huberlin.wbi.dcs.examples.Parameters;
 import de.huberlin.wbi.dcs.examples.WorkflowExample;
 //import matlabcontrol.MatlabInvocationException;
+import de.huberlin.wbi.dcs.workflow.Task;
 
 /**
  * WorkflowEngine represents a engine acting on behalf of a user. It hides VM
@@ -65,6 +66,8 @@ public final class WorkflowEngine extends SimEntity {
      * The job submitted.
      */
     protected int jobsSubmitted;
+    
+    public static int jobsCompleted = 0;
     protected List<? extends Vm> vmList;
     /**
      * The associated scheduler id*
@@ -100,6 +103,7 @@ public final class WorkflowEngine extends SimEntity {
         setJobsReceivedList(new ArrayList<>());
 
         jobsSubmitted = 0;
+        jobsCompleted = 0;
 
         setSchedulers(new ArrayList<>());
         setSchedulerIds(new ArrayList<>());
@@ -115,14 +119,14 @@ public final class WorkflowEngine extends SimEntity {
             getSchedulerIds().add(wfs.getId());
             wfs.setWorkflowEngineId(this.getId());
         }
-//        File file = new File("./result/jobcompletioninfo-"+Parameters.copystrategy
-//				+"-"+Parameters.runIndex+".txt");
-//        try {
-//        	out = new FileWriter(file);
-//        }catch (IOException e) {
-//			// TODO: handle exception
-//        	e.printStackTrace();
-//		}
+        File file = new File("./result/jobcompletioninfo-"+Parameters.copystrategy
+				+"-"+Parameters.runIndex+".txt");
+        try {
+        	out = new FileWriter(file);
+        }catch (IOException e) {
+			// TODO: handle exception
+        	e.printStackTrace();
+		}
     }
 
     /**
@@ -266,7 +270,8 @@ public final class WorkflowEngine extends SimEntity {
             return ;
         }
 
-        getJobsReceivedList().add(job);
+//        getJobsReceivedList().add(job);
+        jobsCompleted += 1;
         getJobsSubmittedList().remove(job);
         
         // save job info
@@ -304,6 +309,46 @@ public final class WorkflowEngine extends SimEntity {
         		break;
         	}
         }
+        
+        
+        //save job info
+        try {
+			out.write(job.getCloudletId()+"\t");
+			out.write(job.arrivalTime+"\t");
+			out.write(job.earliestStartTime+"\t");
+			out.write(job.getFinishTime()+"\t");
+			out.write(job.getFlowTime()+"\t");
+			double DataSize = 0d;
+			for(int tindex = 0; tindex < job.getTaskList().size(); tindex++) {
+				Task task = job.getTaskList().get(tindex);
+				for(int dataindex = 0; dataindex < task.numberOfData; dataindex++) {
+					DataSize += task.sizeOfData[dataindex];
+				}
+			}
+			out.write(DataSize/1024+"\t");
+			out.write(job.getTaskList().size()+"\t");
+			out.write("\r\n");
+			for(int tindex = 0; tindex < job.getTaskList().size(); tindex++) {
+				Task task = job.getTaskList().get(tindex);
+				out.write(task.getCloudletId()+"\t");
+				out.write(task.getCloudletLength()+"\t");
+				out.write(task.earliestStartTime+"\t");
+				out.write(task.getFinishTime()+"\t");
+				out.write(task.getActualCPUTime()+"\t");
+				out.write(task.usedVM+"\t");
+				out.write(task.usedVMxTime+"\t");
+				out.write(task.usedBandwidth+"\t");
+				out.write(task.usedBandxTime+"\t");
+				out.write("\r\n");
+			}
+		} catch (IOException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		}
+		
+        
+        
+        
         // already judge whether the future has workflow
         
         
@@ -313,11 +358,11 @@ public final class WorkflowEngine extends SimEntity {
             
         	
         	if(CloudSim.totalRunIndex < (Parameters.numberOfStrategy * Parameters.numberOfRun - 1)) {
-        		List<Job> outputList0 = getJobsReceivedList();
-        		WorkflowExample.sortJobId(outputList0);
-				WorkflowExample.record(outputList0);
-				Parameters.printJobList(outputList0);
-				int numberOfSuccessfulJob = outputList0.size();
+//        		List<Job> outputList0 = getJobsReceivedList();
+//        		WorkflowExample.sortJobId(outputList0);
+//				WorkflowExample.record(outputList0);
+//				Parameters.printJobList(outputList0);
+				int numberOfSuccessfulJob = jobsCompleted;
 				double accumulatedRuntime = Parameters.sumOfJobExecutime/numberOfSuccessfulJob;
         		
 				Log.printLine("Average runtime in minutes: " + accumulatedRuntime / 60);
@@ -333,12 +378,15 @@ public final class WorkflowEngine extends SimEntity {
 					// TODO: handle exception
 					e.printStackTrace();
 				}
-//				try {
-//					out.close();
-//				}catch (IOException e) {
-//					// TODO: handle exception
-//					e.printStackTrace();
-//				}
+				
+				try {
+					out.write(jobsCompleted+"\t");
+					out.write("\r\n");
+					out.close();
+				}catch (IOException e) {
+					// TODO: handle exception
+					e.printStackTrace();
+				}
 				
 				Parameters.isExtracte = true;
 				CloudSim.totalRunIndex = CloudSim.totalRunIndex + 1;

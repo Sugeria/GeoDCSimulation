@@ -399,21 +399,21 @@ public class BasicClustering implements ClusteringInterface {
      * Update the dependency issues between tasks/jobs
      */
     protected final void updateDependencies() {
-        for (Task task : getTaskList()) {
-            Job job = (Job) getTask2Job().get(task);
-            for (Task parentTask : task.getParentList()) {
-                Job parentJob = (Job) getTask2Job().get(parentTask);
-                if (!job.getParentList().contains(parentJob) && parentJob != job) {//avoid dublicate
-                    job.addParent(parentJob);
-                }
-            }
-            for (Task childTask : task.getChildList()) {
-                Job childJob = (Job) getTask2Job().get(childTask);
-                if (!job.getChildList().contains(childJob) && childJob != job) {//avoid dublicate
-                    job.addChild(childJob);
-                }
-            }
-        }
+//        for (Task task : getTaskList()) {
+//            Job job = (Job) getTask2Job().get(task);
+//            for (Task parentTask : task.getParentList()) {
+//                Job parentJob = (Job) getTask2Job().get(parentTask);
+//                if (!job.getParentList().contains(parentJob) && parentJob != job) {//avoid dublicate
+//                    job.addParent(parentJob);
+//                }
+//            }
+//            for (Task childTask : task.getChildList()) {
+//                Job childJob = (Job) getTask2Job().get(childTask);
+//                if (!job.getChildList().contains(childJob) && childJob != job) {//avoid dublicate
+//                    job.addChild(childJob);
+//                }
+//            }
+//        }
         getTask2Job().clear();
         getTaskList().clear();
     }

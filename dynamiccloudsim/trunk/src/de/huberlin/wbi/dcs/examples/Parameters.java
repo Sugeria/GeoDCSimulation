@@ -3,7 +3,6 @@ package de.huberlin.wbi.dcs.examples;
 
 import java.io.IOException;
 import java.text.DecimalFormat;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -100,17 +99,29 @@ public class Parameters {
     
     public static final int BASE = 0;
     
-    public static final boolean isDebug = false;
+    public static boolean isDebug = false;
     
-    public static boolean isExtracte = false;
+    public static boolean isGurobi = true;
+    
+    public static boolean isUselessDCuseful = true;
+    
+    public static boolean isExtracte = true;
+    
     // 1-4
     public static int copystrategy = 0;
     
-    public static int numberOfStrategy = 6;
+    public static int numberOfStrategy = 3;
 
     public static int numberOfRun = 1;
     
     public static int runIndex = 0;
+    
+    // workflow
+    // default 5 workflows each minutes
+    public static double lambda = 0.083;
+    // default 3 days workflow
+    // defend time exceed INT.MAX_VALUE
+    public static double seconds = 60d;
     
     /**
      * Scheduling mode
@@ -535,12 +546,7 @@ public class Parameters {
     
     
 	
-	// workflow
-    // default 5 workflows each minutes
-    public static double lambda = 0.016;
-    // default 3 days workflow
-    // defend time exceed INT.MAX_VALUE
-    public static double seconds = 12d * 60 * 60;
+	
     
     public static Map<Double, WorkflowInfo> workflowArrival;
     
@@ -610,7 +616,7 @@ public class Parameters {
 
     public static double r = 0.2d;
     
-    public static double epsilon = 0.4d;
+    public static double epsilon = 0.6d;
     
 	public static boolean considerDataLocality = false;
 	

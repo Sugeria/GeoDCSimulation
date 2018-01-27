@@ -80,6 +80,9 @@ public class DatacenterBroker extends SimEntity {
 	/** The datacenter characteristics list. */
 	protected Map<Integer, DatacenterCharacteristics> datacenterCharacteristicsList;
 	
+	public Map<Integer, Double> ori_uplinkOfDC;
+	public Map<Integer, Double> ori_downlinkOfDC;
+	
 	private Map<Integer, Double> uplinkOfDC;
 	private Map<Integer, Double> downlinkOfDC;
 	private Map<Integer, Double> likelihoodOfFailureOfDC;
@@ -126,6 +129,8 @@ public class DatacenterBroker extends SimEntity {
 		
 		uplinkOfDC = new HashMap<>();
 		downlinkOfDC = new HashMap<>();
+		ori_uplinkOfDC = new HashMap<>();
+		ori_downlinkOfDC = new HashMap<>();
 		likelihoodOfDCFailureOfDC = new HashMap<>();
 		likelihoodOfFailureOfDC = new HashMap<>();
 		runtimeFactorIncaseOfFailureOfDC = new HashMap<>();
@@ -361,6 +366,8 @@ public class DatacenterBroker extends SimEntity {
 		getDatacenterCharacteristicsList().put(characteristics.getId(), characteristics);
 		getUplinkOfDC().put(characteristics.getId(),characteristics.getUplink());
 		getDownlinkOfDC().put(characteristics.getId(),characteristics.getDownlink());
+		ori_uplinkOfDC.put(characteristics.getId(), characteristics.getUplink());
+		ori_downlinkOfDC.put(characteristics.getId(), characteristics.getDownlink());
 		getLikelihoodOfFailureOfDC().put(characteristics.getId(), characteristics.getLikelihoodOfFailure());
 		getRuntimeFactorIncaseOfFailureOfDC().put(characteristics.getId(), characteristics.getRuntimeFactorIncaseOfFailure());
 		getLikelihoodOfDCFailureOfDC().put(characteristics.getId(), characteristics.getLikelihoodOfDCFailure());
