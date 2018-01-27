@@ -46,7 +46,7 @@ public class Log {
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
-			AddtoFile(message);
+//			AddtoFile(message);
 		}
 	}
 

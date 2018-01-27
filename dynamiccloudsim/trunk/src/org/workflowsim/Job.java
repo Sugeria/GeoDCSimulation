@@ -74,7 +74,9 @@ public class Job extends Task {
 
 	public double[][] allRateMuArray;
 	public double[][] allRateSigmaArray;
+	public double[] workloadArray;
 	public Map<Integer, HashMap<Integer, Double>> objParaOfTaskInDC;
+	public Map<Integer, HashMap<Integer, Double>> objTimeParaOfTaskInDC;
 	public int uselessConstraintsNum;
     
 	public double[] TotalTransferDataSize;
@@ -133,8 +135,8 @@ public class Job extends Task {
         		pos = unscheduledGreatePosition.get(task.getCloudletId()).get(posindex);
     		}
     		
-    		double task_workload = task.getMi()+task.getIo()+task.TotalTransferDataSize[pos];
-    		utility = Math.max(utility, task_workload/rate);
+//    		double task_workload = task.getMi()+task.getIo()+task.TotalTransferDataSize[pos];
+    		utility = Math.max(utility, rate);
     	}
     	return utility;
     }

@@ -74,7 +74,7 @@ import ilog.cplex.IloCplex;
 //import matlabcontrol.extensions.MatlabTypeConverter;
 import taskAssign.TaskAssign;
 import gurobi.*;
-
+import org.apache.log4j.*;
 /**
  * WorkflowScheduler represents a algorithm acting on behalf of a user. It hides
  * VM management, as vm creation, sumbission of jobs to this VMs and destruction
@@ -152,6 +152,9 @@ public class WorkflowScheduler extends DatacenterBroker {
     public Map<Integer, Job> JobFactory;
 	private double runtime;
 	public int slotNum;
+	
+	
+	public static final Logger log = Logger.getLogger(WorkflowScheduler.class);
 	
 	public Map<Integer, Integer> ori_idleTaskSlotsOfDC;
 	
@@ -620,6 +623,7 @@ public class WorkflowScheduler extends DatacenterBroker {
             		MWNumericArray dcnum = null;
             		MWNumericArray allRateMuArray = null;
             		MWNumericArray allRateSigmaArray = null;
+            		MWNumericArray workloadArray = null;
             		MWNumericArray TotalTransferDataSize = null;
             		MWNumericArray data = null;
             		MWNumericArray datapos = null;
@@ -659,6 +663,7 @@ public class WorkflowScheduler extends DatacenterBroker {
 						xOrig = MWNumericArray.newInstance(dims, MWClassID.DOUBLE,MWComplexity.REAL);
 						allRateMuArray = MWNumericArray.newInstance(dims, MWClassID.DOUBLE,MWComplexity.REAL);
 						allRateSigmaArray = MWNumericArray.newInstance(dims, MWClassID.DOUBLE,MWComplexity.REAL);
+						workloadArray = MWNumericArray.newInstance(dims, MWClassID.DOUBLE,MWComplexity.REAL);
 						TotalTransferDataSize = MWNumericArray.newInstance(dims, MWClassID.DOUBLE,MWComplexity.REAL);
 						uselessDCforTask = MWNumericArray.newInstance(dims, MWClassID.DOUBLE,MWComplexity.REAL);
 						dims[0] = unscheduledTaskNum;
@@ -693,6 +698,7 @@ public class WorkflowScheduler extends DatacenterBroker {
 								xOrig.set(pos, job.greatX[xindex]);
 								allRateMuArray.set(pos, job.allRateMuArray[0][xindex]);
 								allRateSigmaArray.set(pos, job.allRateSigmaArray[0][xindex]);
+								workloadArray.set(pos, job.workloadArray[xindex]);
 								TotalTransferDataSize.set(pos, job.TotalTransferDataSize[xindex]);
 								uselessDCforTask.set(pos, job.uselessDCforTask[xindex]);
 								for(int dataindex = 0; dataindex < Parameters.ubOfData; dataindex++) {
@@ -714,16 +720,16 @@ public class WorkflowScheduler extends DatacenterBroker {
 						
 						switch(Parameters.copystrategy) {
 						case 1:
-							result = taskAssign.copyStrategy(4,xOrig,tasknum,dcnum,allRateMuArray,allRateSigmaArray,TotalTransferDataSize,data,datapos,bandwidth,Slot,Up,Down,uselessDCforTask,r,slotlimit);
+							result = taskAssign.copyStrategy(4,xOrig,tasknum,dcnum,allRateMuArray,allRateSigmaArray,workloadArray,TotalTransferDataSize,data,datapos,bandwidth,Slot,Up,Down,uselessDCforTask,r,slotlimit);
 							break;
 						case 2:
-							result = taskAssign.copyStrategy_optimizeExp_Traverse(4,xOrig,tasknum,dcnum,allRateMuArray,allRateSigmaArray,TotalTransferDataSize,data,datapos,bandwidth,Slot,Up,Down,uselessDCforTask,r,slotlimit);
+							result = taskAssign.copyStrategy_optimizeExp_Traverse(4,xOrig,tasknum,dcnum,allRateMuArray,allRateSigmaArray,workloadArray,TotalTransferDataSize,data,datapos,bandwidth,Slot,Up,Down,uselessDCforTask,r,slotlimit);
 							break;
 						case 3:
-							result = taskAssign.copyStrategy_optimizeAll_orderedRes(4,xOrig,tasknum,dcnum,allRateMuArray,allRateSigmaArray,TotalTransferDataSize,data,datapos,bandwidth,Slot,Up,Down,uselessDCforTask,r,slotlimit);
+							result = taskAssign.copyStrategy_optimizeAll_orderedRes(4,xOrig,tasknum,dcnum,allRateMuArray,allRateSigmaArray,workloadArray,TotalTransferDataSize,data,datapos,bandwidth,Slot,Up,Down,uselessDCforTask,r,slotlimit);
 							break;
 						case 4:
-							result = taskAssign.copyStrategy_optimizeAll_Traverse(4,xOrig,tasknum,dcnum,allRateMuArray,allRateSigmaArray,TotalTransferDataSize,data,datapos,bandwidth,Slot,Up,Down,uselessDCforTask,r,slotlimit);
+							result = taskAssign.copyStrategy_optimizeAll_Traverse(4,xOrig,tasknum,dcnum,allRateMuArray,allRateSigmaArray,workloadArray,TotalTransferDataSize,data,datapos,bandwidth,Slot,Up,Down,uselessDCforTask,r,slotlimit);
 							break;
 						default:
 							break;
@@ -871,7 +877,7 @@ public class WorkflowScheduler extends DatacenterBroker {
     							}
     							
     						}
-    						cplex.addMaximize(cplex.scalProd(var, objvals));
+    						cplex.addMinimize(cplex.scalProd(var, objvals));
     						
     						int constraintsNum = 2 * unscheduledTaskNum + 3 * Parameters.numberOfDC + job.uselessConstraintsNum;
     						IloRange[] rng = new IloRange[constraintsNum];
@@ -884,15 +890,15 @@ public class WorkflowScheduler extends DatacenterBroker {
     								for(int dcindex = 0; dcindex < Parameters.numberOfDC; dcindex++) {
     									int xindex = taskindex*Parameters.numberOfDC + dcindex;
     									if(taskindex == tindex) {
-    										itermOfTask[xindex] = cplex.prod((job.allRateMuArray[0][xindex]
-    												+ Parameters.r * job.allRateSigmaArray[0][xindex]), var[xindex]);
+    										itermOfTask[xindex] = cplex.prod(job.workloadArray[xindex]/(job.allRateMuArray[0][xindex]
+    												- Parameters.r * job.allRateSigmaArray[0][xindex]), var[xindex]);
     									}else {
     										itermOfTask[xindex] = cplex.prod(0.0, var[xindex]);
     									}
     								}
     							}
     							itermOfTask[vnumplusone-1] = cplex.prod(-1.0, var[vnumplusone-1]);
-    							rng[constraintIndex] = cplex.addGe(cplex.sum(itermOfTask), 0.0);
+    							rng[constraintIndex] = cplex.addLe(cplex.sum(itermOfTask), 0.0);
     							constraintIndex++;
     						}
     						
@@ -1203,7 +1209,7 @@ public class WorkflowScheduler extends DatacenterBroker {
 									expr.addTerm(0.0d, vars[vindex]);
 								}
 							}
-							model.setObjective(expr, GRB.MAXIMIZE);
+							model.setObjective(expr, GRB.MINIMIZE);
 							
 							int constraintsNum = 2 * unscheduledTaskNum + 3 * Parameters.numberOfDC + job.uselessConstraintsNum;
 		    				int constraintIndex = 0;
@@ -1216,8 +1222,8 @@ public class WorkflowScheduler extends DatacenterBroker {
 		    						for(int dcindex = 0; dcindex < Parameters.numberOfDC; dcindex++) {
 		    							int xindex = taskindex*Parameters.numberOfDC + dcindex;
 		    							if(taskindex == tindex) {
-		    								expr.addTerm((job.allRateMuArray[0][xindex]
-		    										+ Parameters.r * job.allRateSigmaArray[0][xindex]), vars[xindex]);
+		    								expr.addTerm(job.workloadArray[xindex]/(job.allRateMuArray[0][xindex]
+		    										- Parameters.r * job.allRateSigmaArray[0][xindex]), vars[xindex]);
 		    							}else {
 		    								expr.addTerm(0.0d, vars[xindex]);
 		    							}
@@ -1225,7 +1231,7 @@ public class WorkflowScheduler extends DatacenterBroker {
 		    						}
 		    					}
 		    					expr.addTerm(-1.0d, vars[vnum]);
-		    					model.addConstr(expr, GRB.GREATER_EQUAL, 0.0d, "c"+String.valueOf(constraintIndex));
+		    					model.addConstr(expr, GRB.LESS_EQUAL, 0.0d, "c"+String.valueOf(constraintIndex));
 		    					constraintIndex++;
 		    				}
 		    				
@@ -1566,6 +1572,7 @@ public class WorkflowScheduler extends DatacenterBroker {
                 		MWNumericArray dcnum = null;
                 		MWNumericArray allRateMuArray = null;
                 		MWNumericArray allRateSigmaArray = null;
+                		MWNumericArray workloadArray = null;
                 		MWNumericArray TotalTransferDataSize = null;
                 		MWNumericArray data = null;
                 		MWNumericArray datapos = null;
@@ -1605,6 +1612,7 @@ public class WorkflowScheduler extends DatacenterBroker {
     						xOrig = MWNumericArray.newInstance(dims, MWClassID.DOUBLE,MWComplexity.REAL);
     						allRateMuArray = MWNumericArray.newInstance(dims, MWClassID.DOUBLE,MWComplexity.REAL);
     						allRateSigmaArray = MWNumericArray.newInstance(dims, MWClassID.DOUBLE,MWComplexity.REAL);
+    						workloadArray = MWNumericArray.newInstance(dims, MWClassID.DOUBLE,MWComplexity.REAL);
     						TotalTransferDataSize = MWNumericArray.newInstance(dims, MWClassID.DOUBLE,MWComplexity.REAL);
     						uselessDCforTask = MWNumericArray.newInstance(dims, MWClassID.DOUBLE,MWComplexity.REAL);
     						dims[0] = unscheduledTaskNum;
@@ -1631,7 +1639,7 @@ public class WorkflowScheduler extends DatacenterBroker {
     								pos[1] = dataindex + 1;
     								datapos.set(pos, job.datapos[tindex][dataindex]);
     							}
-    							// xOrig allRateMu allRateSigma uselessDCforTask bandwidth
+    							// xOrig allRateMu allRateSigma workload uselessDCforTask bandwidth
     							for(int dcindex = 0; dcindex < Parameters.numberOfDC; dcindex++) {
     								int xindex = tindex * Parameters.numberOfDC + dcindex;
     								pos[0] = 1;
@@ -1639,6 +1647,7 @@ public class WorkflowScheduler extends DatacenterBroker {
     								xOrig.set(pos, singlex[xindex]);
     								allRateMuArray.set(pos, job.allRateMuArray[0][xindex]);
     								allRateSigmaArray.set(pos, job.allRateSigmaArray[0][xindex]);
+    								workloadArray.set(pos, job.workloadArray[xindex]);
     								uselessDCforTask.set(pos, job.uselessDCforTask[xindex]);
     								TotalTransferDataSize.set(pos, job.TotalTransferDataSize[xindex]);
     								for(int dataindex = 0; dataindex < Parameters.ubOfData; dataindex++) {
@@ -1660,16 +1669,16 @@ public class WorkflowScheduler extends DatacenterBroker {
     						
     						switch(Parameters.copystrategy) {
     						case 1:
-    							result = taskAssign.copyStrategy(4,xOrig,tasknum,dcnum,allRateMuArray,allRateSigmaArray,TotalTransferDataSize,data,datapos,bandwidth,Slot,Up,Down,uselessDCforTask,r,slotlimit);
+    							result = taskAssign.copyStrategy(4,xOrig,tasknum,dcnum,allRateMuArray,allRateSigmaArray,workloadArray,TotalTransferDataSize,data,datapos,bandwidth,Slot,Up,Down,uselessDCforTask,r,slotlimit);
     							break;
     						case 2:
-    							result = taskAssign.copyStrategy_optimizeExp_Traverse(4,xOrig,tasknum,dcnum,allRateMuArray,allRateSigmaArray,TotalTransferDataSize,data,datapos,bandwidth,Slot,Up,Down,uselessDCforTask,r,slotlimit);
+    							result = taskAssign.copyStrategy_optimizeExp_Traverse(4,xOrig,tasknum,dcnum,allRateMuArray,allRateSigmaArray,workloadArray,TotalTransferDataSize,data,datapos,bandwidth,Slot,Up,Down,uselessDCforTask,r,slotlimit);
     							break;
     						case 3:
-    							result = taskAssign.copyStrategy_optimizeAll_orderedRes(4,xOrig,tasknum,dcnum,allRateMuArray,allRateSigmaArray,TotalTransferDataSize,data,datapos,bandwidth,Slot,Up,Down,uselessDCforTask,r,slotlimit);
+    							result = taskAssign.copyStrategy_optimizeAll_orderedRes(4,xOrig,tasknum,dcnum,allRateMuArray,allRateSigmaArray,workloadArray,TotalTransferDataSize,data,datapos,bandwidth,Slot,Up,Down,uselessDCforTask,r,slotlimit);
     							break;
     						case 4:
-    							result = taskAssign.copyStrategy_optimizeAll_Traverse(4,xOrig,tasknum,dcnum,allRateMuArray,allRateSigmaArray,TotalTransferDataSize,data,datapos,bandwidth,Slot,Up,Down,uselessDCforTask,r,slotlimit);
+    							result = taskAssign.copyStrategy_optimizeAll_Traverse(4,xOrig,tasknum,dcnum,allRateMuArray,allRateSigmaArray,workloadArray,TotalTransferDataSize,data,datapos,bandwidth,Slot,Up,Down,uselessDCforTask,r,slotlimit);
     							break;
     						default:
     							break;
@@ -1934,6 +1943,7 @@ public class WorkflowScheduler extends DatacenterBroker {
 	        		MWNumericArray dcnum = null;
 	        		MWNumericArray allRateMuArray = null;
 	        		MWNumericArray allRateSigmaArray = null;
+	        		MWNumericArray workloadArray = null;
 	        		MWNumericArray TotalTransferDataSize = null;
 	        		MWNumericArray data = null;
 	        		MWNumericArray datapos = null;
@@ -1973,6 +1983,7 @@ public class WorkflowScheduler extends DatacenterBroker {
 						xOrig = MWNumericArray.newInstance(dims, MWClassID.DOUBLE,MWComplexity.REAL);
 						allRateMuArray = MWNumericArray.newInstance(dims, MWClassID.DOUBLE,MWComplexity.REAL);
 						allRateSigmaArray = MWNumericArray.newInstance(dims, MWClassID.DOUBLE,MWComplexity.REAL);
+						workloadArray = MWNumericArray.newInstance(dims, MWClassID.DOUBLE,MWComplexity.REAL);
 						TotalTransferDataSize = MWNumericArray.newInstance(dims, MWClassID.DOUBLE,MWComplexity.REAL);
 						uselessDCforTask = MWNumericArray.newInstance(dims, MWClassID.DOUBLE,MWComplexity.REAL);
 						dims[0] = unscheduledTaskNum;
@@ -2007,6 +2018,7 @@ public class WorkflowScheduler extends DatacenterBroker {
 								xOrig.set(pos, singlex[xindex]);
 								allRateMuArray.set(pos, job.allRateMuArray[0][xindex]);
 								allRateSigmaArray.set(pos, job.allRateSigmaArray[0][xindex]);
+								workloadArray.set(pos, job.workloadArray[xindex]);
 								uselessDCforTask.set(pos, job.uselessDCforTask[xindex]);
 								TotalTransferDataSize.set(pos, job.TotalTransferDataSize[xindex]);
 								for(int dataindex = 0; dataindex < Parameters.ubOfData; dataindex++) {
@@ -2027,16 +2039,16 @@ public class WorkflowScheduler extends DatacenterBroker {
 						}
 						switch(Parameters.copystrategy) {
 						case 1:
-							result = taskAssign.copyStrategy(4,xOrig,tasknum,dcnum,allRateMuArray,allRateSigmaArray,TotalTransferDataSize,data,datapos,bandwidth,Slot,Up,Down,uselessDCforTask,r,slotlimit);
+							result = taskAssign.copyStrategy(4,xOrig,tasknum,dcnum,allRateMuArray,allRateSigmaArray,workloadArray,TotalTransferDataSize,data,datapos,bandwidth,Slot,Up,Down,uselessDCforTask,r,slotlimit);
 							break;
 						case 2:
-							result = taskAssign.copyStrategy_optimizeExp_Traverse(4,xOrig,tasknum,dcnum,allRateMuArray,allRateSigmaArray,TotalTransferDataSize,data,datapos,bandwidth,Slot,Up,Down,uselessDCforTask,r,slotlimit);
+							result = taskAssign.copyStrategy_optimizeExp_Traverse(4,xOrig,tasknum,dcnum,allRateMuArray,allRateSigmaArray,workloadArray,TotalTransferDataSize,data,datapos,bandwidth,Slot,Up,Down,uselessDCforTask,r,slotlimit);
 							break;
 						case 3:
-							result = taskAssign.copyStrategy_optimizeAll_orderedRes(4,xOrig,tasknum,dcnum,allRateMuArray,allRateSigmaArray,TotalTransferDataSize,data,datapos,bandwidth,Slot,Up,Down,uselessDCforTask,r,slotlimit);
+							result = taskAssign.copyStrategy_optimizeAll_orderedRes(4,xOrig,tasknum,dcnum,allRateMuArray,allRateSigmaArray,workloadArray,TotalTransferDataSize,data,datapos,bandwidth,Slot,Up,Down,uselessDCforTask,r,slotlimit);
 							break;
 						case 4:
-							result = taskAssign.copyStrategy_optimizeAll_Traverse(4,xOrig,tasknum,dcnum,allRateMuArray,allRateSigmaArray,TotalTransferDataSize,data,datapos,bandwidth,Slot,Up,Down,uselessDCforTask,r,slotlimit);
+							result = taskAssign.copyStrategy_optimizeAll_Traverse(4,xOrig,tasknum,dcnum,allRateMuArray,allRateSigmaArray,workloadArray,TotalTransferDataSize,data,datapos,bandwidth,Slot,Up,Down,uselessDCforTask,r,slotlimit);
 							break;
 						default:
 							break;
@@ -2538,6 +2550,12 @@ public class WorkflowScheduler extends DatacenterBroker {
 //				+ vm.getId() + " starts executing Task # "
 //				+ task.getCloudletId() + " \"" + task.getName() + " "
 //				+ task.getParams() + " \"");
+		if(log.isInfoEnabled()) {
+			log.info(CloudSim.clock() + ": " + getName() + ": VM # "
+				+ vm.getId() + " starts executing Task # "
+				+ task.getCloudletId() + " \"" + task.getName() + " "
+				+ task.getParams() + " \"");
+		}
 		task.setVmId(vm.getId());
 		if (Parameters.numGen.nextDouble() < getLikelihoodOfFailureOfDC().get(task.getAssignmentDCId())) {
 			task.setScheduledToFail(true);
@@ -2554,6 +2572,12 @@ public class WorkflowScheduler extends DatacenterBroker {
 //				+ vm.getId() + " starts executing speculative copy of Task # "
 //				+ task.getCloudletId() + " \"" + task.getName() + " "
 //				+ task.getParams() + " \"");
+		if(log.isInfoEnabled()) {
+			log.info(CloudSim.clock() + ": " + getName() + ": VM # "
+					+ vm.getId() + " starts executing speculative copy of Task # "
+					+ task.getCloudletId() + " \"" + task.getName() + " "
+					+ task.getParams() + " \"");
+		}
 		task.setVmId(vm.getId());
 		if (Parameters.numGen.nextDouble() < getLikelihoodOfFailureOfDC().get(task.getAssignmentDCId())) {
 			task.setScheduledToFail(true);
@@ -2828,6 +2852,14 @@ public class WorkflowScheduler extends DatacenterBroker {
 //								+ speculativeTask.getCloudletId() + " \""
 //								+ speculativeTask.getName() + " "
 //								+ speculativeTask.getParams() + " \"");
+						if(log.isInfoEnabled()) {
+							log.info(CloudSim.clock() + ": " + getName() + ": VM # "
+									+ speculativeTask.getVmId()
+									+ " completed speculative copy of Task # "
+									+ speculativeTask.getCloudletId() + " \""
+									+ speculativeTask.getName() + " "
+									+ speculativeTask.getParams() + " \"");
+						}
 					} else {
 //						Log.printLine(CloudSim.clock() + ": " + getName()
 //						+ ": VM # " + speculativeTask.getVmId()
@@ -2835,6 +2867,14 @@ public class WorkflowScheduler extends DatacenterBroker {
 //						+ speculativeTask.getCloudletId() + " \""
 //						+ speculativeTask.getName() + " "
 //						+ speculativeTask.getParams() + " \"");
+						if(log.isInfoEnabled()) {
+							log.info(CloudSim.clock() + ": " + getName()
+							+ ": VM # " + speculativeTask.getVmId()
+							+ " cancelled speculative copy of Task # "
+							+ speculativeTask.getCloudletId() + " \""
+							+ speculativeTask.getName() + " "
+							+ speculativeTask.getParams() + " \"");
+						}
 						vms.get(speculativeTask.getVmId()).getCloudletScheduler()
 						.cloudletCancel(speculativeTask.getCloudletId());
 					}
@@ -2846,6 +2886,13 @@ public class WorkflowScheduler extends DatacenterBroker {
 //						+ originalTask.getCloudletId() + " \""
 //						+ originalTask.getName() + " "
 //						+ originalTask.getParams() + " \"");
+				if(log.isInfoEnabled()) {
+					log.info(CloudSim.clock() + ": " + getName() + ": VM # "
+							+ originalTask.getVmId() + " cancelled Task # "
+							+ originalTask.getCloudletId() + " \""
+							+ originalTask.getName() + " "
+							+ originalTask.getParams() + " \"");
+				}
 				vms.get(originalTask.getVmId()).getCloudletScheduler()
 						.cloudletCancel(originalTask.getCloudletId());
 			} else {
@@ -2854,6 +2901,13 @@ public class WorkflowScheduler extends DatacenterBroker {
 //						+ originalTask.getCloudletId() + " \""
 //						+ originalTask.getName() + " "
 //						+ originalTask.getParams() + " \"");
+				if(log.isInfoEnabled()) {
+					log.info(CloudSim.clock() + ": " + getName() + ": VM # "
+							+ originalTask.getVmId() + " completed Task # "
+							+ originalTask.getCloudletId() + " \""
+							+ originalTask.getName() + " "
+							+ originalTask.getParams() + " \"");
+				}
 				if (speculativeTaskOfTask.size() != 0) {
 					
 					Iterator<Task> it = speculativeTaskOfTask.iterator();
@@ -2865,6 +2919,14 @@ public class WorkflowScheduler extends DatacenterBroker {
 //						+ speculativeTask.getCloudletId() + " \""
 //						+ speculativeTask.getName() + " "
 //						+ speculativeTask.getParams() + " \"");
+						if(log.isInfoEnabled()) {
+							log.info(CloudSim.clock() + ": " + getName()
+							+ ": VM # " + speculativeTask.getVmId()
+							+ " cancelled speculative copy of Task # "
+							+ speculativeTask.getCloudletId() + " \""
+							+ speculativeTask.getName() + " "
+							+ speculativeTask.getParams() + " \"");
+						}
 						vms.get(speculativeTask.getVmId()).getCloudletScheduler()
 						.cloudletCancel(speculativeTask.getCloudletId());
 					}
@@ -2991,6 +3053,16 @@ public class WorkflowScheduler extends DatacenterBroker {
 //						+ " encountered an error with speculative copy of Task # "
 //						+ task.getCloudletId() + " \"" + task.getName() + " "
 //						+ task.getParams() + " \"");
+				if(log.isInfoEnabled()) {
+					log.info(CloudSim.clock()
+							+ ": "
+							+ getName()
+							+ ": VM # "
+							+ task.getVmId()
+							+ " encountered an error with speculative copy of Task # "
+							+ task.getCloudletId() + " \"" + task.getName() + " "
+							+ task.getParams() + " \"");
+				}
 				for(int index = 0; index < speculativeTaskOfTask.size(); index++ ) {
 					if (speculativeTaskOfTask.get(index).getVmId() == task.getVmId()) {
 						Task speculativeTask = speculativeTaskOfTask.get(index);
@@ -3046,6 +3118,12 @@ public class WorkflowScheduler extends DatacenterBroker {
 //						+ task.getVmId() + " encountered an error with Task # "
 //						+ task.getCloudletId() + " \"" + task.getName() + " "
 //						+ task.getParams() + " \"");
+				if(log.isInfoEnabled()) {
+					log.info(CloudSim.clock() + ": " + getName() + ": VM # "
+							+ task.getVmId() + " encountered an error with Task # "
+							+ task.getCloudletId() + " \"" + task.getName() + " "
+							+ task.getParams() + " \"");
+				}
 				
 				
 				
@@ -3432,7 +3510,6 @@ public class WorkflowScheduler extends DatacenterBroker {
     protected void processResourceCharacteristicsRequest(SimEvent ev) {
 		setDatacenterIdsList(CloudSim.getCloudResourceList());
 		setDatacenterCharacteristicsList(new HashMap<Integer, DatacenterCharacteristics>());
-
 		Log.printLine(CloudSim.clock() + ": " + getName() + ": Cloud Resource List received with "
 				+ getDatacenterIdsList().size() + " resource(s)");
 

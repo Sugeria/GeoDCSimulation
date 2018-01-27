@@ -394,6 +394,11 @@ public final class WorkflowEngine extends SimEntity {
 				int runIndex = (int)(((double)CloudSim.totalRunIndex)%((double)Parameters.numberOfRun));
 				Parameters.copystrategy = strategyIndex;
 				Parameters.runIndex = runIndex;
+				
+				WorkflowScheduler.log.info(CloudSim.clock()+": WorkflowEngine: Begin Strategy"+
+						Parameters.copystrategy+" Run"+Parameters.runIndex);
+				
+				
 				CloudSim.clock = 0.1d;
 				// clear cloudsim.future
 				sendNow(CloudSim.getEntity("planner_0").getId(), CloudSimTags.RUN_INITIAL,null);

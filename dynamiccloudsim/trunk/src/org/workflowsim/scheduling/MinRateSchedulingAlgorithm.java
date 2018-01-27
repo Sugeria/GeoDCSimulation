@@ -80,6 +80,7 @@ public class MinRateSchedulingAlgorithm extends BaseSchedulingAlgorithm{
 			double[][] DownArray = new double[1][Parameters.numberOfDC];
 			double[][] allRateMuArray = new double[1][vnum];
 			double[][] allRateSigmaArray = new double[1][vnum];
+			double[] workloadArray = new double[vnum];
 			int uselessConstraintsNum = 0;
 			//probArray
 			for (int dcindex = 0; dcindex < Parameters.numberOfDC; dcindex++) {
@@ -180,11 +181,13 @@ public class MinRateSchedulingAlgorithm extends BaseSchedulingAlgorithm{
 			}
 			
 			Map<Integer, HashMap<Integer, Double>> objParaOfTaskInDC = new HashMap<>();
+			Map<Integer, HashMap<Integer, Double>> objTimeParaOfTaskInDC = new HashMap<>();
 			
 			for(int tindex = 0; tindex < numberOfTask; tindex++) {
 				Task task = tasklist.get(tindex);
 				int taskId = task.getCloudletId();
 				objParaOfTaskInDC.put(taskId, new HashMap<>());
+				objTimeParaOfTaskInDC.put(taskId, new HashMap<>());
 			}
 			
 			WorkflowScheduler scheduler = (WorkflowScheduler)workflowScheduler;
@@ -251,7 +254,7 @@ public class MinRateSchedulingAlgorithm extends BaseSchedulingAlgorithm{
 			for(int dcindex = 0; dcindex < Parameters.numberOfDC; dcindex++) {
 				double unstable_co = probArray[dcindex][0]
     					+ probArray[dcindex][1]*Parameters.stragglerPerformanceCoefficientOfDC[dcindex]
-    					+ probArray[dcindex][1]/Parameters.runtimeFactorInCaseOfFailure[dcindex];
+    					+ probArray[dcindex][2]/Parameters.runtimeFactorInCaseOfFailure[dcindex];
 				unstablecoOfDC[dcindex] = unstable_co;
 			}
 			
@@ -324,17 +327,21 @@ public class MinRateSchedulingAlgorithm extends BaseSchedulingAlgorithm{
 					double bw_mu_dataDelay = bandwidth_dataDelayOfTaskInDC[0][xindex];
 					
 					muParaOfTaskInDC[xindex] = (mi_mu + io_mu + bw_mu_dataDelay) * unstablecoOfDC[dcindex];
-        			sigmaParaOfTaskInDC[xindex] = unstablecoOfDC[dcindex] * Math.sqrt(Math.pow(mi_sigma, 2)
+        			sigmaParaOfTaskInDC[xindex] = Math.sqrt(Math.pow(mi_sigma, 2)
         					+Math.pow(io_sigma, 2)+Math.pow((bw_mu_dataDelay*bw_sigmaco), 2));
         			double delay_para = (double)Parameters.delayAmongDCIndex[task.submitDCIndex][dcindex];
         			// allRateMuArray allRateSigmaArray
         			double task_workload = task.getMi() + task.getIo() + bwlength;
+        			workloadArray[xindex] = task_workload;
         			double delay_co = task_workload/(task_workload + muParaOfTaskInDC[xindex] * delay_para);
         			allRateMuArray[0][xindex] = muParaOfTaskInDC[xindex] * delay_co;
         			allRateSigmaArray[0][xindex] = sigmaParaOfTaskInDC[xindex] * delay_co;
         			objParaOfTaskInDC.get(task.getCloudletId()).put(dcindex, 
         					allRateMuArray[0][xindex]
-        					+ Parameters.r * allRateSigmaArray[0][xindex]); 
+        					- Parameters.r * allRateSigmaArray[0][xindex]); 
+        			objTimeParaOfTaskInDC.get(task.getCloudletId()).put(dcindex, 
+        					task_workload/(allRateMuArray[0][xindex]
+                					- Parameters.r * allRateSigmaArray[0][xindex]));
         			
 				}
 				tasklist.set(taskindex, task);
@@ -373,9 +380,10 @@ public class MinRateSchedulingAlgorithm extends BaseSchedulingAlgorithm{
 
 			job.allRateMuArray = allRateMuArray;
 			job.allRateSigmaArray = allRateSigmaArray;
+			job.workloadArray = workloadArray;
 			
 			job.objParaOfTaskInDC = objParaOfTaskInDC;
-		    
+		    job.objTimeParaOfTaskInDC = objTimeParaOfTaskInDC;
 			job.TotalTransferDataSize = TotalTransferDataSize;
 			job.transferDataSize = transferDataSize;
 			
@@ -389,7 +397,7 @@ public class MinRateSchedulingAlgorithm extends BaseSchedulingAlgorithm{
 				for(int tindex = 0; tindex < numberOfTask; tindex++) {
 					Task task = tasklist.get(tindex);
 					int taskId = task.getCloudletId();
-					Map<Integer, Double> map = objParaOfTaskInDC.get(taskId);
+					Map<Integer, Double> map = objTimeParaOfTaskInDC.get(taskId);
 					job.sortedListOfTask.put(taskId, new ArrayList<>());
 					for(Map.Entry<Integer, Double> entry:map.entrySet()) {
 						job.sortedListOfTask.get(taskId).add(entry);
@@ -399,7 +407,7 @@ public class MinRateSchedulingAlgorithm extends BaseSchedulingAlgorithm{
 						@Override
 						public int compare(Entry<Integer, Double> o1, Entry<Integer, Double> o2) {
 							// TODO Auto-generated method stub
-							return o2.getValue().compareTo(o1.getValue());
+							return o1.getValue().compareTo(o2.getValue());
 						}
 						
 					});
@@ -610,7 +618,7 @@ public class MinRateSchedulingAlgorithm extends BaseSchedulingAlgorithm{
     					}
     					
     				}
-    				cplex.addMaximize(cplex.scalProd(var, objvals));
+    				cplex.addMinimize(cplex.scalProd(var, objvals));
     				
     				int constraintsNum = 2 * numberOfTask + 3 * Parameters.numberOfDC + uselessConstraintsNum;
     				IloRange[] rng = new IloRange[constraintsNum];
@@ -623,15 +631,15 @@ public class MinRateSchedulingAlgorithm extends BaseSchedulingAlgorithm{
     						for(int dcindex = 0; dcindex < Parameters.numberOfDC; dcindex++) {
     							int xindex = taskindex*Parameters.numberOfDC + dcindex;
     							if(taskindex == tindex) {
-    								itermOfTask[xindex] = cplex.prod((allRateMuArray[0][xindex]
-    										+ Parameters.r * allRateSigmaArray[0][xindex]), var[xindex]);
+    								itermOfTask[xindex] = cplex.prod((workloadArray[xindex]/(allRateMuArray[0][xindex]
+    										+ Parameters.r * allRateSigmaArray[0][xindex])), var[xindex]);
     							}else {
     								itermOfTask[xindex] = cplex.prod(0.0, var[xindex]);
     							}
     						}
     					}
     					itermOfTask[vnum] = cplex.prod(-1.0, var[vnum]);
-    					rng[constraintIndex] = cplex.addGe(cplex.sum(itermOfTask), 0.0);
+    					rng[constraintIndex] = cplex.addLe(cplex.sum(itermOfTask), 0.0);
     					constraintIndex++;
     				}
     				
@@ -819,7 +827,7 @@ public class MinRateSchedulingAlgorithm extends BaseSchedulingAlgorithm{
     						for(int dcindex = 0; dcindex < Parameters.numberOfDC; dcindex++) {
     							int xindex = tindex*Parameters.numberOfDC+dcindex;
     							if(x[xindex]==1) {
-    								rate = allRateMuArray[0][xindex] + Parameters.r * allRateSigmaArray[0][xindex];
+    								rate = workloadArray[xindex]/(allRateMuArray[0][xindex] - Parameters.r * allRateSigmaArray[0][xindex]);
     								pos = dcindex;
     								greatAssignSuccess = true;
     								break;
@@ -928,8 +936,8 @@ public class MinRateSchedulingAlgorithm extends BaseSchedulingAlgorithm{
     						if(success == true && successDC != -1) {
     							// store the greatest assignment info in the job with the current resource
     							int xindex = tindex * Parameters.numberOfDC + successDC;
-    							job.currentGreateRate.put(taskId, allRateMuArray[0][xindex]
-    									+ Parameters.r * allRateSigmaArray[0][xindex]);
+    							job.currentGreateRate.put(taskId, workloadArray[xindex]/(allRateMuArray[0][xindex]
+    									- Parameters.r * allRateSigmaArray[0][xindex]));
     							job.currentGreatePosition.put(taskId, successDC);
     							x[xindex] = 1;
     						}else {
@@ -962,7 +970,7 @@ public class MinRateSchedulingAlgorithm extends BaseSchedulingAlgorithm{
 							expr.addTerm(0.0d, vars[vindex]);
 						}
 					}
-					model.setObjective(expr, GRB.MAXIMIZE);
+					model.setObjective(expr, GRB.MINIMIZE);
 					
 					int constraintsNum = 2 * numberOfTask + 3 * Parameters.numberOfDC + uselessConstraintsNum;
     				int constraintIndex = 0;
@@ -975,8 +983,8 @@ public class MinRateSchedulingAlgorithm extends BaseSchedulingAlgorithm{
     						for(int dcindex = 0; dcindex < Parameters.numberOfDC; dcindex++) {
     							int xindex = taskindex*Parameters.numberOfDC + dcindex;
     							if(taskindex == tindex) {
-    								expr.addTerm((allRateMuArray[0][xindex]
-    										+ Parameters.r * allRateSigmaArray[0][xindex]), vars[xindex]);
+    								expr.addTerm((workloadArray[xindex]/(allRateMuArray[0][xindex]
+    										- Parameters.r * allRateSigmaArray[0][xindex])), vars[xindex]);
     							}else {
     								expr.addTerm(0.0d, vars[xindex]);
     							}
@@ -1170,7 +1178,7 @@ public class MinRateSchedulingAlgorithm extends BaseSchedulingAlgorithm{
     						for(int dcindex = 0; dcindex < Parameters.numberOfDC; dcindex++) {
     							int xindex = tindex*Parameters.numberOfDC+dcindex;
     							if(x[xindex]==1) {
-    								rate = allRateMuArray[0][xindex] + Parameters.r * allRateSigmaArray[0][xindex];
+    								rate = workloadArray[xindex]/(allRateMuArray[0][xindex] - Parameters.r * allRateSigmaArray[0][xindex]);
     								pos = dcindex;
     								greatAssignSuccess = true;
     								break;
@@ -1274,8 +1282,8 @@ public class MinRateSchedulingAlgorithm extends BaseSchedulingAlgorithm{
     						if(success == true && successDC != -1) {
     							// store the greatest assignment info in the job with the current resource
     							int xindex = tindex * Parameters.numberOfDC + successDC;
-    							job.currentGreateRate.put(taskId, allRateMuArray[0][xindex]
-    									+ Parameters.r * allRateSigmaArray[0][xindex]);
+    							job.currentGreateRate.put(taskId, workloadArray[xindex]/(allRateMuArray[0][xindex]
+    									- Parameters.r * allRateSigmaArray[0][xindex]));
     							job.currentGreatePosition.put(taskId, successDC);
     							x[xindex] = 1;
     						}else {

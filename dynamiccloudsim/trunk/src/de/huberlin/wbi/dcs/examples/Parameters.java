@@ -101,16 +101,18 @@ public class Parameters {
     
     public static boolean isDebug = false;
     
-    public static boolean isGurobi = true;
+    public static boolean isGurobi = false;
     
     public static boolean isUselessDCuseful = true;
     
     public static boolean isExtracte = true;
     
+    public static boolean isDCFailHappen = false;
+    
     // 1-4
     public static int copystrategy = 0;
     
-    public static int numberOfStrategy = 3;
+    public static int numberOfStrategy = 6;
 
     public static int numberOfRun = 1;
     

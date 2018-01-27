@@ -20,6 +20,7 @@ import org.cloudbus.cloudsim.core.CloudSimTags;
 import org.cloudbus.cloudsim.core.SimEntity;
 import org.cloudbus.cloudsim.core.SimEvent;
 
+import de.huberlin.wbi.dcs.examples.Parameters;
 import de.huberlin.wbi.dcs.workflow.Task;
 import wtt.info.UplinkRequest;
 
@@ -183,7 +184,7 @@ public class Datacenter extends SimEntity {
 			// New Cloudlet arrives, but the sender asks for an ack
 			case CloudSimTags.CLOUDLET_SUBMIT_ACK:
 				// judge whether the DC is fail to connect with the Broker
-				if(!isFail && CloudSim.clock() != getLastProcessTime()) {
+				if(Parameters.isDCFailHappen && !isFail && CloudSim.clock() != getLastProcessTime()) {
 					DCfailprob = Math.random();
 					DCfailduration = characteristics.lbOfDCFailureDuration + Math.random()*(characteristics.ubOfDCFailureDuration - characteristics.lbOfDCFailureDuration);
 					if (DCfailprob < characteristics.getLikelihoodOfDCFailure()) {
@@ -306,7 +307,7 @@ public class Datacenter extends SimEntity {
 				break;
 
 			case CloudSimTags.VM_DATACENTER_EVENT:
-				if(!isFail && CloudSim.clock() != getLastProcessTime()) {
+				if(Parameters.isDCFailHappen && !isFail && CloudSim.clock() != getLastProcessTime()) {
 					DCfailprob = Math.random();
 					DCfailduration = characteristics.lbOfDCFailureDuration + Math.random()*(characteristics.ubOfDCFailureDuration - characteristics.lbOfDCFailureDuration);
 					if (DCfailprob < characteristics.getLikelihoodOfDCFailure()) {

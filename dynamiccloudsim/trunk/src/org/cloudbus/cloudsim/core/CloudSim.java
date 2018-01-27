@@ -33,6 +33,7 @@ import org.cloudbus.cloudsim.core.predicates.PredicateNone;
 import org.workflowsim.ClusteringEngine;
 import org.workflowsim.Job;
 import org.workflowsim.WorkflowEngine;
+import org.workflowsim.WorkflowScheduler;
 
 import de.huberlin.wbi.cuneiform.core.semanticmodel.Param;
 import de.huberlin.wbi.dcs.examples.Parameters;
@@ -585,6 +586,11 @@ public class CloudSim {
 				int runIndex = (int)(((double)CloudSim.totalRunIndex)%((double)Parameters.numberOfRun));
 				Parameters.copystrategy = strategyIndex;
 				Parameters.runIndex = runIndex;
+				
+				WorkflowScheduler.log.info(CloudSim.clock()+": CloudSim: Begin Strategy"+
+						Parameters.copystrategy+" Run"+Parameters.runIndex);
+				
+				
 				clock = 0.1d;
 				SimEvent ev = new SimEvent(SimEvent.SEND, clock(), -1,entitiesByName.get("planner_0").getId(),CloudSimTags.RUN_INITIAL,null);
 				future.addEvent(ev);
