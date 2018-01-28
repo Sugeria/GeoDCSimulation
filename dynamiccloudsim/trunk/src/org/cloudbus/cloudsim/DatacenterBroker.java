@@ -8,6 +8,10 @@
 
 package org.cloudbus.cloudsim;
 
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileReader;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -344,7 +348,10 @@ public class DatacenterBroker extends SimEntity {
 		return stragglerPerformanceCoefficientOfDC;
 	}
 	
-	
+	 public double failDCtime;
+	 public int failDCNum;
+	 public int[] failDCindex;
+	 public double[] failDCduration;
 	
 	
 	
@@ -389,6 +396,7 @@ public class DatacenterBroker extends SimEntity {
 				//createVmsInDatacenter(dcId);
 			}
 			DCbase = minDCId;
+			sendDCFailInfo();
 			// createVmsInDatacenter(getDatacenterIdsList().get(0));
 			Iterator<Integer> anotherit = dcList.iterator();
 			while(anotherit.hasNext()) {
@@ -396,6 +404,45 @@ public class DatacenterBroker extends SimEntity {
 				createVmsInDatacenter(dcId);
 			}
 		}
+	}
+
+	public void sendDCFailInfo() {
+		// TODO Auto-generated method stub
+		try {
+    		File file = new File("./model/modelInfo-dcfail.txt");
+			BufferedReader in = new BufferedReader(new FileReader(file));
+    		String line;
+    		line = in.readLine();
+    		String[] para_string = line.split("\t");
+    		int totalNum = Integer.parseInt(para_string[0]);
+    		int totalindex = 0;
+    		while(totalindex < totalNum) {
+    			line = in.readLine();
+        		para_string = line.split("\t");
+        		failDCtime = Double.parseDouble(para_string[0]);
+        		failDCNum = Integer.parseInt(para_string[1]);
+        		if(failDCNum > 0) {
+        			failDCindex = new int[failDCNum];
+        			failDCduration = new double[failDCNum];
+        			for(int lindex = 0; lindex < failDCNum; lindex++) {
+        				line = in.readLine();
+        				para_string = line.split("\t");
+        				failDCindex[lindex] = Integer.parseInt(para_string[0]);
+        				failDCduration[lindex] = Double.parseDouble(para_string[1]);
+        				// send Event
+        				send(failDCindex[lindex]+DCbase, failDCtime, CloudSimTags.DC_FAIL_INFO,failDCduration[lindex]);
+        			}
+        		}
+        		totalindex++;
+    		}
+    		
+    		in.close();
+    		
+    	}catch (IOException e) {
+			// TODO: handle exception
+    		e.printStackTrace();
+		}
+    	
 	}
 
 	/**

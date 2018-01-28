@@ -15,6 +15,7 @@ import com.mathworks.toolbox.javabuilder.MWClassID;
 import com.mathworks.toolbox.javabuilder.MWComplexity;
 import com.mathworks.toolbox.javabuilder.MWFunctionHandle;
 import com.mathworks.toolbox.javabuilder.MWNumericArray;
+import com.sun.org.apache.bcel.internal.generic.IF_ACMPEQ;
 import com.sun.org.apache.bcel.internal.generic.NEW;
 
 import de.huberlin.wbi.cuneiform.core.semanticmodel.Param;
@@ -84,20 +85,31 @@ public class MinRateSchedulingAlgorithm extends BaseSchedulingAlgorithm{
 			int uselessConstraintsNum = 0;
 			//probArray
 			for (int dcindex = 0; dcindex < Parameters.numberOfDC; dcindex++) {
+				double D = Parameters.likelihoodOfDCFailure[dcindex];
+				double F = Parameters.likelihoodOfFailure[dcindex];
+				double S = Parameters.likelihoodOfStragglerOfDC[dcindex];
+				if(Parameters.isConcernDCFail == false) {
+					D = 0;
+				}
+				if(Parameters.isConcernUnstable == false) {
+					F = 0;
+					S = 0;
+				}
+				
 				for (int iterm = 0; iterm < 4; iterm++) {
 					double value = 0d;
 					switch (iterm) {
 					case 0:
-						value = (1-Parameters.likelihoodOfDCFailure[dcindex])*(1-Parameters.likelihoodOfFailure[dcindex])*(1-Parameters.likelihoodOfStragglerOfDC[dcindex]);
+						value = (1-D)*(1-F)*(1-S);
 						break;
 					case 1:
-						value = (1-Parameters.likelihoodOfDCFailure[dcindex])*(1-Parameters.likelihoodOfFailure[dcindex])*Parameters.likelihoodOfStragglerOfDC[dcindex];
+						value = (1-D)*(1-F)*S;
 						break;
 					case 2:
-						value = (1-Parameters.likelihoodOfDCFailure[dcindex])*Parameters.likelihoodOfFailure[dcindex];
+						value = (1-D)*F;
 						break;
 					case 3:
-						value = Parameters.likelihoodOfDCFailure[dcindex];
+						value = D;
 						break;
 					default:
 						break;
@@ -304,7 +316,7 @@ public class MinRateSchedulingAlgorithm extends BaseSchedulingAlgorithm{
 							task.bandwidth[dcindex][dataindex] *= bandwidthco;
 							// wait for compute
 							int dataindex_pos = (int) datapos[taskindex][dataindex];
-							double dataDelay = Parameters.delayAmongDCIndex[dataindex_pos][dcindex];
+							double dataDelay = (Parameters.isConcernGeoNet == false)?0:Parameters.delayAmongDCIndex[dataindex_pos][dcindex];
 							if(transferDataSize[xindex][dataindex]==0) {
 								bandwidth_dataDelay_co[xindex][dataindex] = 0;
 							}else {
@@ -322,20 +334,27 @@ public class MinRateSchedulingAlgorithm extends BaseSchedulingAlgorithm{
 								bandwidth[xindex][dataindex] * bandwidth_dataDelay_co[xindex][dataindex];
 					}
 					
-					double mi_sigma = mi_mu * mi_sigmaco;
-					double io_sigma = io_mu * io_sigmaco;
+					
 					double bw_mu_dataDelay = bandwidth_dataDelayOfTaskInDC[0][xindex];
 					
 					muParaOfTaskInDC[xindex] = (mi_mu + io_mu + bw_mu_dataDelay) * unstablecoOfDC[dcindex];
-        			sigmaParaOfTaskInDC[xindex] = Math.sqrt(Math.pow(mi_sigma, 2)
-        					+Math.pow(io_sigma, 2)+Math.pow((bw_mu_dataDelay*bw_sigmaco), 2));
-        			double delay_para = (double)Parameters.delayAmongDCIndex[task.submitDCIndex][dcindex];
+        			
+					
+        			double delay_para = (Parameters.isConcernGeoNet == false)?0:(double)Parameters.delayAmongDCIndex[task.submitDCIndex][dcindex];
         			// allRateMuArray allRateSigmaArray
         			double task_workload = task.getMi() + task.getIo() + bwlength;
         			workloadArray[xindex] = task_workload;
         			double delay_co = task_workload/(task_workload + muParaOfTaskInDC[xindex] * delay_para);
+        			
         			allRateMuArray[0][xindex] = muParaOfTaskInDC[xindex] * delay_co;
-        			allRateSigmaArray[0][xindex] = sigmaParaOfTaskInDC[xindex] * delay_co;
+        			
+        			double mi_sigma = mi_mu * unstablecoOfDC[dcindex] * delay_co * mi_sigmaco;
+					double io_sigma = io_mu * unstablecoOfDC[dcindex] * delay_co * io_sigmaco;
+					allRateSigmaArray[0][xindex] = Math.sqrt(Math.pow(mi_sigma, 2)
+        					+Math.pow(io_sigma, 2)+Math.pow((bw_mu_dataDelay*unstablecoOfDC[dcindex]
+        							*delay_co*bw_sigmaco), 2));
+        			
+//        			allRateSigmaArray[0][xindex] = sigmaParaOfTaskInDC[xindex];
         			objParaOfTaskInDC.get(task.getCloudletId()).put(dcindex, 
         					allRateMuArray[0][xindex]
         					- Parameters.r * allRateSigmaArray[0][xindex]); 
@@ -430,6 +449,50 @@ public class MinRateSchedulingAlgorithm extends BaseSchedulingAlgorithm{
 						}
 					}
 				}
+				
+				
+				//order the rate
+				job.sortedListOfTaskRate = new HashMap<>();
+				for(int tindex = 0; tindex < numberOfTask; tindex++) {
+					Task task = tasklist.get(tindex);
+					int taskId = task.getCloudletId();
+					Map<Integer, Double> map = objParaOfTaskInDC.get(taskId);
+					job.sortedListOfTaskRate.put(taskId, new ArrayList<>());
+					for(Map.Entry<Integer, Double> entry:map.entrySet()) {
+						job.sortedListOfTaskRate.get(taskId).add(entry);
+					}
+					job.sortedListOfTaskRate.get(taskId).sort(new Comparator<Map.Entry<Integer, Double>>() {
+
+						@Override
+						public int compare(Entry<Integer, Double> o1, Entry<Integer, Double> o2) {
+							// TODO Auto-generated method stub
+							return o2.getValue().compareTo(o1.getValue());
+						}
+						
+					});
+//					int listindex = 0;
+//					for(Map.Entry<Integer, Double> iterm:job.sortedListOfTaskRate.get(taskId)) {
+//						int dcindex = iterm.getKey();
+//						task.orderedDClist[listindex] = dcindex;
+//						listindex++;
+//					}
+//					tasklist.set(tindex, task);
+					job.unscheduledGreateRealRate.put(taskId, job.sortedListOfTaskRate.get(taskId).get(0).getValue());
+					
+					job.unscheduledGreateRealRatePosition.put(taskId, new ArrayList<>());
+					job.unscheduledGreateRealRatePosition.get(taskId).add(job.sortedListOfTaskRate.get(taskId).get(0).getKey());
+					for(int posindex = 1; posindex < Parameters.numberOfDC; posindex++) {
+						if(job.unscheduledGreateRealRate.get(taskId) > job.sortedListOfTaskRate.get(taskId).get(posindex).getValue()) {
+							break;
+						}else {
+							job.unscheduledGreateRealRatePosition.get(taskId).add(job.sortedListOfTaskRate.get(taskId).get(posindex).getKey());
+						}
+					}
+				}
+				
+				
+				
+				
 				job.sortedflag = true;
 			}
 			
@@ -440,7 +503,7 @@ public class MinRateSchedulingAlgorithm extends BaseSchedulingAlgorithm{
 			for(int taskindex = 0; taskindex < numberOfTask; taskindex++) {
 				Task task = tasklist.get(taskindex);
 				int taskId = task.getCloudletId();
-				double maxRate = job.unscheduledGreateRate.get(taskId);
+				double maxRate = job.unscheduledGreateRealRate.get(taskId);
 				for(int dcindex = 0; dcindex < Parameters.numberOfDC; dcindex++) {
 					int xindex = taskindex * Parameters.numberOfDC + dcindex;
 					if(Parameters.isUselessDCuseful == true) {
@@ -448,12 +511,59 @@ public class MinRateSchedulingAlgorithm extends BaseSchedulingAlgorithm{
 							uselessDCforTask[xindex] = 0;
 							task.uselessDC[dcindex] = 0;
 							uselessConstraintsNum += 1;
+						}else if(Parameters.isConcernGeoNet == false) {
+							// need extra limit to defend transfer error not the transfer delay
+							boolean whetherAvailable = true;
+							double submitDelay = Parameters.delayAmongDCIndex[task.submitDCIndex][dcindex];
+							if(submitDelay > 1e20d) {
+								whetherAvailable = false;
+							}
+							if(whetherAvailable == true && task.numberOfData > 0) {
+								int datanum = task.numberOfData;
+								for(int dataindex = 0; dataindex < datanum; dataindex++) {
+									double dataTransDelay = Parameters.delayAmongDCIndex[task.positionOfData[dataindex]][dcindex];
+									if(dataTransDelay > 1e20d) {
+										whetherAvailable = false;
+										break;
+										
+									}
+								}
+							}
+							if(whetherAvailable == false) {
+								uselessDCforTask[xindex] = 0;
+								task.uselessDC[dcindex] = 0;
+								uselessConstraintsNum += 1;
+							}
+							
 						}
 					}else {
 						if(objParaOfTaskInDC.get(taskId).get(dcindex) < 1d) {
 							uselessDCforTask[xindex] = 0;
 							task.uselessDC[dcindex] = 0;
 							uselessConstraintsNum += 1;
+						}else if(Parameters.isConcernGeoNet == false) {
+							// need extra limit to defend error
+							boolean whetherAvailable = true;
+							double submitDelay = Parameters.delayAmongDCIndex[task.submitDCIndex][dcindex];
+							if(submitDelay > 1e20d) {
+								whetherAvailable = false;
+							}
+							if(whetherAvailable == true && task.numberOfData > 0) {
+								int datanum = task.numberOfData;
+								for(int dataindex = 0; dataindex < datanum; dataindex++) {
+									double dataTransDelay = Parameters.delayAmongDCIndex[task.positionOfData[dataindex]][dcindex];
+									if(dataTransDelay > 1e20d) {
+										whetherAvailable = false;
+										break;
+										
+									}
+								}
+							}
+							if(whetherAvailable == false) {
+								uselessDCforTask[xindex] = 0;
+								task.uselessDC[dcindex] = 0;
+								uselessConstraintsNum += 1;
+							}
 						}
 					}
 					
@@ -695,7 +805,10 @@ public class MinRateSchedulingAlgorithm extends BaseSchedulingAlgorithm{
     						}
     					}
     					itermOfTask[vnum] = cplex.prod(0.0, var[vnum]);
-    					rng[constraintIndex] = cplex.addLe(cplex.sum(itermOfTask), UpArray[0][datacenterindex]);
+    					
+    					rng[constraintIndex] = (Parameters.isConcernGeoNet == false)?
+    							cplex.addGe(cplex.sum(itermOfTask), 0.0d)
+    							:cplex.addLe(cplex.sum(itermOfTask), UpArray[0][datacenterindex]);
     					constraintIndex++;
     				}
     				
@@ -718,7 +831,9 @@ public class MinRateSchedulingAlgorithm extends BaseSchedulingAlgorithm{
     						}
     					}
     					itermOfTask[vnum] = cplex.prod(0.0, var[vnum]);
-    					rng[constraintIndex] = cplex.addLe(cplex.sum(itermOfTask), DownArray[0][datacenterindex]);
+    					rng[constraintIndex] = (Parameters.isConcernGeoNet == false)?
+    							cplex.addGe(cplex.sum(itermOfTask), 0.0d)
+    							:cplex.addLe(cplex.sum(itermOfTask), DownArray[0][datacenterindex]);
     					constraintIndex++;
     				}
     				// uselessDC limitation
@@ -762,47 +877,52 @@ public class MinRateSchedulingAlgorithm extends BaseSchedulingAlgorithm{
     								if((tempSlotArray[dcindex]-1)<0) {
     									resourceEnough = false;
     								}
-    								
-    								
     								double totalBandwidth = 0d;
     								// uplink
     								Map<Integer, Double> bwOfSrcPos = new HashMap<>();
-    								if(TotalTransferDataSize[xindex]>0 && resourceEnough == true) {
-    									for(int dataindex = 0; dataindex < datanumber; dataindex++) {
-    										double neededBw = bandwidth[xindex][dataindex];
-    										totalBandwidth+=neededBw;
-    										int srcPos = (int) datapos[tindex][dataindex];
-    										if(bwOfSrcPos.containsKey(srcPos)) {
-    											double oldvalue = bwOfSrcPos.get(srcPos);
-    											bwOfSrcPos.put(srcPos, oldvalue + neededBw);
-    										}else {
-    											bwOfSrcPos.put(srcPos, 0 + neededBw);
-    										}
-    									}
-    									for(int pos : bwOfSrcPos.keySet()) {
-    										if((tempUpArray[pos]-bwOfSrcPos.get(pos))<0) {
-    											resourceEnough = false;
-    											break;
-    										}
-    									}
-    								}
     								
-    								// downlink
-    								if(TotalTransferDataSize[xindex]>0 && resourceEnough == true) {
-    									if((tempDownArray[dcindex]-totalBandwidth)<0) {
-    										resourceEnough = false;
-    									}
+    								if(Parameters.isConcernGeoNet == true) {
+    									if(TotalTransferDataSize[xindex]>0 && resourceEnough == true) {
+        									for(int dataindex = 0; dataindex < datanumber; dataindex++) {
+        										double neededBw = bandwidth[xindex][dataindex];
+        										totalBandwidth+=neededBw;
+        										int srcPos = (int) datapos[tindex][dataindex];
+        										if(bwOfSrcPos.containsKey(srcPos)) {
+        											double oldvalue = bwOfSrcPos.get(srcPos);
+        											bwOfSrcPos.put(srcPos, oldvalue + neededBw);
+        										}else {
+        											bwOfSrcPos.put(srcPos, 0 + neededBw);
+        										}
+        									}
+        									for(int pos : bwOfSrcPos.keySet()) {
+        										if((tempUpArray[pos]-bwOfSrcPos.get(pos))<0) {
+        											resourceEnough = false;
+        											break;
+        										}
+        									}
+        								}
+        								
+        								// downlink
+        								if(TotalTransferDataSize[xindex]>0 && resourceEnough == true) {
+        									if((tempDownArray[dcindex]-totalBandwidth)<0) {
+        										resourceEnough = false;
+        									}
+        								}
+        								
     								}
     								
     								if(resourceEnough == true) {
     									tempSlotArray[dcindex] -= 1;
-    									if(TotalTransferDataSize[xindex]>0) {
-    										tempDownArray[dcindex] -= totalBandwidth;
+    									if(Parameters.isConcernGeoNet == true) {
+    										if(TotalTransferDataSize[xindex]>0) {
+        										tempDownArray[dcindex] -= totalBandwidth;
 
+        									}
+        									for(int pos : bwOfSrcPos.keySet()) {
+        										tempUpArray[pos] -= bwOfSrcPos.get(pos);
+        									}
     									}
-    									for(int pos : bwOfSrcPos.keySet()) {
-    										tempUpArray[pos] -= bwOfSrcPos.get(pos);
-    									}
+    									
     									success = true;
     									x[xindex] = 1;
     								}else {
@@ -892,42 +1012,48 @@ public class MinRateSchedulingAlgorithm extends BaseSchedulingAlgorithm{
     								double totalBandwidth = 0d;
     								// uplink
     								Map<Integer, Double> bwOfSrcPos = new HashMap<>();
-    								if(TotalTransferDataSize[xindex]>0) {
-    									for(int dataindex = 0; dataindex < datanumber; dataindex++) {
-    										double neededBw = bandwidth[xindex][dataindex];
-    										totalBandwidth += neededBw;
-    										int srcPos = (int) datapos[tindex][dataindex];
-    										if(bwOfSrcPos.containsKey(srcPos)) {
-    											double oldvalue = bwOfSrcPos.get(srcPos);
-    											bwOfSrcPos.put(srcPos, oldvalue + neededBw);
-    										}else {
-    											bwOfSrcPos.put(srcPos, 0 + neededBw);
-    										}
-    									}
-    									for(int pos : bwOfSrcPos.keySet()) {
-    										if((tempUpArray[pos]-bwOfSrcPos.get(pos))<0) {
-    											success = false;
-    											break;
-    										}
-    									}
+    								if(Parameters.isConcernGeoNet == true) {
+    									if(TotalTransferDataSize[xindex]>0) {
+        									for(int dataindex = 0; dataindex < datanumber; dataindex++) {
+        										double neededBw = bandwidth[xindex][dataindex];
+        										totalBandwidth += neededBw;
+        										int srcPos = (int) datapos[tindex][dataindex];
+        										if(bwOfSrcPos.containsKey(srcPos)) {
+        											double oldvalue = bwOfSrcPos.get(srcPos);
+        											bwOfSrcPos.put(srcPos, oldvalue + neededBw);
+        										}else {
+        											bwOfSrcPos.put(srcPos, 0 + neededBw);
+        										}
+        									}
+        									for(int pos : bwOfSrcPos.keySet()) {
+        										if((tempUpArray[pos]-bwOfSrcPos.get(pos))<0) {
+        											success = false;
+        											break;
+        										}
+        									}
+        								}
+        								
+        								// downlink
+        								if(TotalTransferDataSize[xindex]>0 && success == true) {
+        									if((tempDownArray[dcindex]-totalBandwidth)<0) {
+        										success = false;
+        										continue;
+        									}
+        								}
     								}
     								
-    								// downlink
-    								if(TotalTransferDataSize[xindex]>0 && success == true) {
-    									if((tempDownArray[dcindex]-totalBandwidth)<0) {
-    										success = false;
-    										continue;
-    									}
-    								}
     								if(success == true) {
     									tempSlotArray[dcindex] -= 1;
-    									if(TotalTransferDataSize[xindex]>0) {
-    										tempDownArray[dcindex] -= totalBandwidth;
+    									if(Parameters.isConcernGeoNet == true) {
+    										if(TotalTransferDataSize[xindex]>0) {
+        										tempDownArray[dcindex] -= totalBandwidth;
+        									}
+        									
+        									for(int pos : bwOfSrcPos.keySet()) {
+        										tempUpArray[pos] -= bwOfSrcPos.get(pos);
+        									}
     									}
     									
-    									for(int pos : bwOfSrcPos.keySet()) {
-    										tempUpArray[pos] -= bwOfSrcPos.get(pos);
-    									}
     									successDC = dcindex;
     									break;
     								}
@@ -1048,7 +1174,12 @@ public class MinRateSchedulingAlgorithm extends BaseSchedulingAlgorithm{
     						}
     					}
     					expr.addTerm(0.0d, vars[vnum]);
-    					model.addConstr(expr, GRB.LESS_EQUAL, UpArray[0][datacenterindex], "c"+String.valueOf(constraintIndex));
+    					if(Parameters.isConcernGeoNet == false) {
+							model.addConstr(expr, GRB.GREATER_EQUAL, 0.0d, "c"+String.valueOf(constraintIndex));
+    					}else {
+							model.addConstr(expr, GRB.LESS_EQUAL, UpArray[0][datacenterindex], "c"+String.valueOf(constraintIndex));
+
+    					}
     					constraintIndex++;
     				}
     				
@@ -1071,7 +1202,11 @@ public class MinRateSchedulingAlgorithm extends BaseSchedulingAlgorithm{
     						}
     					}
     					expr.addTerm(0.0d, vars[vnum]);
-    					model.addConstr(expr, GRB.LESS_EQUAL, DownArray[0][datacenterindex], "c"+String.valueOf(constraintIndex));
+    					if(Parameters.isConcernGeoNet == false) {
+        					model.addConstr(expr, GRB.GREATER_EQUAL, 0.0d, "c"+String.valueOf(constraintIndex));
+    					}else {
+        					model.addConstr(expr, GRB.LESS_EQUAL, DownArray[0][datacenterindex], "c"+String.valueOf(constraintIndex));
+    					}
     					constraintIndex++;
     				}
     				
@@ -1118,42 +1253,48 @@ public class MinRateSchedulingAlgorithm extends BaseSchedulingAlgorithm{
     								double totalBandwidth = 0d;
     								// uplink
     								Map<Integer, Double> bwOfSrcPos = new HashMap<>();
-    								if(TotalTransferDataSize[xindex]>0 && resourceEnough == true) {
-    									for(int dataindex = 0; dataindex < datanumber; dataindex++) {
-    										double neededBw = bandwidth[xindex][dataindex];
-    										totalBandwidth+=neededBw;
-    										int srcPos = (int) datapos[tindex][dataindex];
-    										if(bwOfSrcPos.containsKey(srcPos)) {
-    											double oldvalue = bwOfSrcPos.get(srcPos);
-    											bwOfSrcPos.put(srcPos, oldvalue + neededBw);
-    										}else {
-    											bwOfSrcPos.put(srcPos, 0 + neededBw);
-    										}
-    									}
-    									for(int pos : bwOfSrcPos.keySet()) {
-    										if((tempUpArray[pos]-bwOfSrcPos.get(pos))<0) {
-    											resourceEnough = false;
-    											break;
-    										}
-    									}
-    								}
-    								
-    								// downlink
-    								if(TotalTransferDataSize[xindex]>0 && resourceEnough == true) {
-    									if((tempDownArray[dcindex]-totalBandwidth)<0) {
-    										resourceEnough = false;
-    									}
+    								if(Parameters.isConcernGeoNet == true) {
+    									if(TotalTransferDataSize[xindex]>0 && resourceEnough == true) {
+        									for(int dataindex = 0; dataindex < datanumber; dataindex++) {
+        										double neededBw = bandwidth[xindex][dataindex];
+        										totalBandwidth+=neededBw;
+        										int srcPos = (int) datapos[tindex][dataindex];
+        										if(bwOfSrcPos.containsKey(srcPos)) {
+        											double oldvalue = bwOfSrcPos.get(srcPos);
+        											bwOfSrcPos.put(srcPos, oldvalue + neededBw);
+        										}else {
+        											bwOfSrcPos.put(srcPos, 0 + neededBw);
+        										}
+        									}
+        									for(int pos : bwOfSrcPos.keySet()) {
+        										if((tempUpArray[pos]-bwOfSrcPos.get(pos))<0) {
+        											resourceEnough = false;
+        											break;
+        										}
+        									}
+        								}
+        								
+        								// downlink
+        								if(TotalTransferDataSize[xindex]>0 && resourceEnough == true) {
+        									if((tempDownArray[dcindex]-totalBandwidth)<0) {
+        										resourceEnough = false;
+        									}
+        								}
+        								
     								}
     								
     								if(resourceEnough == true) {
     									tempSlotArray[dcindex] -= 1;
-    									if(TotalTransferDataSize[xindex]>0) {
-    										tempDownArray[dcindex] -= totalBandwidth;
+    									if(Parameters.isConcernGeoNet == true) {
+    										if(TotalTransferDataSize[xindex]>0) {
+        										tempDownArray[dcindex] -= totalBandwidth;
 
+        									}
+        									for(int pos : bwOfSrcPos.keySet()) {
+        										tempUpArray[pos] -= bwOfSrcPos.get(pos);
+        									}
     									}
-    									for(int pos : bwOfSrcPos.keySet()) {
-    										tempUpArray[pos] -= bwOfSrcPos.get(pos);
-    									}
+    									
     									success = true;
     									x[xindex] = 1;
     								}else {
@@ -1238,42 +1379,50 @@ public class MinRateSchedulingAlgorithm extends BaseSchedulingAlgorithm{
     								double totalBandwidth = 0d;
     								// uplink
     								Map<Integer, Double> bwOfSrcPos = new HashMap<>();
-    								if(TotalTransferDataSize[xindex]>0) {
-    									for(int dataindex = 0; dataindex < datanumber; dataindex++) {
-    										double neededBw = bandwidth[xindex][dataindex];
-    										totalBandwidth += neededBw;
-    										int srcPos = (int) datapos[tindex][dataindex];
-    										if(bwOfSrcPos.containsKey(srcPos)) {
-    											double oldvalue = bwOfSrcPos.get(srcPos);
-    											bwOfSrcPos.put(srcPos, oldvalue + neededBw);
-    										}else {
-    											bwOfSrcPos.put(srcPos, 0 + neededBw);
-    										}
-    									}
-    									for(int pos : bwOfSrcPos.keySet()) {
-    										if((tempUpArray[pos]-bwOfSrcPos.get(pos))<0) {
-    											success = false;
-    											break;
-    										}
-    									}
+    								
+    								if(Parameters.isConcernGeoNet == true) {
+    									if(TotalTransferDataSize[xindex]>0) {
+        									for(int dataindex = 0; dataindex < datanumber; dataindex++) {
+        										double neededBw = bandwidth[xindex][dataindex];
+        										totalBandwidth += neededBw;
+        										int srcPos = (int) datapos[tindex][dataindex];
+        										if(bwOfSrcPos.containsKey(srcPos)) {
+        											double oldvalue = bwOfSrcPos.get(srcPos);
+        											bwOfSrcPos.put(srcPos, oldvalue + neededBw);
+        										}else {
+        											bwOfSrcPos.put(srcPos, 0 + neededBw);
+        										}
+        									}
+        									for(int pos : bwOfSrcPos.keySet()) {
+        										if((tempUpArray[pos]-bwOfSrcPos.get(pos))<0) {
+        											success = false;
+        											break;
+        										}
+        									}
+        								}
+        								
+        								// downlink
+        								if(TotalTransferDataSize[xindex]>0 && success == true) {
+        									if((tempDownArray[dcindex]-totalBandwidth)<0) {
+        										success = false;
+        										continue;
+        									}
+        								}
     								}
     								
-    								// downlink
-    								if(TotalTransferDataSize[xindex]>0 && success == true) {
-    									if((tempDownArray[dcindex]-totalBandwidth)<0) {
-    										success = false;
-    										continue;
-    									}
-    								}
+    								
     								if(success == true) {
     									tempSlotArray[dcindex] -= 1;
-    									if(TotalTransferDataSize[xindex]>0) {
-    										tempDownArray[dcindex] -= totalBandwidth;
+    									if(Parameters.isConcernGeoNet == true) {
+    										if(TotalTransferDataSize[xindex]>0) {
+        										tempDownArray[dcindex] -= totalBandwidth;
+        									}
+        									
+        									for(int pos : bwOfSrcPos.keySet()) {
+        										tempUpArray[pos] -= bwOfSrcPos.get(pos);
+        									}
     									}
     									
-    									for(int pos : bwOfSrcPos.keySet()) {
-    										tempUpArray[pos] -= bwOfSrcPos.get(pos);
-    									}
     									successDC = dcindex;
     									break;
     								}

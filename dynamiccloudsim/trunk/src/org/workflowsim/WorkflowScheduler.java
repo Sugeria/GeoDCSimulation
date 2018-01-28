@@ -954,7 +954,10 @@ public class WorkflowScheduler extends DatacenterBroker {
     								}
     							}
     							itermOfTask[vnum] = cplex.prod(0.0, var[vnum]);
-    							rng[constraintIndex] = cplex.addLe(cplex.sum(itermOfTask), UpArray[0][datacenterindex]);
+    							rng[constraintIndex] = (Parameters.isConcernGeoNet == false)?
+    	    							cplex.addGe(cplex.sum(itermOfTask), 0.0d)
+    	    							:cplex.addLe(cplex.sum(itermOfTask), UpArray[0][datacenterindex]);
+    	    					
     							constraintIndex++;
     						}
     						
@@ -977,7 +980,9 @@ public class WorkflowScheduler extends DatacenterBroker {
     								}
     							}
     							itermOfTask[vnum] = cplex.prod(0.0, var[vnum]);
-    							rng[constraintIndex] = cplex.addLe(cplex.sum(itermOfTask), DownArray[0][datacenterindex]);
+    							rng[constraintIndex] = (Parameters.isConcernGeoNet == false)?
+    	    							cplex.addGe(cplex.sum(itermOfTask), 0.0d)
+    	    							:cplex.addLe(cplex.sum(itermOfTask), DownArray[0][datacenterindex]);
     							constraintIndex++;
     						}
     						// uselessDC limitation
@@ -1022,35 +1027,38 @@ public class WorkflowScheduler extends DatacenterBroker {
     											inter_resourceEnough = false;
     										}
     										
-    										
     										totalBandwidth = 0d;
     										// uplink
     										bwOfSrcPos = new HashMap<>();
-    										if(job.TotalTransferDataSize[xindex]>0) {
-    											for(int dataindex = 0; dataindex < datanumber; dataindex++) {
-    												double neededBw = job.bandwidth[xindex][dataindex];
-    												totalBandwidth += neededBw;
-    												int srcPos = (int) job.datapos[tindex][dataindex];
-    												if(bwOfSrcPos.containsKey(srcPos)) {
-    													double oldvalue = bwOfSrcPos.get(srcPos);
-    													bwOfSrcPos.put(srcPos, oldvalue + neededBw);
-    												}else {
-    													bwOfSrcPos.put(srcPos, 0 + neededBw);
-    												}
-    											}
-    											for(int pos : bwOfSrcPos.keySet()) {
-    												if((UpArray[0][pos]-bwOfSrcPos.get(pos))<0) {
-    													inter_resourceEnough = false;
-    													break;
-    												}
-    											}
+    										if(Parameters.isConcernGeoNet == true) {
+    											
+        										if(job.TotalTransferDataSize[xindex]>0) {
+        											for(int dataindex = 0; dataindex < datanumber; dataindex++) {
+        												double neededBw = job.bandwidth[xindex][dataindex];
+        												totalBandwidth += neededBw;
+        												int srcPos = (int) job.datapos[tindex][dataindex];
+        												if(bwOfSrcPos.containsKey(srcPos)) {
+        													double oldvalue = bwOfSrcPos.get(srcPos);
+        													bwOfSrcPos.put(srcPos, oldvalue + neededBw);
+        												}else {
+        													bwOfSrcPos.put(srcPos, 0 + neededBw);
+        												}
+        											}
+        											for(int pos : bwOfSrcPos.keySet()) {
+        												if((UpArray[0][pos]-bwOfSrcPos.get(pos))<0) {
+        													inter_resourceEnough = false;
+        													break;
+        												}
+        											}
+        										}
+        										// downlink
+        										if(job.TotalTransferDataSize[xindex]>0 && inter_resourceEnough == true) {
+        											if((DownArray[0][dcindex]-totalBandwidth)<0) {
+        												inter_resourceEnough = false;
+        											}
+        										}
     										}
-    										// downlink
-    										if(job.TotalTransferDataSize[xindex]>0 && inter_resourceEnough == true) {
-    											if((DownArray[0][dcindex]-totalBandwidth)<0) {
-    												inter_resourceEnough = false;
-    											}
-    										}
+    										
     										
     										if(inter_resourceEnough == true) {
     											success = true;
@@ -1060,19 +1068,21 @@ public class WorkflowScheduler extends DatacenterBroker {
     											// cut down resource
     											// machines
     											SlotArray[0][dcindex] -= 1;
-    											
-    											// downlink
-    											if(job.TotalTransferDataSize[xindex]>0) {
-    												DownArray[0][dcindex] -= totalBandwidth;
+    											if(Parameters.isConcernGeoNet == true) {
+    												// downlink
+        											if(job.TotalTransferDataSize[xindex]>0) {
+        												DownArray[0][dcindex] -= totalBandwidth;
+        											}
+        											
+        											// uplink
+        											
+        											if(job.TotalTransferDataSize[xindex]>0) {
+        												for(int pos : bwOfSrcPos.keySet()) {
+        													UpArray[0][pos] -= bwOfSrcPos.get(pos);
+        												}
+        											}
     											}
     											
-    											// uplink
-    											
-    											if(job.TotalTransferDataSize[xindex]>0) {
-    												for(int pos : bwOfSrcPos.keySet()) {
-    													UpArray[0][pos] -= bwOfSrcPos.get(pos);
-    												}
-    											}
     										}else {
     											singlex[xindex] = 0;
     										}
@@ -1128,44 +1138,50 @@ public class WorkflowScheduler extends DatacenterBroker {
     										totalBandwidth = 0d;
     										// uplink
     										bwOfSrcPos = new HashMap<>();
-    										if(job.TotalTransferDataSize[xindex]>0) {
-    											for(int dataindex = 0; dataindex < datanumber; dataindex++) {
-    												double neededBw = job.bandwidth[xindex][dataindex];
-    												totalBandwidth += neededBw;
-    												int srcPos = (int) job.datapos[tindex][dataindex];
-    												if(bwOfSrcPos.containsKey(srcPos)) {
-    													double oldvalue = bwOfSrcPos.get(srcPos);
-    													bwOfSrcPos.put(srcPos, oldvalue + neededBw);
-    												}else {
-    													bwOfSrcPos.put(srcPos, 0 + neededBw);
-    												}
-    											}
-    											for(int pos : bwOfSrcPos.keySet()) {
-    												if((UpArray[0][pos]-bwOfSrcPos.get(pos))<0) {
-    													success = false;
-    													break;
-    												}
-    											}
+    										if(Parameters.isConcernGeoNet == true) {
+    											if(job.TotalTransferDataSize[xindex]>0) {
+        											for(int dataindex = 0; dataindex < datanumber; dataindex++) {
+        												double neededBw = job.bandwidth[xindex][dataindex];
+        												totalBandwidth += neededBw;
+        												int srcPos = (int) job.datapos[tindex][dataindex];
+        												if(bwOfSrcPos.containsKey(srcPos)) {
+        													double oldvalue = bwOfSrcPos.get(srcPos);
+        													bwOfSrcPos.put(srcPos, oldvalue + neededBw);
+        												}else {
+        													bwOfSrcPos.put(srcPos, 0 + neededBw);
+        												}
+        											}
+        											for(int pos : bwOfSrcPos.keySet()) {
+        												if((UpArray[0][pos]-bwOfSrcPos.get(pos))<0) {
+        													success = false;
+        													break;
+        												}
+        											}
+        										}
+        										
+        										
+        										// downlink
+        										if(job.TotalTransferDataSize[xindex]>0 && success == true) {
+        											if((DownArray[0][dcindex]-totalBandwidth)<0) {
+        												success = false;
+        												continue;
+        											}
+        										}
     										}
     										
-    										
-    										// downlink
-    										if(job.TotalTransferDataSize[xindex]>0 && success == true) {
-    											if((DownArray[0][dcindex]-totalBandwidth)<0) {
-    												success = false;
-    												continue;
-    											}
-    										}
     										if(success == true) {
     											SlotArray[0][dcindex] -= 1;
     											
-    											if(job.TotalTransferDataSize[xindex]>0) {
-    												DownArray[0][dcindex] -= totalBandwidth;
+    											if(Parameters.isConcernGeoNet == true) {
+    												if(job.TotalTransferDataSize[xindex]>0) {
+        												DownArray[0][dcindex] -= totalBandwidth;
 
+        											}
+        											for(int pos : bwOfSrcPos.keySet()) {
+        												UpArray[0][pos]-=bwOfSrcPos.get(pos);
+        											}
     											}
-    											for(int pos : bwOfSrcPos.keySet()) {
-    												UpArray[0][pos]-=bwOfSrcPos.get(pos);
-    											}
+    											
     											successDC = dcindex;
     											break;
     										}
@@ -1287,7 +1303,12 @@ public class WorkflowScheduler extends DatacenterBroker {
 		    						}
 		    					}
 		    					expr.addTerm(0.0d, vars[vnum]);
-		    					model.addConstr(expr, GRB.LESS_EQUAL, UpArray[0][datacenterindex], "c"+String.valueOf(constraintIndex));
+		    					if(Parameters.isConcernGeoNet == false) {
+									model.addConstr(expr, GRB.GREATER_EQUAL, 0.0d, "c"+String.valueOf(constraintIndex));
+		    					}else {
+									model.addConstr(expr, GRB.LESS_EQUAL, UpArray[0][datacenterindex], "c"+String.valueOf(constraintIndex));
+
+		    					}
 		    					constraintIndex++;
 		    				}
 		    				
@@ -1310,7 +1331,11 @@ public class WorkflowScheduler extends DatacenterBroker {
 		    						}
 		    					}
 		    					expr.addTerm(0.0d, vars[vnum]);
-		    					model.addConstr(expr, GRB.LESS_EQUAL, DownArray[0][datacenterindex], "c"+String.valueOf(constraintIndex));
+		    					if(Parameters.isConcernGeoNet == false) {
+		        					model.addConstr(expr, GRB.GREATER_EQUAL, 0.0d, "c"+String.valueOf(constraintIndex));
+		    					}else {
+		        					model.addConstr(expr, GRB.LESS_EQUAL, DownArray[0][datacenterindex], "c"+String.valueOf(constraintIndex));
+		    					}
 		    					constraintIndex++;
 		    				}
 		    				
@@ -1354,31 +1379,34 @@ public class WorkflowScheduler extends DatacenterBroker {
     										totalBandwidth = 0d;
     										// uplink
     										bwOfSrcPos = new HashMap<>();
-    										if(job.TotalTransferDataSize[xindex]>0) {
-    											for(int dataindex = 0; dataindex < datanumber; dataindex++) {
-    												double neededBw = job.bandwidth[xindex][dataindex];
-    												totalBandwidth += neededBw;
-    												int srcPos = (int) job.datapos[tindex][dataindex];
-    												if(bwOfSrcPos.containsKey(srcPos)) {
-    													double oldvalue = bwOfSrcPos.get(srcPos);
-    													bwOfSrcPos.put(srcPos, oldvalue + neededBw);
-    												}else {
-    													bwOfSrcPos.put(srcPos, 0 + neededBw);
-    												}
-    											}
-    											for(int pos : bwOfSrcPos.keySet()) {
-    												if((UpArray[0][pos]-bwOfSrcPos.get(pos))<0) {
-    													inter_resourceEnough = false;
-    													break;
-    												}
-    											}
+    										if(Parameters.isConcernGeoNet == true) {
+    											if(job.TotalTransferDataSize[xindex]>0) {
+        											for(int dataindex = 0; dataindex < datanumber; dataindex++) {
+        												double neededBw = job.bandwidth[xindex][dataindex];
+        												totalBandwidth += neededBw;
+        												int srcPos = (int) job.datapos[tindex][dataindex];
+        												if(bwOfSrcPos.containsKey(srcPos)) {
+        													double oldvalue = bwOfSrcPos.get(srcPos);
+        													bwOfSrcPos.put(srcPos, oldvalue + neededBw);
+        												}else {
+        													bwOfSrcPos.put(srcPos, 0 + neededBw);
+        												}
+        											}
+        											for(int pos : bwOfSrcPos.keySet()) {
+        												if((UpArray[0][pos]-bwOfSrcPos.get(pos))<0) {
+        													inter_resourceEnough = false;
+        													break;
+        												}
+        											}
+        										}
+        										// downlink
+        										if(job.TotalTransferDataSize[xindex]>0 && inter_resourceEnough == true) {
+        											if((DownArray[0][dcindex]-totalBandwidth)<0) {
+        												inter_resourceEnough = false;
+        											}
+        										}
     										}
-    										// downlink
-    										if(job.TotalTransferDataSize[xindex]>0 && inter_resourceEnough == true) {
-    											if((DownArray[0][dcindex]-totalBandwidth)<0) {
-    												inter_resourceEnough = false;
-    											}
-    										}
+    										
     										
     										if(inter_resourceEnough == true) {
     											success = true;
@@ -1389,18 +1417,21 @@ public class WorkflowScheduler extends DatacenterBroker {
     											// machines
     											SlotArray[0][dcindex] -= 1;
     											
-    											// downlink
-    											if(job.TotalTransferDataSize[xindex]>0) {
-    												DownArray[0][dcindex] -= totalBandwidth;
+    											if(Parameters.isConcernGeoNet == true) {
+    												// downlink
+        											if(job.TotalTransferDataSize[xindex]>0) {
+        												DownArray[0][dcindex] -= totalBandwidth;
+        											}
+        											
+        											// uplink
+        											
+        											if(job.TotalTransferDataSize[xindex]>0) {
+        												for(int pos : bwOfSrcPos.keySet()) {
+        													UpArray[0][pos] -= bwOfSrcPos.get(pos);
+        												}
+        											}
     											}
     											
-    											// uplink
-    											
-    											if(job.TotalTransferDataSize[xindex]>0) {
-    												for(int pos : bwOfSrcPos.keySet()) {
-    													UpArray[0][pos] -= bwOfSrcPos.get(pos);
-    												}
-    											}
     										}else {
     											singlex[xindex] = 0;
     										}
@@ -1444,44 +1475,51 @@ public class WorkflowScheduler extends DatacenterBroker {
     										totalBandwidth = 0d;
     										// uplink
     										bwOfSrcPos = new HashMap<>();
-    										if(job.TotalTransferDataSize[xindex]>0) {
-    											for(int dataindex = 0; dataindex < datanumber; dataindex++) {
-    												double neededBw = job.bandwidth[xindex][dataindex];
-    												totalBandwidth += neededBw;
-    												int srcPos = (int) job.datapos[tindex][dataindex];
-    												if(bwOfSrcPos.containsKey(srcPos)) {
-    													double oldvalue = bwOfSrcPos.get(srcPos);
-    													bwOfSrcPos.put(srcPos, oldvalue + neededBw);
-    												}else {
-    													bwOfSrcPos.put(srcPos, 0 + neededBw);
-    												}
-    											}
-    											for(int pos : bwOfSrcPos.keySet()) {
-    												if((UpArray[0][pos]-bwOfSrcPos.get(pos))<0) {
-    													success = false;
-    													break;
-    												}
-    											}
+    										
+    										if(Parameters.isConcernGeoNet == true) {
+    											if(job.TotalTransferDataSize[xindex]>0) {
+        											for(int dataindex = 0; dataindex < datanumber; dataindex++) {
+        												double neededBw = job.bandwidth[xindex][dataindex];
+        												totalBandwidth += neededBw;
+        												int srcPos = (int) job.datapos[tindex][dataindex];
+        												if(bwOfSrcPos.containsKey(srcPos)) {
+        													double oldvalue = bwOfSrcPos.get(srcPos);
+        													bwOfSrcPos.put(srcPos, oldvalue + neededBw);
+        												}else {
+        													bwOfSrcPos.put(srcPos, 0 + neededBw);
+        												}
+        											}
+        											for(int pos : bwOfSrcPos.keySet()) {
+        												if((UpArray[0][pos]-bwOfSrcPos.get(pos))<0) {
+        													success = false;
+        													break;
+        												}
+        											}
+        										}
+        										
+        										
+        										// downlink
+        										if(job.TotalTransferDataSize[xindex]>0 && success == true) {
+        											if((DownArray[0][dcindex]-totalBandwidth)<0) {
+        												success = false;
+        												continue;
+        											}
+        										}
     										}
     										
-    										
-    										// downlink
-    										if(job.TotalTransferDataSize[xindex]>0 && success == true) {
-    											if((DownArray[0][dcindex]-totalBandwidth)<0) {
-    												success = false;
-    												continue;
-    											}
-    										}
     										if(success == true) {
     											SlotArray[0][dcindex] -= 1;
     											
-    											if(job.TotalTransferDataSize[xindex]>0) {
-    												DownArray[0][dcindex] -= totalBandwidth;
+    											if(Parameters.isConcernGeoNet == true) {
+    												if(job.TotalTransferDataSize[xindex]>0) {
+        												DownArray[0][dcindex] -= totalBandwidth;
 
+        											}
+        											for(int pos : bwOfSrcPos.keySet()) {
+        												UpArray[0][pos]-=bwOfSrcPos.get(pos);
+        											}
     											}
-    											for(int pos : bwOfSrcPos.keySet()) {
-    												UpArray[0][pos]-=bwOfSrcPos.get(pos);
-    											}
+    											
     											successDC = dcindex;
     											break;
     										}
@@ -1583,6 +1621,7 @@ public class WorkflowScheduler extends DatacenterBroker {
                 		MWNumericArray uselessDCforTask = null;
                 		MWNumericArray r = null;
                 		MWNumericArray slotlimit = null;
+                		MWNumericArray isGeoNet = null;
                 		Object[] result = null;	/* Stores the result */
                 		MWNumericArray xAssign = null;	/* Location of minimal value */
                 		MWNumericArray UpdatedSlot = null;	/* solvable flag */
@@ -1602,6 +1641,7 @@ public class WorkflowScheduler extends DatacenterBroker {
     						dcnum = MWNumericArray.newInstance(dims, MWClassID.INT64,MWComplexity.REAL);
     						r = MWNumericArray.newInstance(dims, MWClassID.DOUBLE,MWComplexity.REAL);
     						slotlimit = MWNumericArray.newInstance(dims, MWClassID.INT64,MWComplexity.REAL);
+    						isGeoNet = MWNumericArray.newInstance(dims, MWClassID.INT16,MWComplexity.REAL);
     						dims[1] = unscheduledTaskNum;
     						data = MWNumericArray.newInstance(dims, MWClassID.INT64,MWComplexity.REAL);
     						dims[1] = Parameters.numberOfDC;
@@ -1626,6 +1666,10 @@ public class WorkflowScheduler extends DatacenterBroker {
     						dcnum.set(1, Parameters.numberOfDC);
     						r.set(1, Parameters.r);
     						slotlimit.set(1, preAssignedSlots);
+    						if(Parameters.isConcernGeoNet == true)
+    							isGeoNet.set(1, 1);
+    						else
+    							isGeoNet.set(1, 0);
     						
     						int[] pos = new int[2];
     						
@@ -1669,16 +1713,16 @@ public class WorkflowScheduler extends DatacenterBroker {
     						
     						switch(Parameters.copystrategy) {
     						case 1:
-    							result = taskAssign.copyStrategy(4,xOrig,tasknum,dcnum,allRateMuArray,allRateSigmaArray,workloadArray,TotalTransferDataSize,data,datapos,bandwidth,Slot,Up,Down,uselessDCforTask,r,slotlimit);
+    							result = taskAssign.copyStrategy(4,xOrig,tasknum,dcnum,allRateMuArray,allRateSigmaArray,workloadArray,TotalTransferDataSize,data,datapos,bandwidth,Slot,Up,Down,uselessDCforTask,r,slotlimit,isGeoNet);
     							break;
     						case 2:
-    							result = taskAssign.copyStrategy_optimizeExp_Traverse(4,xOrig,tasknum,dcnum,allRateMuArray,allRateSigmaArray,workloadArray,TotalTransferDataSize,data,datapos,bandwidth,Slot,Up,Down,uselessDCforTask,r,slotlimit);
+    							result = taskAssign.copyStrategy_optimizeExp_Traverse(4,xOrig,tasknum,dcnum,allRateMuArray,allRateSigmaArray,workloadArray,TotalTransferDataSize,data,datapos,bandwidth,Slot,Up,Down,uselessDCforTask,r,slotlimit,isGeoNet);
     							break;
     						case 3:
-    							result = taskAssign.copyStrategy_optimizeAll_orderedRes(4,xOrig,tasknum,dcnum,allRateMuArray,allRateSigmaArray,workloadArray,TotalTransferDataSize,data,datapos,bandwidth,Slot,Up,Down,uselessDCforTask,r,slotlimit);
+    							result = taskAssign.copyStrategy_optimizeAll_orderedRes(4,xOrig,tasknum,dcnum,allRateMuArray,allRateSigmaArray,workloadArray,TotalTransferDataSize,data,datapos,bandwidth,Slot,Up,Down,uselessDCforTask,r,slotlimit,isGeoNet);
     							break;
     						case 4:
-    							result = taskAssign.copyStrategy_optimizeAll_Traverse(4,xOrig,tasknum,dcnum,allRateMuArray,allRateSigmaArray,workloadArray,TotalTransferDataSize,data,datapos,bandwidth,Slot,Up,Down,uselessDCforTask,r,slotlimit);
+    							result = taskAssign.copyStrategy_optimizeAll_Traverse(4,xOrig,tasknum,dcnum,allRateMuArray,allRateSigmaArray,workloadArray,TotalTransferDataSize,data,datapos,bandwidth,Slot,Up,Down,uselessDCforTask,r,slotlimit,isGeoNet);
     							break;
     						default:
     							break;
@@ -1765,6 +1809,7 @@ public class WorkflowScheduler extends DatacenterBroker {
     						MWNumericArray.disposeArray(xOrig);
     						MWNumericArray.disposeArray(tasknum);
     						MWNumericArray.disposeArray(dcnum);
+    						MWNumericArray.disposeArray(isGeoNet);
     						MWNumericArray.disposeArray(allRateMuArray);
     						MWNumericArray.disposeArray(allRateSigmaArray);
     						MWNumericArray.disposeArray(TotalTransferDataSize);
@@ -1788,7 +1833,7 @@ public class WorkflowScheduler extends DatacenterBroker {
             		}
             	}
             	
-        	}else {
+        	}else if(false){
         	// if no
             	// greedy assign for the tasks one by one
         		if(Parameters.isDebug)
@@ -2410,44 +2455,51 @@ public class WorkflowScheduler extends DatacenterBroker {
 					double totalBandwidth = 0d;
 					// uplink
 					Map<Integer, Double> bwOfSrcPos = new HashMap<>();
-					if(task.TotalTransferDataSize[dcindex]>0) {
-						for(int dataindex = 0; dataindex < datanumber; dataindex++) {
-							double neededBw = task.bandwidth[dcindex][dataindex];
-							totalBandwidth += totalBandwidth;
-							int srcPos = (int) task.positionOfData[dataindex];
-							if(bwOfSrcPos.containsKey(srcPos)) {
-								double oldvalue = bwOfSrcPos.get(srcPos);
-								bwOfSrcPos.put(srcPos, oldvalue + neededBw);
-							}else {
-								bwOfSrcPos.put(srcPos, 0 + neededBw);
+					if(Parameters.isConcernGeoNet == true) {
+						if(task.TotalTransferDataSize[dcindex]>0) {
+							for(int dataindex = 0; dataindex < datanumber; dataindex++) {
+								double neededBw = task.bandwidth[dcindex][dataindex];
+								totalBandwidth += totalBandwidth;
+								int srcPos = (int) task.positionOfData[dataindex];
+								if(bwOfSrcPos.containsKey(srcPos)) {
+									double oldvalue = bwOfSrcPos.get(srcPos);
+									bwOfSrcPos.put(srcPos, oldvalue + neededBw);
+								}else {
+									bwOfSrcPos.put(srcPos, 0 + neededBw);
+								}
+							}
+							for(int pos : bwOfSrcPos.keySet()) {
+								if((UpArray[pos]-bwOfSrcPos.get(pos))<0) {
+									success = false;
+									break;
+								}
 							}
 						}
-						for(int pos : bwOfSrcPos.keySet()) {
-							if((UpArray[pos]-bwOfSrcPos.get(pos))<0) {
+						
+						// downlink
+						if(task.TotalTransferDataSize[dcindex]>0 && success == true) {
+							if((DownArray[dcindex]-totalBandwidth)<0) {
 								success = false;
-								break;
+								continue;
 							}
 						}
 					}
 					
-					// downlink
-					if(task.TotalTransferDataSize[dcindex]>0 && success == true) {
-						if((DownArray[dcindex]-totalBandwidth)<0) {
-							success = false;
-							continue;
-						}
-					}
 					
 					
 					if(success == true) {
 						SlotArray[dcindex] -= 1;
-						if(task.TotalTransferDataSize[dcindex]>0) {
-							DownArray[dcindex] -= totalBandwidth;
+						
+						if(Parameters.isConcernGeoNet == true) {
+							if(task.TotalTransferDataSize[dcindex]>0) {
+								DownArray[dcindex] -= totalBandwidth;
 
+							}
+							for(int pos : bwOfSrcPos.keySet()) {
+								UpArray[pos]-=bwOfSrcPos.get(pos);
+							}
 						}
-						for(int pos : bwOfSrcPos.keySet()) {
-							UpArray[pos]-=bwOfSrcPos.get(pos);
-						}
+						
 						successDC = dcindex;
 						break;
 					}

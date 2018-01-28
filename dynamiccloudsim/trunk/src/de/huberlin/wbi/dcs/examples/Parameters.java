@@ -1,6 +1,8 @@
 
 package de.huberlin.wbi.dcs.examples;
 
+import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.text.DecimalFormat;
 import java.util.HashMap;
@@ -99,9 +101,19 @@ public class Parameters {
     
     public static final int BASE = 0;
     
+//    public static double dcFailTime = 1d;
+    
+    public static int failNumOfDC = 2;
+    
     public static boolean isDebug = false;
     
-    public static boolean isGurobi = false;
+    public static boolean isGurobi = true;
+    
+    public static boolean isConcernDCFail = true;
+    
+    public static boolean isConcernUnstable = true;
+    
+    public static boolean isConcernGeoNet = true;
     
     public static boolean isUselessDCuseful = true;
     
@@ -258,6 +270,8 @@ public class Parameters {
     		} catch (IOException e) {
     			e.printStackTrace();
     		}
+            generateDCfailEvent();
+            
         }else {
         	try {
 	  			ModelExtractor.extracteWorkflowInfo();
@@ -265,6 +279,7 @@ public class Parameters {
 	  		} catch (IOException e) {
 	  			e.printStackTrace();
 	  		}
+ //       	generateDCfailEvent();
         }
         
 
@@ -315,7 +330,59 @@ public class Parameters {
 //    	nVms = sumOfVM();
 //    }
 
-    /**
+    private static void generateDCfailEvent() {
+		// TODO Auto-generated method stub
+    	// default: ten DCfail during the 12day execution time
+//    	double[] failTimeOfDC = new double[Parameters.failNumOfDC];
+//    	int[] failNumOfTime = new int[Parameters.failNumOfDC];
+    	
+    	File file = new File("./model/modelInfo-dcfail.txt");
+    	try {
+    		FileWriter out = new FileWriter(file);
+    		out.write(Parameters.failNumOfDC+"\t");
+    		out.write("\r\n");
+        	int successfulindex = 0;
+        	while(successfulindex < Parameters.failNumOfDC) {
+        		double dcFailTime = 1+Math.random()*(12d*24*60*60);
+        		int[] whetherFail = new int[Parameters.numberOfDC];
+        		double[] failDuration = new double[Parameters.numberOfDC];
+        		int failNum = 0;
+        		for(int dcindex = 0; dcindex < Parameters.numberOfDC; dcindex++) {
+        			double pro = Math.random();
+        			if(pro < Parameters.likelihoodOfDCFailure[dcindex]) {
+        				whetherFail[dcindex] = 1;
+        				failDuration[dcindex] = Parameters.lbOfDCFailureDuration[dcindex] + Math.random()
+        				*(Parameters.ubOfDCFailureDuration[dcindex] 
+        						- Parameters.lbOfDCFailureDuration[dcindex]);
+        				failNum++;
+        			}else {
+        				whetherFail[dcindex] = 0;
+        			}
+        		}
+        		if(failNum == 0)
+        			continue;
+        		out.write(dcFailTime+"\t"+failNum+"\t");
+    			out.write("\r\n");
+    			for(int dcindex = 0; dcindex < Parameters.numberOfDC; dcindex++) {
+    				if(whetherFail[dcindex] == 1) {
+    					out.write(dcindex+"\t"+failDuration[dcindex]+"\t");
+    					out.write("\r\n");
+    				}
+    			}
+    			
+        		successfulindex++;
+        		
+        	}
+        	out.close();
+    	}catch (IOException e) {
+			// TODO: handle exception
+    		e.printStackTrace();
+		}
+    	
+		
+	}
+
+	/**
      * Gets the overhead parameters
      *
      * @return the overhead parameters

@@ -184,19 +184,19 @@ public class Datacenter extends SimEntity {
 			// New Cloudlet arrives, but the sender asks for an ack
 			case CloudSimTags.CLOUDLET_SUBMIT_ACK:
 				// judge whether the DC is fail to connect with the Broker
-				if(Parameters.isDCFailHappen && !isFail && CloudSim.clock() != getLastProcessTime()) {
-					DCfailprob = Math.random();
-					DCfailduration = characteristics.lbOfDCFailureDuration + Math.random()*(characteristics.ubOfDCFailureDuration - characteristics.lbOfDCFailureDuration);
-					if (DCfailprob < characteristics.getLikelihoodOfDCFailure()) {
-						isFail = true;
-						double[] data = new double[2];
-						data[0] = getId();
-						data[1] = DCfailduration;
-						sendNow(attributedBrokerId, CloudSimTags.DC_FAIL,data);
-						failCloudletProcessing();
-						setLastProcessTime(CloudSim.clock());
-					}
-				}
+//				if(Parameters.isDCFailHappen && !isFail && CloudSim.clock() != getLastProcessTime()) {
+//					DCfailprob = Math.random();
+//					DCfailduration = characteristics.lbOfDCFailureDuration + Math.random()*(characteristics.ubOfDCFailureDuration - characteristics.lbOfDCFailureDuration);
+//					if (DCfailprob < characteristics.getLikelihoodOfDCFailure()) {
+//						isFail = true;
+//						double[] data = new double[2];
+//						data[0] = getId();
+//						data[1] = DCfailduration;
+//						sendNow(attributedBrokerId, CloudSimTags.DC_FAIL,data);
+//						failCloudletProcessing();
+//						setLastProcessTime(CloudSim.clock());
+//					}
+//				}
 				
 				if(!isFail) {
 					processCloudletSubmit(ev, true);
@@ -307,18 +307,18 @@ public class Datacenter extends SimEntity {
 				break;
 
 			case CloudSimTags.VM_DATACENTER_EVENT:
-				if(Parameters.isDCFailHappen && !isFail && CloudSim.clock() != getLastProcessTime()) {
-					DCfailprob = Math.random();
-					DCfailduration = characteristics.lbOfDCFailureDuration + Math.random()*(characteristics.ubOfDCFailureDuration - characteristics.lbOfDCFailureDuration);
-					if (DCfailprob < characteristics.getLikelihoodOfDCFailure()) {
-						isFail = true;
-						double[] data = new double[2];
-						data[0] = getId();
-						data[1] = DCfailduration;
-						sendNow(attributedBrokerId,CloudSimTags.DC_FAIL,data);
-						setLastProcessTime(CloudSim.clock());
-					}
-				}
+//				if(Parameters.isDCFailHappen && !isFail && CloudSim.clock() != getLastProcessTime()) {
+//					DCfailprob = Math.random();
+//					DCfailduration = characteristics.lbOfDCFailureDuration + Math.random()*(characteristics.ubOfDCFailureDuration - characteristics.lbOfDCFailureDuration);
+//					if (DCfailprob < characteristics.getLikelihoodOfDCFailure()) {
+//						isFail = true;
+//						double[] data = new double[2];
+//						data[0] = getId();
+//						data[1] = DCfailduration;
+//						sendNow(attributedBrokerId,CloudSimTags.DC_FAIL,data);
+//						setLastProcessTime(CloudSim.clock());
+//					}
+//				}
 				if(!isFail) {
 					updateCloudletProcessing();
 					checkCloudletCompletion();
@@ -347,6 +347,18 @@ public class Datacenter extends SimEntity {
 				break;
 			case CloudSimTags.INITIAL_LASTTIME:
 				setLastProcessTime(0.0);
+				break;
+			case CloudSimTags.DC_FAIL_INFO:
+				if(!isFail && CloudSim.clock() != getLastProcessTime()) {
+					DCfailduration = (double)ev.getData();
+					isFail = true;
+					double[] data_dura = new double[2];
+					data_dura[0] = getId();
+					data_dura[1] = DCfailduration;
+					sendNow(attributedBrokerId,CloudSimTags.DC_FAIL,data_dura);
+					failCloudletProcessing();
+					setLastProcessTime(CloudSim.clock());
+				}
 				break;
 			// other unknown tags are processed by this method
 			default:

@@ -57,11 +57,15 @@ public class Job extends Task {
     public Map<Integer, Double> unscheduledGreateRate;
     public Map<Integer, List<Integer>> unscheduledGreatePosition;
     
+    public Map<Integer, Double> unscheduledGreateRealRate;
+    public Map<Integer, List<Integer>> unscheduledGreateRealRatePosition;
+    
     public List<Integer> failedAssignTaskIndexInGreateAssign;
 
     
     // required information when scheduled
     public Map<Integer,List<Map.Entry<Integer, Double>>> sortedListOfTask;
+    public Map<Integer,List<Map.Entry<Integer, Double>>> sortedListOfTaskRate;
     public double[] muParaOfTaskInDC;
 	public double[] sigmaParaOfTaskInDC;
 	public int[] uselessDCforTask;
@@ -114,6 +118,8 @@ public class Job extends Task {
         currentGreatePosition = new HashMap<>();
         unscheduledGreateRate = new HashMap<>();
         unscheduledGreatePosition = new HashMap<>();
+        unscheduledGreateRealRate = new HashMap<>();
+        unscheduledGreateRealRatePosition = new HashMap<>();
         failedAssignTaskIndexInGreateAssign = new ArrayList<>();
         sortedflag = false;
     }
