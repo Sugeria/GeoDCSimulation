@@ -33,6 +33,7 @@ import org.cloudbus.cloudsim.core.predicates.PredicateNone;
 import org.workflowsim.ClusteringEngine;
 import org.workflowsim.Job;
 import org.workflowsim.WorkflowEngine;
+import org.workflowsim.WorkflowScheduler;
 
 import de.huberlin.wbi.cuneiform.core.semanticmodel.Param;
 import de.huberlin.wbi.dcs.examples.Parameters;
@@ -78,8 +79,8 @@ public class CloudSim {
 	/** The termination time. */
 	private static double terminateAt = -1;
 	
-	public static int totalRunIndex = 1;
 
+	public static int totalRunIndex = 1;
 	/**
 	 * Initialises all the common attributes.
 	 * 
@@ -546,12 +547,12 @@ public class CloudSim {
 
 		} else {
 			
-			if(CloudSim.totalRunIndex < (Parameters.numberOfStrategy * Parameters.numberOfRun - 1)) {
-				List<Job> outputList0 = WorkflowEngine.getJobsReceivedList();
-        		WorkflowExample.sortJobId(outputList0);
-				WorkflowExample.record(outputList0);
-				Parameters.printJobList(outputList0);
-				int numberOfSuccessfulJob = outputList0.size();
+			if(CloudSim.totalRunIndex < 23) {
+//				List<Job> outputList0 = WorkflowEngine.getJobsReceivedList();
+//        		WorkflowExample.sortJobId(outputList0);
+//				WorkflowExample.record(outputList0);
+//				Parameters.printJobList(outputList0);
+				int numberOfSuccessfulJob = WorkflowEngine.jobsCompleted;
 				double accumulatedRuntime = Parameters.sumOfJobExecutime/numberOfSuccessfulJob;
 				Log.printLine("Average runtime in minutes: " + accumulatedRuntime / 60);
 				
@@ -566,12 +567,14 @@ public class CloudSim {
 					e.printStackTrace();
 				}
 				
-//				try {
-//					WorkflowEngine.out.close();
-//				}catch (IOException e) {
-//					// TODO: handle exception
-//					e.printStackTrace();
-//				}
+				try {
+					WorkflowEngine.out.write(WorkflowEngine.jobsCompleted+"\t");
+					WorkflowEngine.out.write("\r\n");
+					WorkflowEngine.out.close();
+				}catch (IOException e) {
+					// TODO: handle exception
+					e.printStackTrace();
+				}
 				
 				// each datacenter initial lastprocessingtime
 				
@@ -579,10 +582,181 @@ public class CloudSim {
 				Parameters.isExtracte = true;
 				queue_empty = false;
 				CloudSim.totalRunIndex = CloudSim.totalRunIndex + 1;
-				int strategyIndex = (int)Math.floor(((double)CloudSim.totalRunIndex)/((double)Parameters.numberOfRun));
-				int runIndex = (int)(((double)CloudSim.totalRunIndex)%((double)Parameters.numberOfRun));
-				Parameters.copystrategy = strategyIndex;
-				Parameters.runIndex = runIndex;
+				
+				switch (totalRunIndex) {
+				case 1:
+					Parameters.isConcernDCFail = false;
+					Parameters.isConcernUnstable = false;
+					Parameters.isConcernGeoNet = false;
+					Parameters.isUselessDCuseful = false;
+					break;
+				case 2:
+					Parameters.copystrategy = 1;
+					Parameters.isConcernDCFail = true;
+					Parameters.isConcernUnstable = true;
+					Parameters.isConcernGeoNet = true;
+					Parameters.isUselessDCuseful = true;
+					break;
+				case 3:
+					Parameters.copystrategy = 1;
+					Parameters.isConcernDCFail = false;
+					Parameters.isConcernUnstable = false;
+					Parameters.isConcernGeoNet = false;
+					Parameters.isUselessDCuseful = false;
+					break;
+				case 4:
+					Parameters.copystrategy = 5;
+					Parameters.isConcernDCFail = true;
+					Parameters.isConcernUnstable = true;
+					Parameters.isConcernGeoNet = true;
+					Parameters.isUselessDCuseful = true;
+					break;
+				case 5:
+					Parameters.copystrategy = 5;
+					Parameters.isConcernDCFail = false;
+					Parameters.isConcernUnstable = false;
+					Parameters.isConcernGeoNet = false;
+					Parameters.isUselessDCuseful = false;
+					break;
+				case 6:
+					Parameters.copystrategy = 2;
+					Parameters.isConcernDCFail = true;
+					Parameters.isConcernUnstable = true;
+					Parameters.isConcernGeoNet = true;
+					Parameters.isUselessDCuseful = true;
+					break;
+				case 7:
+					Parameters.copystrategy = 3;
+					Parameters.isConcernDCFail = true;
+					Parameters.isConcernUnstable = true;
+					Parameters.isConcernGeoNet = true;
+					Parameters.isUselessDCuseful = true;
+					break;
+				case 8:
+					Parameters.copystrategy = 4;
+					Parameters.isConcernDCFail = true;
+					Parameters.isConcernUnstable = true;
+					Parameters.isConcernGeoNet = true;
+					Parameters.isUselessDCuseful = true;
+					break;
+				case 9:
+					Parameters.copystrategy = 2;
+					Parameters.isConcernDCFail = false;
+					Parameters.isConcernUnstable = false;
+					Parameters.isConcernGeoNet = false;
+					Parameters.isUselessDCuseful = false;
+					break;
+				case 10:
+					Parameters.copystrategy = 3;
+					Parameters.isConcernDCFail = false;
+					Parameters.isConcernUnstable = false;
+					Parameters.isConcernGeoNet = false;
+					Parameters.isUselessDCuseful = false;
+					break;
+				case 11:
+					Parameters.copystrategy = 4;
+					Parameters.isConcernDCFail = false;
+					Parameters.isConcernUnstable = false;
+					Parameters.isConcernGeoNet = false;
+					Parameters.isUselessDCuseful = false;
+					break;
+				case 12:
+					Parameters.copystrategy = 0;
+					Parameters.isConcernDCFail = false;
+					Parameters.isConcernUnstable = true;
+					Parameters.isConcernGeoNet = true;
+					Parameters.isUselessDCuseful = true;
+					break;
+				case 13:
+					Parameters.copystrategy = 1;
+					Parameters.isConcernDCFail = false;
+					Parameters.isConcernUnstable = true;
+					Parameters.isConcernGeoNet = true;
+					Parameters.isUselessDCuseful = true;
+					break;
+				case 14:
+					Parameters.copystrategy = 5;
+					Parameters.isConcernDCFail = false;
+					Parameters.isConcernUnstable = true;
+					Parameters.isConcernGeoNet = true;
+					Parameters.isUselessDCuseful = true;
+					break;
+				case 15:
+					Parameters.copystrategy = 0;
+					Parameters.isConcernDCFail = true;
+					Parameters.isConcernUnstable = false;
+					Parameters.isConcernGeoNet = true;
+					Parameters.isUselessDCuseful = true;
+					break;
+				case 16:
+					Parameters.copystrategy = 1;
+					Parameters.isConcernDCFail = true;
+					Parameters.isConcernUnstable = false;
+					Parameters.isConcernGeoNet = true;
+					Parameters.isUselessDCuseful = true;
+					break;
+				case 17:
+					Parameters.copystrategy = 5;
+					Parameters.isConcernDCFail = true;
+					Parameters.isConcernUnstable = false;
+					Parameters.isConcernGeoNet = true;
+					Parameters.isUselessDCuseful = true;
+					break;
+				case 18:
+					Parameters.copystrategy = 0;
+					Parameters.isConcernDCFail = true;
+					Parameters.isConcernUnstable = true;
+					Parameters.isConcernGeoNet = false;
+					Parameters.isUselessDCuseful = true;
+					break;
+				case 19:
+					Parameters.copystrategy = 1;
+					Parameters.isConcernDCFail = true;
+					Parameters.isConcernUnstable = true;
+					Parameters.isConcernGeoNet = false;
+					Parameters.isUselessDCuseful = true;
+					break;
+				case 20:
+					Parameters.copystrategy = 5;
+					Parameters.isConcernDCFail = true;
+					Parameters.isConcernUnstable = true;
+					Parameters.isConcernGeoNet = false;
+					Parameters.isUselessDCuseful = true;
+					break;
+				case 21:
+					Parameters.copystrategy = 0;
+					Parameters.isConcernDCFail = true;
+					Parameters.isConcernUnstable = true;
+					Parameters.isConcernGeoNet = true;
+					Parameters.isUselessDCuseful = false;
+					break;
+				case 22:
+					Parameters.copystrategy = 1;
+					Parameters.isConcernDCFail = true;
+					Parameters.isConcernUnstable = true;
+					Parameters.isConcernGeoNet = true;
+					Parameters.isUselessDCuseful = false;
+					break;
+				case 23:
+					Parameters.copystrategy = 5;
+					Parameters.isConcernDCFail = true;
+					Parameters.isConcernUnstable = true;
+					Parameters.isConcernGeoNet = true;
+					Parameters.isUselessDCuseful = false;
+					break;
+				default:
+					break;
+				}
+				
+				
+//				int strategyIndex = (int)Math.floor(((double)CloudSim.totalRunIndex)/((double)Parameters.numberOfRun));
+//				int runIndex = (int)(((double)CloudSim.totalRunIndex)%((double)Parameters.numberOfRun));
+//				Parameters.copystrategy = strategyIndex;
+//				Parameters.runIndex = runIndex;
+				
+				WorkflowScheduler.log.info(CloudSim.clock()+": CloudSim: Begin Strategy"+CloudSim.totalRunIndex);
+				
+				
 				clock = 0.1d;
 				SimEvent ev = new SimEvent(SimEvent.SEND, clock(), -1,entitiesByName.get("planner_0").getId(),CloudSimTags.RUN_INITIAL,null);
 				future.addEvent(ev);

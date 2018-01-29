@@ -57,11 +57,15 @@ public class Job extends Task {
     public Map<Integer, Double> unscheduledGreateRate;
     public Map<Integer, List<Integer>> unscheduledGreatePosition;
     
+    public Map<Integer, Double> unscheduledGreateRealRate;
+    public Map<Integer, List<Integer>> unscheduledGreateRealRatePosition;
+    
     public List<Integer> failedAssignTaskIndexInGreateAssign;
 
     
     // required information when scheduled
     public Map<Integer,List<Map.Entry<Integer, Double>>> sortedListOfTask;
+    public Map<Integer,List<Map.Entry<Integer, Double>>> sortedListOfTaskRate;
     public double[] muParaOfTaskInDC;
 	public double[] sigmaParaOfTaskInDC;
 	public int[] uselessDCforTask;
@@ -74,7 +78,9 @@ public class Job extends Task {
 
 	public double[][] allRateMuArray;
 	public double[][] allRateSigmaArray;
+	public double[] workloadArray;
 	public Map<Integer, HashMap<Integer, Double>> objParaOfTaskInDC;
+	public Map<Integer, HashMap<Integer, Double>> objTimeParaOfTaskInDC;
 	public int uselessConstraintsNum;
     
 	public double[] TotalTransferDataSize;
@@ -112,13 +118,15 @@ public class Job extends Task {
         currentGreatePosition = new HashMap<>();
         unscheduledGreateRate = new HashMap<>();
         unscheduledGreatePosition = new HashMap<>();
+        unscheduledGreateRealRate = new HashMap<>();
+        unscheduledGreateRealRatePosition = new HashMap<>();
         failedAssignTaskIndexInGreateAssign = new ArrayList<>();
         sortedflag = false;
     }
 
 
     public double getJobUtility() {
-    	double utility = 0d;
+    	double utility = Double.MIN_VALUE;
     	for(int tindex = 0; tindex < unscheduledTaskList.size(); tindex++) {
     		Task task  = taskList.get(tindex);
     		double rate;
@@ -133,8 +141,8 @@ public class Job extends Task {
         		pos = unscheduledGreatePosition.get(task.getCloudletId()).get(posindex);
     		}
     		
-    		double task_workload = task.getMi()+task.getIo()+task.TotalTransferDataSize[pos];
-    		utility += task_workload/rate;
+//    		double task_workload = task.getMi()+task.getIo()+task.TotalTransferDataSize[pos];
+    		utility = Math.max(utility, rate);
     	}
     	return utility;
     }

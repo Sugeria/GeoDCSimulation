@@ -27,6 +27,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.cloudbus.cloudsim.Log;
+import org.cloudbus.cloudsim.core.CloudSim;
 import org.cloudbus.cloudsim.core.CloudSimTags;
 import org.cloudbus.cloudsim.core.SimEntity;
 import org.cloudbus.cloudsim.core.SimEvent;
@@ -36,6 +37,7 @@ import org.workflowsim.planning.DHEFTPlanningAlgorithm;
 import org.workflowsim.planning.HEFTPlanningAlgorithm;
 import org.workflowsim.planning.RandomPlanningAlgorithm;
 
+import EDU.oswego.cs.dl.util.concurrent.FJTask.Par;
 import de.huberlin.wbi.dcs.examples.Parameters;
 import de.huberlin.wbi.dcs.examples.Parameters.PlanningAlgorithm;
 import de.huberlin.wbi.dcs.workflow.Task;
@@ -69,6 +71,11 @@ public final class WorkflowPlanner extends SimEntity {
      */
     private int clusteringEngineId;
     private ClusteringEngine clusteringEngine;
+    
+//    public double failDCtime;
+//    public int failDCNum;
+//    public int[] failDCindex;
+//    public double[] failDCduration;
 
     /**
      * Created a new WorkflowPlanner object.
@@ -145,7 +152,8 @@ public final class WorkflowPlanner extends SimEntity {
      * @pre ev != null
      * @post $none
      */
-    @Override
+	@SuppressWarnings("resource")
+	@Override
     public void processEvent(SimEvent ev) {
         switch (ev.getTag()) {
             case WorkflowSimTags.START_SIMULATION:
@@ -155,6 +163,10 @@ public final class WorkflowPlanner extends SimEntity {
 //            		List<String> daxList = Parameters.workflowArrival.get(time);
             		send(getId(), time, CloudSimTags.WORKFLOW_ARRIVAL,Parameters.workflowArrival.get(time));
             	}
+            	//extract the event send to DC to start DCfail
+            	
+            	
+            	
                 break;
             case CloudSimTags.WORKFLOW_ARRIVAL:
             	
@@ -189,7 +201,7 @@ public final class WorkflowPlanner extends SimEntity {
     }
 
     private void initialRun() {
-		Log.printLine("Simulations: copyStrategy" + Parameters.copystrategy + " runIndex" + Parameters.runIndex);
+		Log.printLine("Simulations: copyStrategy" + CloudSim.totalRunIndex);
 		this.taskListOfWorkflow = new HashMap<>();
 		// initial workflowParse
 		getWorkflowParser().workflowId = 0;
@@ -226,6 +238,7 @@ public final class WorkflowPlanner extends SimEntity {
 		clusteringEngine.getWorkflowEngine().setJobsReceivedList(new ArrayList<>());
 
 		clusteringEngine.getWorkflowEngine().jobsSubmitted = 0;
+		WorkflowEngine.jobsCompleted = 0;
 
 		clusteringEngine.getWorkflowEngine().jobSizeOfWorkflow = new HashMap<>();
 		clusteringEngine.getWorkflowEngine().successJobSizeOfWorkflow = new HashMap<>();
@@ -233,14 +246,13 @@ public final class WorkflowPlanner extends SimEntity {
 		clusteringEngine.getWorkflowEngine().finishTimeOfWorkflow = new HashMap<>();
 		clusteringEngine.getWorkflowEngine().executionTimeOfWorkflow = new HashMap<>();
 		
-//		File file2 = new File("./result/jobcompletioninfo-"+Parameters.copystrategy
-//				+"-"+Parameters.runIndex+".txt");
-//        try {
-//        	clusteringEngine.getWorkflowEngine().out = new FileWriter(file2);
-//        }catch (IOException e) {
-//			// TODO: handle exception
-//        	e.printStackTrace();
-//		}
+		File file2 = new File("./result/jobcompletioninfo-"+CloudSim.totalRunIndex+".txt");
+        try {
+        	WorkflowEngine.out = new FileWriter(file2);
+        }catch (IOException e) {
+			// TODO: handle exception
+        	e.printStackTrace();
+		}
 		
 		
 		
@@ -263,7 +275,7 @@ public final class WorkflowPlanner extends SimEntity {
 		clusteringEngine.getWorkflowEngine().getScheduler(0).estimatedTimesToCompletion = new HashMap<>();
 		
 		clusteringEngine.getWorkflowEngine().getScheduler(0).lastProcessTime = 0.0;
-		
+		clusteringEngine.getWorkflowEngine().getScheduler(0).sendDCFailInfo();
 		
 		
 		
