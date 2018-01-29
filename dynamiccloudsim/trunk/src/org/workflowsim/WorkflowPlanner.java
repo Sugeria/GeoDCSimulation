@@ -267,6 +267,7 @@ public final class WorkflowPlanner extends SimEntity {
 		clusteringEngine.getWorkflowEngine().getScheduler(0).ackTaskOfJob = new HashMap<>();
 		clusteringEngine.getWorkflowEngine().getScheduler(0).scheduledTaskOfJob = new HashMap<>();
 		clusteringEngine.getWorkflowEngine().getScheduler(0).JobFactory = new HashMap<>();
+		clusteringEngine.getWorkflowEngine().getScheduler(0).usedSlotsOfJob = new HashMap<>();
 		
 
 		clusteringEngine.getWorkflowEngine().getScheduler(0).progressScores = new HashMap<>();

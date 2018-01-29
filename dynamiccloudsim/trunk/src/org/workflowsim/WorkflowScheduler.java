@@ -150,6 +150,7 @@ public class WorkflowScheduler extends DatacenterBroker {
     public Map<Integer, Integer> ackTaskOfJob;
     public Map<Integer, Integer> scheduledTaskOfJob;
     public Map<Integer, Job> JobFactory;
+    public Map<Integer, Integer> usedSlotsOfJob;
 	private double runtime;
 	public int slotNum;
 	
@@ -213,6 +214,7 @@ public class WorkflowScheduler extends DatacenterBroker {
 		ackTaskOfJob = new HashMap<>();
 		scheduledTaskOfJob = new HashMap<>();
 		JobFactory = new HashMap<>();
+		usedSlotsOfJob = new HashMap<>();
 		slotNum = 0;
 //		nSucceededTasksPerVm = new HashMap<>();
 		
@@ -422,16 +424,19 @@ public class WorkflowScheduler extends DatacenterBroker {
     				taskOfJob.put(job.getCloudletId(), 1);
     				ackTaskOfJob.put(job.getCloudletId(), 0);
     				JobFactory.put(job.getCloudletId(), job);
+    				usedSlotsOfJob.put(job.getCloudletId(), 0);
     			}else {
     				// when return remember to delete the item in the three tables
     				taskOfJob.put(job.getCloudletId(), job.getTaskList().size());
     				scheduledTaskOfJob.put(job.getCloudletId(), 0);
     				ackTaskOfJob.put(job.getCloudletId(), 0);
     				JobFactory.put(job.getCloudletId(), job);
+    				usedSlotsOfJob.put(job.getCloudletId(), 0);
     				rescheduleTasks(job.getTaskList());
     			}
 			}
         	int preAssignedSlots = (int)Math.round(slotNum/srptJobNum);
+        	preAssignedSlots -= usedSlotsOfJob.get(job.getCloudletId());
         	int unscheduledTaskNum = job.unscheduledTaskList.size();
         	int greatAssignedTaskNum = unscheduledTaskNum - job.failedAssignTaskIndexInGreateAssign.size();
         	if(greatAssignedTaskNum == 0)
@@ -1855,6 +1860,8 @@ public class WorkflowScheduler extends DatacenterBroker {
 		} else {
 			task.setScheduledToFail(false);
 		}
+		int usedSlots = usedSlotsOfJob.get(task.jobId);
+		usedSlotsOfJob.put(task.jobId, usedSlots+1);
 		sendNow(getVmsToDatacentersMap().get(vm.getId()),
 				CloudSimTags.CLOUDLET_SUBMIT_ACK, task);
 	}
@@ -1877,6 +1884,8 @@ public class WorkflowScheduler extends DatacenterBroker {
 		} else {
 			task.setScheduledToFail(false);
 		}
+		int usedSlots = usedSlotsOfJob.get(task.jobId);
+		usedSlotsOfJob.put(task.jobId, usedSlots+1);
 		sendNow(getVmsToDatacentersMap().get(vm.getId()),
 				CloudSimTags.CLOUDLET_SUBMIT_ACK, task);
 	}
@@ -2117,6 +2126,7 @@ public class WorkflowScheduler extends DatacenterBroker {
     	Task task = (Task) ev.getData();
 		Vm vm = vms.get(task.getVmId());
 		Host host = vm.getHost();
+		int usedSlots = 0;
 		if (task.getCloudletStatus() == Cloudlet.SUCCESS) {
 			// in case that speculative and original tasks complete at the same time
 			if(!tasks.containsKey(task.getCloudletId())) {
@@ -2230,6 +2240,8 @@ public class WorkflowScheduler extends DatacenterBroker {
 			Vm originalVm = vms.get(originalTask.getVmId());
 			taskSucceeded(originalTask, originalVm);
 			idleTaskSlotsOfDC.get(originalVm.DCId).add(originalVm);
+			usedSlots = usedSlotsOfJob.get(originalTask.jobId);
+			usedSlotsOfJob.put(originalTask.jobId, usedSlots-1);
 			
 			originalTask.usedVM++;
 			originalTask.usedVMxTime = originalTask.usedVMxTime + (CloudSim.clock()-originalTask.getExecStartTime());
@@ -2279,7 +2291,8 @@ public class WorkflowScheduler extends DatacenterBroker {
 					Vm speculativeVm = vms.get(speculativeTask.getVmId());
 					taskSucceeded(speculativeTask, speculativeVm);
 					idleTaskSlotsOfDC.get(speculativeVm.DCId).add(speculativeVm);
-					
+					usedSlots = usedSlotsOfJob.get(speculativeTask.jobId);
+					usedSlotsOfJob.put(speculativeTask.jobId, usedSlots-1);
 					originalTask.usedVM++;
 					originalTask.usedVMxTime = originalTask.usedVMxTime + (CloudSim.clock()-speculativeTask.getExecStartTime());
 					
@@ -2359,7 +2372,8 @@ public class WorkflowScheduler extends DatacenterBroker {
 					if (speculativeTaskOfTask.get(index).getVmId() == task.getVmId()) {
 						Task speculativeTask = speculativeTaskOfTask.get(index);
 						idleTaskSlotsOfDC.get(vm.DCId).add(vm);
-						
+						usedSlots = usedSlotsOfJob.get(speculativeTask.jobId);
+						usedSlotsOfJob.put(speculativeTask.jobId, usedSlots-1);
 						originalTask.usedVM++;
 						originalTask.usedVMxTime = originalTask.usedVMxTime + (CloudSim.clock()-speculativeTask.getExecStartTime());
 						
@@ -2421,6 +2435,8 @@ public class WorkflowScheduler extends DatacenterBroker {
 				
 				Task originalTask = tasks.remove(task.getCloudletId());
 				idleTaskSlotsOfDC.get(vm.DCId).add(vm);
+				usedSlots = usedSlotsOfJob.get(originalTask.jobId);
+				usedSlotsOfJob.put(originalTask.jobId, usedSlots-1);
 				
 				originalTask.usedVM++;
 				originalTask.usedVMxTime = originalTask.usedVMxTime + (CloudSim.clock()-originalTask.getExecStartTime());
@@ -2587,6 +2603,7 @@ public class WorkflowScheduler extends DatacenterBroker {
                     ackTaskOfJob.remove(attributedJobId);
                     scheduledTaskOfJob.remove(attributedJobId);
                     JobFactory.remove(attributedJobId);
+                    usedSlotsOfJob.remove(attributedJobId);
                     
                     cloudletsSubmitted--;
                     //not really update right now, should wait 1 s until many jobs have returned
@@ -2599,6 +2616,7 @@ public class WorkflowScheduler extends DatacenterBroker {
                     scheduledTaskOfJob.remove(attributedJobId);
                     ackTaskOfJob.remove(attributedJobId);
                     JobFactory.remove(attributedJobId);
+                    usedSlotsOfJob.remove(attributedJobId);
                     
                     cloudletsSubmitted--;
                     //not really update right now, should wait 1 s until many jobs have returned
@@ -2675,6 +2693,7 @@ public class WorkflowScheduler extends DatacenterBroker {
             ackTaskOfJob.remove(attributedJobId);
             JobFactory.remove(attributedJobId);
             scheduledTaskOfJob.remove(attributedJobId);
+            usedSlotsOfJob.remove(attributedJobId);
             cloudletsSubmitted--;
             //not really update right now, should wait 1 s until many jobs have returned
             schedule(this.getId(), 0.0, WorkflowSimTags.CLOUDLET_UPDATE);
