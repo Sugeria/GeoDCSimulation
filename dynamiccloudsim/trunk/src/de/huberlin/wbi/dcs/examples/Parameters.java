@@ -102,9 +102,9 @@ public class Parameters {
     
     public static final boolean isDebug = false;
     
-    public static boolean isExtracte = false;
+    public static boolean isExtracte = true;
     // 1-4
-    public static int copystrategy = 0;
+    public static int copystrategy = 1;
     
     public static int numberOfStrategy = 6;
 
