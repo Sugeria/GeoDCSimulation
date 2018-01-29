@@ -97,7 +97,7 @@ public class WorkflowExample {
 				/**
 	             * Should change this based on real physical path
 	             */
-	            String daxPath = "./dynamiccloudsim/config/dax/Montage_1000.xml";
+	            String daxPath = "./config/dax/Montage_1000.xml";
 	            File daxFile = new File(daxPath);
 	            if (!daxFile.exists()) {
 	                Log.printLine("Warning: Please replace daxPath with the physical path in your working environment!");

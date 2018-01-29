@@ -103,7 +103,7 @@ public class Parameters {
     
 //    public static double dcFailTime = 1d;
     
-    public static int failNumOfDC = 2;
+    public static int failNumOfDC = 10;
     
     public static boolean isDebug = false;
     
@@ -117,7 +117,7 @@ public class Parameters {
     
     public static boolean isUselessDCuseful = true;
     
-    public static boolean isExtracte = true;
+    public static boolean isExtracte = false;
     
     public static boolean isDCFailHappen = false;
     
@@ -132,10 +132,10 @@ public class Parameters {
     
     // workflow
     // default 5 workflows each minutes
-    public static double lambda = 0.083;
+    public static double lambda = 0.0277;
     // default 3 days workflow
     // defend time exceed INT.MAX_VALUE
-    public static double seconds = 60d;
+    public static double seconds = 12*60*60;
     
     /**
      * Scheduling mode
@@ -683,7 +683,7 @@ public class Parameters {
 	}
 	
 
-    public static double r = 0.2d;
+    public static double r = 1d;
     
     public static double epsilon = 0.6d;
     
@@ -1342,8 +1342,8 @@ public class Parameters {
 	
 	
 	// datacenter number
-	public static int numberOfDC = 5;
-	public static String BriteFileName = "./5.brite";
+	public static int numberOfDC = 50;
+	public static String BriteFileName = "./50.brite";
 	// upperbound of inputdata
 	public static int ubOfData = 5;
 		
