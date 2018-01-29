@@ -107,7 +107,7 @@ public class Parameters {
     
     public static boolean isDebug = false;
     
-    public static boolean isGurobi = true;
+    public static boolean isGurobi = false;
     
     public static boolean isConcernDCFail = true;
     
