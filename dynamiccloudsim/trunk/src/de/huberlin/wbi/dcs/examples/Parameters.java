@@ -683,7 +683,7 @@ public class Parameters {
 	}
 	
 
-    public static double r = 0.2d;
+    public static double r = 1d;
     
     public static double epsilon = 0.6d;
     
