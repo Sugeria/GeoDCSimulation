@@ -13,10 +13,8 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.time.Year;
 import java.util.StringTokenizer;
 
-import sun.net.www.content.audio.x_aiff;
 
 /**
  * This class is just an file-reader for the special brite-format! the brite-file is structured as
