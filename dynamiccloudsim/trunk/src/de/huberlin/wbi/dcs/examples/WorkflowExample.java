@@ -24,6 +24,7 @@ import org.cloudbus.cloudsim.distributions.ContinuousDistribution;
 import org.workflowsim.Job;
 import org.workflowsim.WorkflowEngine;
 import org.workflowsim.WorkflowPlanner;
+import org.workflowsim.WorkflowScheduler;
 import org.workflowsim.utils.ClusteringParameters;
 import org.workflowsim.utils.OverheadParameters;
 import org.workflowsim.utils.ReplicaCatalog;
@@ -171,7 +172,7 @@ public class WorkflowExample {
 					wfEngine.bindSchedulerDatacenter(datacenter.getId(),0);
 				}
 				
-				
+				WorkflowScheduler.log.info("Begin:"+CloudSim.clock()+": WorkflowExample Strategy"+CloudSim.totalRunIndex);
 				// Start the simulation
 				CloudSim.startSimulation();
 //	            List<Job> outputList0 = wfEngine.getJobsReceivedList();

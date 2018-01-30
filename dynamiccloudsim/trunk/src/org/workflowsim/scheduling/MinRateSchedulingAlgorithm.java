@@ -286,24 +286,7 @@ public class MinRateSchedulingAlgorithm extends BaseSchedulingAlgorithm{
         			double io_mu_ori = io_mu;
         			double mi_mu_ori = mi_mu;
         			
-        			double miSeconds = task.getMi()/mi_mu;
-        			double ioSeconds = task.getIo()/io_mu;
-        			double bwlength = TotalTransferDataSize[xindex]/1024d;
-        			double bwSeconds = TotalTransferDataSize[xindex]/(bw_mu*1024d);
         			
-        			if (task.getMi() > 0 && miSeconds >= Math.max(ioSeconds, bwSeconds)) {
-        				
-        				io_mu = Math.min(io_mu_ori, task.getIo()*mi_mu/task.getMi());
-        				bw_mu = Math.min(bw_mu_ori, bwlength*mi_mu/task.getMi());
-        			} else if (task.getIo() > 0 && ioSeconds >= Math.max(miSeconds, bwSeconds)) {
-        				mi_mu = Math.min(mi_mu_ori, task.getMi()*io_mu/task.getIo());
-        				bw_mu = Math.min(bw_mu_ori, bwlength*io_mu/task.getIo());
-        				
-        			} else if (TotalTransferDataSize[xindex] > 0 && bwSeconds >= Math.max(miSeconds, ioSeconds)) {
-        				mi_mu = Math.min(mi_mu_ori, task.getMi()*bw_mu/bwlength);
-        				io_mu = Math.min(io_mu_ori, task.getIo()*bw_mu/bwlength);
-        				
-        			}
         			
         			// bandwidth bandwidth_dataDelay_co bandwidth_dataDelayOfTaskInDC
         			double bandwidthco = bw_mu/bw_mu_ori;
@@ -336,6 +319,34 @@ public class MinRateSchedulingAlgorithm extends BaseSchedulingAlgorithm{
 					
 					double bw_mu_dataDelay = bandwidth_dataDelayOfTaskInDC[0][xindex];
 					
+        			
+        			
+        			
+        			
+        			bw_mu = bw_mu_dataDelay;
+        			
+        			double miSeconds = task.getMi()/mi_mu;
+        			double ioSeconds = task.getIo()/io_mu;
+        			double bwlength = TotalTransferDataSize[xindex]/1024d;
+        			double bwSeconds = TotalTransferDataSize[xindex]/(bw_mu*1024d);
+        			
+        			if (task.getMi() > 0 && miSeconds >= Math.max(ioSeconds, bwSeconds)) {
+        				
+        				io_mu = Math.min(io_mu_ori, task.getIo()*mi_mu/task.getMi());
+        				bw_mu = Math.min(bw_mu_ori, bwlength*mi_mu/task.getMi());
+        			} else if (task.getIo() > 0 && ioSeconds >= Math.max(miSeconds, bwSeconds)) {
+        				mi_mu = Math.min(mi_mu_ori, task.getMi()*io_mu/task.getIo());
+        				bw_mu = Math.min(bw_mu_ori, bwlength*io_mu/task.getIo());
+        				
+        			} else if (TotalTransferDataSize[xindex] > 0 && bwSeconds >= Math.max(miSeconds, ioSeconds)) {
+        				mi_mu = Math.min(mi_mu_ori, task.getMi()*bw_mu/bwlength);
+        				io_mu = Math.min(io_mu_ori, task.getIo()*bw_mu/bwlength);
+        				
+        			}
+        			
+        			
+        			bw_mu_dataDelay = bw_mu;
+        			
 					muParaOfTaskInDC[xindex] = (mi_mu + io_mu + bw_mu_dataDelay) * unstablecoOfDC[dcindex];
         			
 					
@@ -587,105 +598,7 @@ public class MinRateSchedulingAlgorithm extends BaseSchedulingAlgorithm{
 				tasklist.set(taskindex, task);
 			}
 			
-//			for(int taskindex = 0; taskindex < numberOfTask; taskindex++) {
-//				Task task = tasklist.get(taskindex);
-//				int taskId = task.getCloudletId();
-//				int datanumber = data[taskindex];
-//				// best vm in best DC
-//				int randomeindex = (int)Math.round(Math.random()*(job.unscheduledGreatePosition.get(task.getCloudletId()).size()-1));
-//				int bestDCindex = job.unscheduledGreatePosition.get(task.getCloudletId()).get(randomeindex);
-//				int bestxindex = taskindex * Parameters.numberOfDC + bestDCindex;
-//				List<Vm> vmList = scheduler.getIdleTaskSlotsOfDC().get(bestDCindex+DCbase);
-//				int vmSize = vmList.size();
-//				double maxRate = Double.MIN_VALUE;
-//				for(int j=0; j<vmSize; j++) {
-//					DynamicVm vm = (DynamicVm)vmList.get(j);
-//					
-//					//compute the rate
-//					double mips = vm.getMips();
-//					double bwps = vm.getBw();
-//					double iops = vm.getIo();
-//					double mips_ori = mips;
-//					double bwps_ori = bwps;
-//					double iops_ori = iops;
-//					double miSeconds = task.getMi()/mips;
-//        			double ioSeconds = task.getIo()/iops;
-//        			double bwSeconds = TotalTransferDataSize[bestxindex]/bwps;
-//        			
-//        			if (task.getMi() > 0 && miSeconds >= Math.max(ioSeconds, bwSeconds)) {
-//        				iops = Math.min(iops_ori, task.getIo()*mips/task.getMi());
-//        				bwps = Math.min(bwps_ori,TotalTransferDataSize[bestxindex]*mips/task.getMi());
-//        			} else if (task.getIo() > 0 && ioSeconds >= Math.max(miSeconds, bwSeconds)) {
-//        				mips = Math.min(mips_ori,task.getMi()*iops/task.getIo());
-//        				bwps = Math.min(bwps_ori,TotalTransferDataSize[bestxindex]*iops/task.getIo());
-//        				
-//        			} else if (TotalTransferDataSize[bestxindex] > 0 && bwSeconds >= Math.max(miSeconds, ioSeconds)) {
-//        				mips = Math.min(mips_ori,task.getMi()*bwps/TotalTransferDataSize[bestxindex]);
-//        				iops = Math.min(iops_ori,task.getIo()*bwps/TotalTransferDataSize[bestxindex]);
-//        				
-//        			}
-//        			double[] bandwidthInBestVM = new double[Parameters.ubOfData];
-//        			double[] bandwidth_dataDelay_coInBestVM = new double[Parameters.ubOfData];
-//        			double bandwidth_dataDelayInBestVM = 0d;
-//        			for(int dataindex = 0; dataindex < datanumber; dataindex++) {
-//        				if (TotalTransferDataSize[bestxindex] > 0) {
-//							bandwidthInBestVM[dataindex] = bwps*transferDataSize[bestxindex][dataindex]/TotalTransferDataSize[bestxindex];
-//							
-//							int dataindex_pos = (int) datapos[taskindex][dataindex];
-//							double dataDelay = Parameters.delayAmongDCIndex[dataindex_pos][bestDCindex];
-//							if(transferDataSize[bestxindex][dataindex]==0) {
-//								bandwidth_dataDelay_coInBestVM[dataindex] = 0;
-//							}else {
-//								bandwidth_dataDelay_coInBestVM[dataindex] = transferDataSize[bestxindex][dataindex]
-//										/(transferDataSize[bestxindex][dataindex]+dataDelay*bandwidthInBestVM[dataindex]);
-//
-//							}
-//        				
-//        				}else {
-//							bandwidthInBestVM[dataindex] = 0;
-//							bandwidth_dataDelay_coInBestVM[dataindex] = 0;
-//						}
-//        				bandwidth_dataDelayInBestVM += 
-//								bandwidthInBestVM[dataindex] * bandwidth_dataDelay_coInBestVM[dataindex];
-//					
-//        				
-//        			}
-//        			
-//					
-//					double orirate = (mips + iops + bandwidth_dataDelayInBestVM)*unstablecoOfDC[bestDCindex];
-//					double delay_para = (double)Parameters.delayAmongDCIndex[task.submitDCIndex][bestDCindex];
-//        			
-//        			double task_workload = task.getMi() + task.getIo() + TotalTransferDataSize[bestxindex];
-//        			double delay_co = task_workload/(task_workload + orirate * delay_para);
-//        			double rate = orirate * delay_co;
-//        			
-//					if(rate > maxRate) {
-//						maxRate = rate;
-//					}
-//				}
-//				for(int dcindex = 0; dcindex < Parameters.numberOfDC; dcindex++) {
-//					int xindex = taskindex * Parameters.numberOfDC + dcindex;
-//					if(objParaOfTaskInDC.get(task.getCloudletId()).get(dcindex) <= (maxRate * 1/(1+Parameters.epsilon))) {
-//						uselessDCforTask[xindex] = 0;
-//						uselessConstraintsNum += 1;
-//					}
-//				}
-//				boolean noCandidateDCflag = true;
-//				for(int dcindex = 0; dcindex < Parameters.numberOfDC; dcindex++) {
-//					int xindex = taskindex * Parameters.numberOfDC + dcindex;
-//					if(uselessDCforTask[xindex]==-1) {
-//						noCandidateDCflag = false;
-//					}	
-//				}
-//				if(noCandidateDCflag == true) {
-//					for(int bdcindex = 0; bdcindex < job.unscheduledGreatePosition.get(taskId).size(); bdcindex++) {
-//						int bxindex = taskindex * Parameters.numberOfDC + job.unscheduledGreatePosition.get(taskId).get(bdcindex);
-//						uselessDCforTask[bxindex] = -1;
-//						uselessConstraintsNum -= 1;
-//					}
-//					
-//				}
-//			}
+//			
 			
 			job.uselessConstraintsNum = uselessConstraintsNum;
 			job.uselessDCforTask = uselessDCforTask;

@@ -255,11 +255,30 @@ public class BasicClustering implements ClusteringInterface {
 				
 			}
 			
+			int representTaskIndex = 0;
+			long representMiLength = 0;
+			try {
+				if(!Parameters.isExtracte) {
+					// choose the one milength of task to replace all the mi in the same taskset
+					representTaskIndex = (int)(Math.random()*(taskList.size()-1));
+					representMiLength = taskList.get(representTaskIndex).getMi();
+					if(representMiLength < 4e4d && representMiLength > 20) {
+					}else {
+						representMiLength = (long)(Math.random()*(4e4d-20)+20);
+					}
+					ClusteringEngine.out.write(representMiLength+"\t");
+					ClusteringEngine.out.write("\r\n");
+				}else {
+					line = ClusteringEngine.in.readLine();
+					para_string = line.split("\t");
+					representMiLength = (long)Double.parseDouble(para_string[0]);
+					
+				}
+			}catch (IOException e) {
+				// TODO: handle exception
+				e.printStackTrace();
+			}
 			
-			
-			// choose the one milength of task to replace all the mi in the same taskset
-			int representTaskIndex = (int)(Math.random()*(taskList.size()-1));
-			long representMiLength = taskList.get(representTaskIndex).getMi();
 			
 			List<Integer> dataSrcCandidates = new ArrayList<>();
 			

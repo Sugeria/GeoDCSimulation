@@ -387,7 +387,7 @@ public class WorkflowScheduler extends DatacenterBroker {
 		double[][] DownArray = new double[1][Parameters.numberOfDC];
 		
         //current SlotArray UpArray DownArray
-		
+		log.info("Resource");
   		for(int dcindex = 0; dcindex < Parameters.numberOfDC; dcindex++) {
   			if(healthyStateOfDC.get(dcindex + DCbase) == true) {
   				SlotArray[0][dcindex] = idleTaskSlotsOfDC.get(dcindex + DCbase).size();
@@ -397,6 +397,10 @@ public class WorkflowScheduler extends DatacenterBroker {
   			}
   			UpArray[0][dcindex] = getUplinkOfDC().get(dcindex + DCbase);
   			DownArray[0][dcindex] = getDownlinkOfDC().get(dcindex + DCbase);
+  			String resourcelog = SlotArray[0][dcindex]+"\t"+(SlotArray[0][dcindex]/ori_idleTaskSlotsOfDC.get(dcindex+DCbase))+"\t"
+  					+ UpArray[0][dcindex]+"\t"+(UpArray[0][dcindex]/ori_uplinkOfDC.get(dcindex+DCbase))+"\t"
+  					+ DownArray[0][dcindex]+"\t"+(DownArray[0][dcindex]/ori_downlinkOfDC.get(dcindex+DCbase))+"\t";
+  			log.info(resourcelog);
   		}
   		
 //  		int remainingSlotNum = slotNum;
@@ -409,6 +413,8 @@ public class WorkflowScheduler extends DatacenterBroker {
             Log.printLine(DownArray[0][0]+" "+DownArray[0][1]+" "+DownArray[0][2]);
             Log.printLine(UpArray[0][0]+" "+UpArray[0][1]+" "+UpArray[0][2]);
         }
+        
+        
         
         int lastjobindex = 0;
         int srptJobNum = (int)Math.ceil(jobNumInOneLoop*Parameters.epsilon);
@@ -1489,6 +1495,14 @@ public class WorkflowScheduler extends DatacenterBroker {
         	
         }
         lastProcessTime = CloudSim.clock();
+        log.info("Resource");
+        for(int dcindex = 0; dcindex < Parameters.numberOfDC; dcindex++) {
+        	String resourcelog = SlotArray[0][dcindex]+"\t"+(SlotArray[0][dcindex]/ori_idleTaskSlotsOfDC.get(dcindex+DCbase))+"\t"
+					+ UpArray[0][dcindex]+"\t"+(UpArray[0][dcindex]/ori_uplinkOfDC.get(dcindex+DCbase))+"\t"
+					+ DownArray[0][dcindex]+"\t"+(DownArray[0][dcindex]/ori_downlinkOfDC.get(dcindex+DCbase))+"\t";
+			log.info(resourcelog);
+        }
+        
 
     }
 
@@ -1854,7 +1868,9 @@ public class WorkflowScheduler extends DatacenterBroker {
 //				+ task.getParams() + " \"");
 		if(log.isInfoEnabled()) {
 			log.info(CloudSim.clock() + ": " + getName() + ": VM # "
-				+ vm.getId() + " starts executing Task # "
+				+ vm.getId() + " in DC"+ vm.DCId 
+				+ " with mips:" + vm.getMips() + " bw:" + vm.getBw()
+				+ " starts executing Task # "
 				+ task.getCloudletId() + " \"" + task.getName() + " "
 				+ task.getParams() + " \"");
 		}
@@ -1878,7 +1894,9 @@ public class WorkflowScheduler extends DatacenterBroker {
 //				+ task.getParams() + " \"");
 		if(log.isInfoEnabled()) {
 			log.info(CloudSim.clock() + ": " + getName() + ": VM # "
-					+ vm.getId() + " starts executing speculative copy of Task # "
+					+ vm.getId() + " in DC"+ vm.DCId 
+					+ " with mips:" + vm.getMips() + " bw:" + vm.getBw()
+					+ " starts executing speculative copy of Task # "
 					+ task.getCloudletId() + " \"" + task.getName() + " "
 					+ task.getParams() + " \"");
 		}
