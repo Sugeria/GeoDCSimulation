@@ -103,26 +103,26 @@ public class Parameters {
     
 //    public static double dcFailTime = 1d;
     
-    public static int failNumOfDC = 10;
+    public static int failNumOfDC = 5;
     
     public static boolean isDebug = false;
     
     public static boolean isGurobi = false;
     
-    public static boolean isConcernDCFail = false;
+    public static boolean isConcernDCFail = true;
     
-    public static boolean isConcernUnstable = false;
+    public static boolean isConcernUnstable = true;
     
-    public static boolean isConcernGeoNet = false;
+    public static boolean isConcernGeoNet = true;
     
-    public static boolean isUselessDCuseful = false;
+    public static boolean isUselessDCuseful = true;
     
-    public static boolean isExtracte = true;
+    public static boolean isExtracte = false;
     
     public static boolean isDCFailHappen = false;
     
     // 1-4
-    public static int copystrategy = 5;
+    public static int copystrategy = 0;
     
     public static int numberOfStrategy = 6;
 
@@ -132,10 +132,10 @@ public class Parameters {
     
     // workflow
     // default 5 workflows each minutes
-    public static double lambda = 0.0138;
+    public static double lambda = 0.00578;
     // default 3 days workflow
     // defend time exceed INT.MAX_VALUE
-    public static double seconds = 6*60*60;
+    public static double seconds = 12*60*60;
     
     /**
      * Scheduling mode
