@@ -107,7 +107,7 @@ public class Parameters {
     
     public static boolean isDebug = false;
     
-    public static boolean isGurobi = true;
+    public static boolean isGurobi = false;
     
     public static boolean isConcernDCFail = true;
     
@@ -1345,7 +1345,7 @@ public class Parameters {
 	public static int numberOfDC = 50;
 	public static String BriteFileName = "./50.brite";
 	// upperbound of inputdata
-	public static int ubOfData = 5;
+	public static int ubOfData = 20;
 		
 	
 	// number of machineType in each datacenter

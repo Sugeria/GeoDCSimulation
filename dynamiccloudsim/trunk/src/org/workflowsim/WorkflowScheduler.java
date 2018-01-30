@@ -618,7 +618,7 @@ public class WorkflowScheduler extends DatacenterBroker {
 							}
 							
 		//					double[] slack = cplex.getSlacks(rng);
-		//					System.out.println("Solution status = " + cplex.getStatus());
+							System.out.println("Solution status = " + cplex.getStatus());
 							
 							//verify x
 							
