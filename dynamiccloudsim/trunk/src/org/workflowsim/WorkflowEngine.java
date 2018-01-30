@@ -308,6 +308,28 @@ public final class WorkflowEngine extends SimEntity {
         		break;
         	}
         }
+        WorkflowScheduler.log.info("Resource");
+        WorkflowScheduler scheduler_0 = scheduler.get(0);
+        int DCbase = scheduler_0.DCbase;
+        for(int dcindex = 0; dcindex < Parameters.numberOfDC; dcindex++) {
+        	double slot = 0;
+        	double up = 0;
+        	double down = 0;
+        	if(scheduler_0.healthyStateOfDC.get(dcindex + DCbase) == true) {
+  				slot = scheduler_0.idleTaskSlotsOfDC.get(dcindex + DCbase).size();
+//  				slotNum += SlotArray[0][dcindex];
+  			}else {
+  				slot = 0;
+  			}
+  			up = scheduler_0.getUplinkOfDC().get(dcindex + DCbase);
+  			down = scheduler_0.getDownlinkOfDC().get(dcindex + DCbase);
+  			
+        	String resourcelog = slot+"\t"+(slot/scheduler_0.ori_idleTaskSlotsOfDC.get(dcindex+DCbase))+"\t"
+					+ up+"\t"+(up/scheduler_0.ori_uplinkOfDC.get(dcindex+DCbase))+"\t"
+					+ down+"\t"+(down/scheduler_0.ori_downlinkOfDC.get(dcindex+DCbase))+"\t";
+			WorkflowScheduler.log.info(resourcelog);
+        }
+        
         
         
         //save job info
@@ -325,6 +347,7 @@ public final class WorkflowEngine extends SimEntity {
 				}
 			}
 			out.write(DataSize/1024+"\t");
+			out.write(job.getTaskList().get(0).getMi()+"\t");
 			out.write(job.getTaskList().size()+"\t");
 			out.write("\r\n");
 			for(int tindex = 0; tindex < job.getTaskList().size(); tindex++) {
@@ -566,7 +589,7 @@ public final class WorkflowEngine extends SimEntity {
 				
 				
 				
-				WorkflowScheduler.log.info(CloudSim.clock()+": WorkflowEngine: Begin Strategy"+CloudSim.totalRunIndex);
+				WorkflowScheduler.log.info("Begin "+CloudSim.clock()+": WorkflowEngine Strategy"+CloudSim.totalRunIndex);
 				
 				
 				CloudSim.clock = 0.1d;

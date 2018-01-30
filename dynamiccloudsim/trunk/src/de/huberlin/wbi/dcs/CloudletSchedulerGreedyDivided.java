@@ -266,19 +266,51 @@ public class CloudletSchedulerGreedyDivided extends CloudletSchedulerTimeShared 
 			}
 			ioSeconds = (totalIo > 0) ? Double.MAX_VALUE : 0;
 			totalBw = dcl.getBw();
-			bwSeconds = (totalBw > 0) ? Double.MAX_VALUE : 0;
+			
 			if (iops.get(0) > 0) {
 				ioSeconds = totalIo / iops.get(0);
 			}
-			if (bwps.get(0) > 0) {
-				bwSeconds = totalBw / bwps.get(0);
-			}
+			
 		}
 
 		double maxMi = Math.min(mips.get(0), rcl.getNumberOfPes() * miPerVMPe);
 		if (maxMi > 0) {
 			miSeconds = totalMi / maxMi;
 		}
+		
+		
+		
+		
+		double bw_mu = bwps.get(0);
+		int datanumber = cl.numberOfData;
+		double band = 0d;
+		double band_delayOfData = 0d;
+		double band_delay = 0d;
+		
+		
+		if(cl.TotalTransferDataSize[cl.assignmentDCindex]>0) {
+			// compute bandwidth delay
+			for(int dataindex = 0; dataindex < datanumber; dataindex++) {
+				if(cl.transferDataSize[cl.assignmentDCindex][dataindex]>0) {
+					band = bw_mu*cl.transferDataSize[cl.assignmentDCindex][dataindex]
+							/cl.TotalTransferDataSize[cl.assignmentDCindex];
+					double dataDelay = Parameters.delayAmongDCIndex[cl.positionOfData[dataindex]][cl.assignmentDCindex];
+					band_delayOfData = band * 
+							(cl.transferDataSize[cl.assignmentDCindex][dataindex]
+									/(cl.transferDataSize[cl.assignmentDCindex][dataindex]+dataDelay*band));
+					band_delay += band_delayOfData;
+				}
+			}
+		}
+		
+		
+		bwSeconds = (totalBw > 0) ? Double.MAX_VALUE : 0;
+		if (band_delay > 0) {
+			bwSeconds = totalBw / band_delay;
+		}
+		
+		
+		
 
 		// (b) compute, how many MIPS will be assigned to this task, based on
 		// the previously
@@ -295,35 +327,17 @@ public class CloudletSchedulerGreedyDivided extends CloudletSchedulerTimeShared 
 			mips.set(taskSlot, Math.min(mips.get(0), totalMi * iops.get(0) / totalIo));
 			bwps.set(taskSlot, Math.min(bwps.get(0), totalBw * iops.get(0) / totalIo));
 		} else if (totalBw > 0 && bwSeconds >= Math.max(miSeconds, ioSeconds)) {
-			bwps.set(taskSlot, bwps.get(0));
-			mips.set(taskSlot, Math.min(mips.get(0), totalMi * bwps.get(0) / totalBw));
-			iops.set(taskSlot, Math.min(iops.get(0), totalIo * bwps.get(0) / totalBw));
+			bwps.set(taskSlot, band_delay);
+			mips.set(taskSlot, Math.min(mips.get(0), totalMi * band_delay / totalBw));
+			iops.set(taskSlot, Math.min(iops.get(0), totalIo * band_delay / totalBw));
 		}
 		
 		mips.set(0, mips.get(0) - mips.get(taskSlot));
 		iops.set(0, iops.get(0) - iops.get(taskSlot));
 		bwps.set(0, bwps.get(0) - bwps.get(taskSlot));
 		
-		int datanumber = cl.numberOfData;
-		double band = 0d;
-		double band_delayOfData = 0d;
-		double band_delay = 0d;
-		double bw_mu = bwps.get(taskSlot);
+		band_delay = bwps.get(taskSlot);
 		
-		if(cl.TotalTransferDataSize[cl.assignmentDCindex]>0) {
-			// compute bandwidth delay
-			for(int dataindex = 0; dataindex < datanumber; dataindex++) {
-				if(cl.transferDataSize[cl.assignmentDCindex][dataindex]>0) {
-					band = bw_mu*cl.transferDataSize[cl.assignmentDCindex][dataindex]
-							/cl.TotalTransferDataSize[cl.assignmentDCindex];
-					double dataDelay = Parameters.delayAmongDCIndex[cl.positionOfData[dataindex]][cl.assignmentDCindex];
-					band_delayOfData = band * 
-							(cl.transferDataSize[cl.assignmentDCindex][dataindex]
-									/(cl.transferDataSize[cl.assignmentDCindex][dataindex]+dataDelay*band));
-					band_delay += band_delayOfData;
-				}
-			}
-		}
 		
 		double resource = mips.get(taskSlot) + iops.get(taskSlot) + band_delay;
 		double delay_para = (double)Parameters.delayAmongDCIndex[cl.submitDCIndex][cl.assignmentDCindex];
