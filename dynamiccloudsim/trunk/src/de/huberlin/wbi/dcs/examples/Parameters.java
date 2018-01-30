@@ -913,7 +913,7 @@ public class Parameters {
 		DelayMatrix_Float delayMatrix = new DelayMatrix_Float(topograph, true);
 		for(int dci = 0; dci < Parameters.numberOfDC; dci++) {
 			for(int dcj = 0; dcj < Parameters.numberOfDC; dcj++) {
-				delayAmongDCIndex[dci][dcj] = delayMatrix.getDelay(dci,dcj);
+				delayAmongDCIndex[dci][dcj] = delayMatrix.getDelay(dci,dcj)*100;
 			}
 			degreeNumberOfDC[dci] = delayMatrix.getDegree(dci);
 		}

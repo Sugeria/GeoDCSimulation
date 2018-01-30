@@ -754,7 +754,7 @@ public class CloudSim {
 //				Parameters.copystrategy = strategyIndex;
 //				Parameters.runIndex = runIndex;
 				
-				WorkflowScheduler.log.info(CloudSim.clock()+": CloudSim: Begin Strategy"+CloudSim.totalRunIndex);
+				WorkflowScheduler.log.info("Begin:"+CloudSim.clock()+": CloudSim Strategy"+CloudSim.totalRunIndex);
 				
 				
 				clock = 0.1d;

@@ -9,9 +9,14 @@
 package org.cloudbus.cloudsim.network;
 
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.IOException;
+import java.time.Year;
 import java.util.StringTokenizer;
+
+import sun.net.www.content.audio.x_aiff;
 
 /**
  * This class is just an file-reader for the special brite-format! the brite-file is structured as
@@ -34,6 +39,10 @@ public class GraphReaderBrite implements GraphReaderIF {
 
 	private TopologicalGraph graph = null;
 
+	public FileWriter x_out = null;
+	public FileWriter y_out = null;
+	
+	
 	/**
 	 * this method just reads the file and creates an TopologicalGraph object
 	 * 
@@ -45,11 +54,18 @@ public class GraphReaderBrite implements GraphReaderIF {
 	public TopologicalGraph readGraphFile(String filename) throws IOException {
 
 		graph = new TopologicalGraph();
-
+		
+		
 		// lets read the file
 		FileReader fr = new FileReader(filename);
 		BufferedReader br = new BufferedReader(fr);
 
+		File x_File = new File("./x.txt");
+		File y_File = new File("./y.txt");
+		
+		x_out = new FileWriter(x_File);
+		y_out = new FileWriter(y_File);
+		
 		String lineSep = System.getProperty("line.separator");
 		String nextLine = null;
 		StringBuffer sb = new StringBuffer();
@@ -85,14 +101,17 @@ public class GraphReaderBrite implements GraphReaderIF {
 		}
 
 		br.close();
-
+		x_out.close();
+		y_out.close();
 		// Log.printLine("read file successfully...");
 		// Log.printLine(sb.toString());
 
 		return graph;
 	}
-
-	private void parseNodeString(String nodeLine) {
+	
+	
+	
+	private void parseNodeString(String nodeLine) throws IOException {
 
 		StringTokenizer tokenizer = new StringTokenizer(nodeLine);
 
@@ -134,10 +153,14 @@ public class GraphReaderBrite implements GraphReaderIF {
 
 				case 1:	// Log.printLine("x-Pos: "+token);
 					xPos = Integer.valueOf(token);
+					x_out.write(xPos+"\t");
+					x_out.write("\r\n");
 					break;
 
 				case 2:	// Log.printLine("y-Pos: "+token);
 					yPos = Integer.valueOf(token);
+					y_out.write(yPos+"\t");
+					y_out.write("\r\n");
 					break;
 					
 				case 3:
@@ -156,7 +179,8 @@ public class GraphReaderBrite implements GraphReaderIF {
 		topoNode.indegree = indegree;
 		topoNode.outdegree = outdegree;
 		graph.addNode(topoNode);
-
+		
+		
 	}// parseNodeString-END
 
 	private void parseEdgesString(String nodeLine) {
@@ -214,4 +238,5 @@ public class GraphReaderBrite implements GraphReaderIF {
 
 	}
 
+	
 }
