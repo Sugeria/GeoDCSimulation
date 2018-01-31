@@ -914,10 +914,10 @@ public class Parameters {
 		for(int dci = 0; dci < Parameters.numberOfDC; dci++) {
 			for(int dcj = 0; dcj < Parameters.numberOfDC; dcj++) {
 				delayAmongDCIndex[dci][dcj] = delayMatrix.getDelay(dci,dcj);
-//				if(delayAmongDCIndex[dci][dcj] < 1e20d) {
-//					delayAmongDCIndex[dci][dcj]*=100;
-//				}
-				delayAmongDCIndex[dci][dcj]*=100;
+				if(delayAmongDCIndex[dci][dcj] < 1e20d) {
+					delayAmongDCIndex[dci][dcj]*=100;
+				}
+//				delayAmongDCIndex[dci][dcj]*=100;
 			}
 			degreeNumberOfDC[dci] = delayMatrix.getDegree(dci);
 		}

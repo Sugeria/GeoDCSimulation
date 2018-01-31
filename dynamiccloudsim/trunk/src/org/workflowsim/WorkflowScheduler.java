@@ -511,8 +511,13 @@ public class WorkflowScheduler extends DatacenterBroker {
 								for(int dcindex = 0; dcindex < Parameters.numberOfDC; dcindex++) {
 									int xindex = taskindex*Parameters.numberOfDC + dcindex;
 									if(taskindex == tindex) {
-										itermOfTask[xindex] = cplex.prod(job.workloadArray[xindex]/(job.allRateMuArray[0][xindex]
-												- Parameters.r * job.allRateSigmaArray[0][xindex]), var[xindex]);
+										if(job.allRateMuArray[0][xindex] == 0) {
+											itermOfTask[xindex] = cplex.prod(1e20d, var[xindex]);
+										}else {
+											itermOfTask[xindex] = cplex.prod(job.workloadArray[xindex]/(job.allRateMuArray[0][xindex]
+													- Parameters.r * job.allRateSigmaArray[0][xindex]), var[xindex]);
+										}
+										
 									}else {
 										itermOfTask[xindex] = cplex.prod(0.0, var[xindex]);
 									}
@@ -860,8 +865,13 @@ public class WorkflowScheduler extends DatacenterBroker {
 	    						for(int dcindex = 0; dcindex < Parameters.numberOfDC; dcindex++) {
 	    							int xindex = taskindex*Parameters.numberOfDC + dcindex;
 	    							if(taskindex == tindex) {
-	    								expr.addTerm(job.workloadArray[xindex]/(job.allRateMuArray[0][xindex]
-	    										- Parameters.r * job.allRateSigmaArray[0][xindex]), vars[xindex]);
+	    								if(job.allRateMuArray[0][xindex] == 0) {
+	    									expr.addTerm(1e20d, vars[xindex]);
+	    								}else {
+	    									expr.addTerm(job.workloadArray[xindex]/(job.allRateMuArray[0][xindex]
+		    										- Parameters.r * job.allRateSigmaArray[0][xindex]), vars[xindex]);
+	    								}
+	    								
 	    							}else {
 	    								expr.addTerm(0.0d, vars[xindex]);
 	    							}
