@@ -107,7 +107,7 @@ public class Parameters {
     
     public static boolean isDebug = false;
     
-    public static boolean isGurobi = false;
+    public static boolean isGurobi = true;
     
     public static boolean isConcernDCFail = true;
     
@@ -132,10 +132,10 @@ public class Parameters {
     
     // workflow
     // default 5 workflows each minutes
-    public static double lambda = 0.0277;
+    public static double lambda = 0.01446;
     // default 3 days workflow
     // defend time exceed INT.MAX_VALUE
-    public static double seconds = 12*60*60;
+    public static double seconds = 24*60*60;
     
     /**
      * Scheduling mode
@@ -913,7 +913,10 @@ public class Parameters {
 		DelayMatrix_Float delayMatrix = new DelayMatrix_Float(topograph, true);
 		for(int dci = 0; dci < Parameters.numberOfDC; dci++) {
 			for(int dcj = 0; dcj < Parameters.numberOfDC; dcj++) {
-				delayAmongDCIndex[dci][dcj] = delayMatrix.getDelay(dci,dcj)*100;
+				delayAmongDCIndex[dci][dcj] = delayMatrix.getDelay(dci,dcj);
+				if(delayAmongDCIndex[dci][dcj] < 1e20d) {
+					delayAmongDCIndex[dci][dcj] *= 100;
+				}
 			}
 			degreeNumberOfDC[dci] = delayMatrix.getDegree(dci);
 		}

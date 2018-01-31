@@ -289,6 +289,30 @@ public class MinRateSchedulingAlgorithm extends BaseSchedulingAlgorithm{
         			
         			
         			
+        			double miSeconds = task.getMi()/mi_mu;
+        			double ioSeconds = task.getIo()/io_mu;
+        			double bwlength = TotalTransferDataSize[xindex]/1024d;
+        			
+        			double bwSeconds = (TotalTransferDataSize[xindex] > 0) ? Double.MAX_VALUE : 0;
+        			if (bw_mu > 0) {
+        				bwSeconds = bwlength/bw_mu;
+        			}
+        			
+        			        			
+        			if (task.getMi() > 0 && miSeconds >= Math.max(ioSeconds, bwSeconds)) {
+        				
+        				io_mu = Math.min(io_mu_ori, task.getIo()*mi_mu/task.getMi());
+        				bw_mu = Math.min(bw_mu_ori, bwlength*mi_mu/task.getMi());
+        			} else if (task.getIo() > 0 && ioSeconds >= Math.max(miSeconds, bwSeconds)) {
+        				mi_mu = Math.min(mi_mu_ori, task.getMi()*io_mu/task.getIo());
+        				bw_mu = Math.min(bw_mu_ori, bwlength*io_mu/task.getIo());
+        				
+        			} else if (TotalTransferDataSize[xindex] > 0 && bwSeconds >= Math.max(miSeconds, ioSeconds)) {
+        				mi_mu = Math.min(mi_mu_ori, task.getMi()*bw_mu/bwlength);
+        				io_mu = Math.min(io_mu_ori, task.getIo()*bw_mu/bwlength);
+        				
+        			}
+        			
         			// bandwidth bandwidth_dataDelay_co bandwidth_dataDelayOfTaskInDC
         			double bandwidthco = bw_mu/bw_mu_ori;
         			bandwidth_dataDelayOfTaskInDC[0][xindex] = 0;
@@ -322,31 +346,6 @@ public class MinRateSchedulingAlgorithm extends BaseSchedulingAlgorithm{
 					
         			
         			
-        			
-        			
-        			bw_mu = bw_mu_dataDelay;
-        			
-        			double miSeconds = task.getMi()/mi_mu;
-        			double ioSeconds = task.getIo()/io_mu;
-        			double bwlength = TotalTransferDataSize[xindex]/1024d;
-        			double bwSeconds = TotalTransferDataSize[xindex]/(bw_mu*1024d);
-        			
-        			if (task.getMi() > 0 && miSeconds >= Math.max(ioSeconds, bwSeconds)) {
-        				
-        				io_mu = Math.min(io_mu_ori, task.getIo()*mi_mu/task.getMi());
-        				bw_mu = Math.min(bw_mu_ori, bwlength*mi_mu/task.getMi());
-        			} else if (task.getIo() > 0 && ioSeconds >= Math.max(miSeconds, bwSeconds)) {
-        				mi_mu = Math.min(mi_mu_ori, task.getMi()*io_mu/task.getIo());
-        				bw_mu = Math.min(bw_mu_ori, bwlength*io_mu/task.getIo());
-        				
-        			} else if (TotalTransferDataSize[xindex] > 0 && bwSeconds >= Math.max(miSeconds, ioSeconds)) {
-        				mi_mu = Math.min(mi_mu_ori, task.getMi()*bw_mu/bwlength);
-        				io_mu = Math.min(io_mu_ori, task.getIo()*bw_mu/bwlength);
-        				
-        			}
-        			
-        			
-        			bw_mu_dataDelay = bw_mu;
         			
 					muParaOfTaskInDC[xindex] = (mi_mu + io_mu + bw_mu_dataDelay) * unstablecoOfDC[dcindex];
         			
@@ -1031,7 +1030,7 @@ public class MinRateSchedulingAlgorithm extends BaseSchedulingAlgorithm{
     						}
     					}
     					expr.addTerm(-1.0d, vars[vnum]);
-    					model.addConstr(expr, GRB.GREATER_EQUAL, 0.0d, "c"+String.valueOf(constraintIndex));
+    					model.addConstr(expr, GRB.LESS_EQUAL, 0.0d, "c"+String.valueOf(constraintIndex));
     					constraintIndex++;
     				}
     				
