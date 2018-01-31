@@ -2285,31 +2285,35 @@ public class WorkflowScheduler extends DatacenterBroker {
 			
 			// return bandwidth
 			double Totaldown = 0;
-			if(originalTask.numberOfTransferData[originalTask.assignmentDCindex] > 0) {
+			if(originalTask.isBandwidthCompetitive == false) {
 				
-				
-				
-				for(int dataindex = 0; dataindex < originalTask.numberOfData; dataindex++ ) {
-					Totaldown += originalTask.requiredBandwidth[dataindex];
-					if (originalTask.requiredBandwidth[dataindex] > 0) {
-						sendNow(originalTask.positionOfDataID[dataindex], CloudSimTags.UPLINK_RETURN,originalTask.requiredBandwidth[dataindex]);
-						double upbandwidth = getUplinkOfDC().get(originalTask.positionOfDataID[dataindex]) + originalTask.requiredBandwidth[dataindex];
-						getUplinkOfDC().put(originalTask.positionOfDataID[dataindex], upbandwidth);
+				if(originalTask.numberOfTransferData[originalTask.assignmentDCindex] > 0) {
+					
+					
+					
+					for(int dataindex = 0; dataindex < originalTask.numberOfData; dataindex++ ) {
+						Totaldown += originalTask.requiredBandwidth[dataindex];
+						if (originalTask.requiredBandwidth[dataindex] > 0) {
+							sendNow(originalTask.positionOfDataID[dataindex], CloudSimTags.UPLINK_RETURN,originalTask.requiredBandwidth[dataindex]);
+							double upbandwidth = getUplinkOfDC().get(originalTask.positionOfDataID[dataindex]) + originalTask.requiredBandwidth[dataindex];
+							getUplinkOfDC().put(originalTask.positionOfDataID[dataindex], upbandwidth);
+						}
+						
+					}
+					
+					originalTask.usedBandwidth = originalTask.usedBandwidth + Totaldown;
+					originalTask.usedBandxTime = originalTask.usedBandxTime +
+							Totaldown*(CloudSim.clock()-originalTask.getExecStartTime());
+					
+					if (Totaldown > 0) {
+						sendNow(originalTask.getAssignmentDCId(), CloudSimTags.DOWNLINK_RETURN, Totaldown);
+						double downbandwidth = getDownlinkOfDC().get(originalTask.getAssignmentDCId()) + Totaldown;
+						getDownlinkOfDC().put(originalTask.getAssignmentDCId(), downbandwidth);
 					}
 					
 				}
-				
-				originalTask.usedBandwidth = originalTask.usedBandwidth + Totaldown;
-				originalTask.usedBandxTime = originalTask.usedBandxTime +
-						Totaldown*(CloudSim.clock()-originalTask.getExecStartTime());
-				
-				if (Totaldown > 0) {
-					sendNow(originalTask.getAssignmentDCId(), CloudSimTags.DOWNLINK_RETURN, Totaldown);
-					double downbandwidth = getDownlinkOfDC().get(originalTask.getAssignmentDCId()) + Totaldown;
-					getDownlinkOfDC().put(originalTask.getAssignmentDCId(), downbandwidth);
-				}
-				
 			}
+			
 			//tasks.remove(originalTask.getCloudletId());
 			//taskSucceeded(originalTask, originalVm);
 			if (speculativeTaskOfTask.size() != 0) {
@@ -2329,28 +2333,31 @@ public class WorkflowScheduler extends DatacenterBroker {
 					}
 					
 					// return bandwidth
-					Totaldown = 0;
-					if(speculativeTask.numberOfTransferData[speculativeTask.assignmentDCindex] > 0) {
-						
-						
-						
-						for(int dataindex = 0; dataindex < speculativeTask.numberOfData; dataindex++ ) {
-							Totaldown += speculativeTask.requiredBandwidth[dataindex];
-							if (speculativeTask.requiredBandwidth[dataindex] > 0) {
-								sendNow(speculativeTask.positionOfDataID[dataindex], CloudSimTags.UPLINK_RETURN,speculativeTask.requiredBandwidth[dataindex]);
-								double upbandwidth = getUplinkOfDC().get(speculativeTask.positionOfDataID[dataindex]) + speculativeTask.requiredBandwidth[dataindex];
-								getUplinkOfDC().put(speculativeTask.positionOfDataID[dataindex], upbandwidth);
+					if(speculativeTask.isBandwidthCompetitive == false) {
+						Totaldown = 0;
+						if(speculativeTask.numberOfTransferData[speculativeTask.assignmentDCindex] > 0) {
+							
+							
+							
+							for(int dataindex = 0; dataindex < speculativeTask.numberOfData; dataindex++ ) {
+								Totaldown += speculativeTask.requiredBandwidth[dataindex];
+								if (speculativeTask.requiredBandwidth[dataindex] > 0) {
+									sendNow(speculativeTask.positionOfDataID[dataindex], CloudSimTags.UPLINK_RETURN,speculativeTask.requiredBandwidth[dataindex]);
+									double upbandwidth = getUplinkOfDC().get(speculativeTask.positionOfDataID[dataindex]) + speculativeTask.requiredBandwidth[dataindex];
+									getUplinkOfDC().put(speculativeTask.positionOfDataID[dataindex], upbandwidth);
+								}
+								
+							}
+							originalTask.usedBandwidth = originalTask.usedBandwidth + Totaldown;
+							originalTask.usedBandxTime = originalTask.usedBandxTime +
+									Totaldown*(CloudSim.clock()-speculativeTask.getExecStartTime());
+							
+							if(Totaldown > 0) {
+								sendNow(speculativeTask.getAssignmentDCId(), CloudSimTags.DOWNLINK_RETURN, Totaldown);
+								double downbandwidth = getDownlinkOfDC().get(speculativeTask.getAssignmentDCId()) + Totaldown;
+								getDownlinkOfDC().put(speculativeTask.getAssignmentDCId(), downbandwidth);
 							}
 							
-						}
-						originalTask.usedBandwidth = originalTask.usedBandwidth + Totaldown;
-						originalTask.usedBandxTime = originalTask.usedBandxTime +
-								Totaldown*(CloudSim.clock()-speculativeTask.getExecStartTime());
-						
-						if(Totaldown > 0) {
-							sendNow(speculativeTask.getAssignmentDCId(), CloudSimTags.DOWNLINK_RETURN, Totaldown);
-							double downbandwidth = getDownlinkOfDC().get(speculativeTask.getAssignmentDCId()) + Totaldown;
-							getDownlinkOfDC().put(speculativeTask.getAssignmentDCId(), downbandwidth);
 						}
 						
 					}
@@ -2414,32 +2421,35 @@ public class WorkflowScheduler extends DatacenterBroker {
 						}
 						
 						double Totaldown = 0;
-						if(speculativeTask.numberOfTransferData[speculativeTask.assignmentDCindex] > 0) {
-							
-							
-							
-							for(int dataindex = 0; dataindex < speculativeTask.numberOfData; dataindex++ ) {
-								Totaldown += speculativeTask.requiredBandwidth[dataindex];
-								if (speculativeTask.requiredBandwidth[dataindex] > 0) {
-									sendNow(speculativeTask.positionOfDataID[dataindex], CloudSimTags.UPLINK_RETURN,speculativeTask.requiredBandwidth[dataindex]);
-									double upbandwidth = getUplinkOfDC().get(speculativeTask.positionOfDataID[dataindex]) + speculativeTask.requiredBandwidth[dataindex];
-									getUplinkOfDC().put(speculativeTask.positionOfDataID[dataindex], upbandwidth);
+						if(speculativeTask.isBandwidthCompetitive == false) {
+							if(speculativeTask.numberOfTransferData[speculativeTask.assignmentDCindex] > 0) {
+								
+								
+								
+								for(int dataindex = 0; dataindex < speculativeTask.numberOfData; dataindex++ ) {
+									Totaldown += speculativeTask.requiredBandwidth[dataindex];
+									if (speculativeTask.requiredBandwidth[dataindex] > 0) {
+										sendNow(speculativeTask.positionOfDataID[dataindex], CloudSimTags.UPLINK_RETURN,speculativeTask.requiredBandwidth[dataindex]);
+										double upbandwidth = getUplinkOfDC().get(speculativeTask.positionOfDataID[dataindex]) + speculativeTask.requiredBandwidth[dataindex];
+										getUplinkOfDC().put(speculativeTask.positionOfDataID[dataindex], upbandwidth);
+									}
+									
+								}
+								
+								originalTask.usedBandwidth = 
+										originalTask.usedBandwidth + Totaldown;
+								originalTask.usedBandxTime = originalTask.usedBandxTime + 
+										Totaldown*(CloudSim.clock()-speculativeTask.getExecStartTime());
+								
+								if(Totaldown > 0) {
+									sendNow(speculativeTask.getAssignmentDCId(), CloudSimTags.DOWNLINK_RETURN, Totaldown);
+									double downbandwidth = getDownlinkOfDC().get(speculativeTask.getAssignmentDCId()) + Totaldown;
+									getDownlinkOfDC().put(speculativeTask.getAssignmentDCId(), downbandwidth);
 								}
 								
 							}
-							
-							originalTask.usedBandwidth = 
-									originalTask.usedBandwidth + Totaldown;
-							originalTask.usedBandxTime = originalTask.usedBandxTime + 
-									Totaldown*(CloudSim.clock()-speculativeTask.getExecStartTime());
-							
-							if(Totaldown > 0) {
-								sendNow(speculativeTask.getAssignmentDCId(), CloudSimTags.DOWNLINK_RETURN, Totaldown);
-								double downbandwidth = getDownlinkOfDC().get(speculativeTask.getAssignmentDCId()) + Totaldown;
-								getDownlinkOfDC().put(speculativeTask.getAssignmentDCId(), downbandwidth);
-							}
-							
 						}
+						
 						speculativeTaskOfTask.remove(index);
 						break;
 					}
@@ -2479,33 +2489,36 @@ public class WorkflowScheduler extends DatacenterBroker {
 				
 				
 				double Totaldown = 0;
-				if(originalTask.numberOfTransferData[originalTask.assignmentDCindex] > 0) {
-					for(int dataindex = 0; dataindex < originalTask.numberOfData; dataindex++ ) {
-						
-						
+				if(originalTask.isBandwidthCompetitive == false) {
+					if(originalTask.numberOfTransferData[originalTask.assignmentDCindex] > 0) {
+						for(int dataindex = 0; dataindex < originalTask.numberOfData; dataindex++ ) {
+							
+							
 
-						
-						Totaldown += originalTask.requiredBandwidth[dataindex];
-						if (originalTask.requiredBandwidth[dataindex] > 0) {
-							sendNow(originalTask.positionOfDataID[dataindex], CloudSimTags.UPLINK_RETURN,originalTask.requiredBandwidth[dataindex]);
-							double upbandwidth = getUplinkOfDC().get(originalTask.positionOfDataID[dataindex]) + originalTask.requiredBandwidth[dataindex];
-							getUplinkOfDC().put(originalTask.positionOfDataID[dataindex], upbandwidth);
+							
+							Totaldown += originalTask.requiredBandwidth[dataindex];
+							if (originalTask.requiredBandwidth[dataindex] > 0) {
+								sendNow(originalTask.positionOfDataID[dataindex], CloudSimTags.UPLINK_RETURN,originalTask.requiredBandwidth[dataindex]);
+								double upbandwidth = getUplinkOfDC().get(originalTask.positionOfDataID[dataindex]) + originalTask.requiredBandwidth[dataindex];
+								getUplinkOfDC().put(originalTask.positionOfDataID[dataindex], upbandwidth);
+							}
+							
 						}
 						
-					}
-					
-					originalTask.usedBandwidth = originalTask.usedBandwidth +
-							Totaldown;
-					originalTask.usedBandxTime = originalTask.usedBandxTime +
-							Totaldown * (CloudSim.clock()-originalTask.getExecStartTime());
-					
-					
-					if(Totaldown > 0) {
-						sendNow(originalTask.getAssignmentDCId(), CloudSimTags.DOWNLINK_RETURN, Totaldown);
-						double downbandwidth = getDownlinkOfDC().get(originalTask.getAssignmentDCId()) + Totaldown;
-						getDownlinkOfDC().put(originalTask.getAssignmentDCId(), downbandwidth);
+						originalTask.usedBandwidth = originalTask.usedBandwidth +
+								Totaldown;
+						originalTask.usedBandxTime = originalTask.usedBandxTime +
+								Totaldown * (CloudSim.clock()-originalTask.getExecStartTime());
+						
+						
+						if(Totaldown > 0) {
+							sendNow(originalTask.getAssignmentDCId(), CloudSimTags.DOWNLINK_RETURN, Totaldown);
+							double downbandwidth = getDownlinkOfDC().get(originalTask.getAssignmentDCId()) + Totaldown;
+							getDownlinkOfDC().put(originalTask.getAssignmentDCId(), downbandwidth);
+						}
 					}
 				}
+				
 				if (speculativeTaskOfTask.size() != 0) {
 					Task speculativeTask = speculativeTaskOfTask.remove();
 					speculativeTask.usedVM = originalTask.usedVM;
@@ -2535,11 +2548,12 @@ public class WorkflowScheduler extends DatacenterBroker {
     protected void resetTask(Task task) {
 		task.setCloudletFinishedSoFar(0);
 		try {
-			double taskExecStarttime = task.getExecStartTime();
-			double taskFinishTime = task.getFinishTime();
+//			double taskExecStarttime = task.getExecStartTime();
+//			double taskFinishTime = task.getFinishTime();
 			
 			task.setScheduledToFail(false);
 			task.setCloudletLength(task.oriCloudletLength);
+			task.isBandwidthCompetitive = false;
 			task.setCloudletStatus(Cloudlet.CREATED);
 			task.setExecStartTime(-1.0d);
 			task.setFinishTime(-1.0d);
