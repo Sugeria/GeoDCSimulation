@@ -13,15 +13,17 @@ public class ParseFile {
 
 	public static void main(String[] args) {
 		// TODO Auto-generated method stub
-		GraphReaderBrite brite = new GraphReaderBrite();
-		
-		try {
-			String BriteFileName = "./50.brite";
-			brite.readGraphFile(BriteFileName);
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
+//		GraphReaderBrite brite = new GraphReaderBrite();
+//		
+//		try {
+//			String BriteFileName = "./50.brite";
+//			brite.readGraphFile(BriteFileName);
+//		} catch (IOException e) {
+//			// TODO Auto-generated catch block
+//			e.printStackTrace();
+//		}
+		double a = 3.4028235E38;
+		double b = 56789/(67852+1024*a);
 	}
 	
 	
