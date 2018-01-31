@@ -558,17 +558,23 @@ public class Datacenter extends SimEntity {
 					UplinkRequest failUpr = CloudletTransferFailReq.get(task_vm).get(sindex);
 					downlink +=  failUpr.requestedUpbandwidth;
 				}
+				// return all its need bandwidth but with slow deal rate
+				
 				try {
-					task.setCloudletStatus(Cloudlet.FAILED);
-					CloudletTransferRequest.remove(task_vm);
-					CloudletTransferSuccessReq.remove(task_vm);
-					CloudletTransferFailReq.remove(task_vm);
-					sendNow(task.getUserId(), CloudSimTags.CLOUDLET_RETURN, task);
+					double slowco = characteristics.getStragglerPerformanceCoefficient();
+					task.isBandwidthCompetitive = true;
+					task.setCloudletLength((long) (task.getCloudletLength() 
+							/slowco));
+//					task.setCloudletStatus(Cloudlet.FAILED);
+//					CloudletTransferRequest.remove(task_vm);
+//					CloudletTransferSuccessReq.remove(task_vm);
+//					CloudletTransferFailReq.remove(task_vm);
+//					sendNow(task.getUserId(), CloudSimTags.CLOUDLET_RETURN, task);
 				} catch (Exception e) {
 					e.printStackTrace();
 				}
 				
-				return ;
+//				return ;
 			}
 			
 			
@@ -596,28 +602,30 @@ public class Datacenter extends SimEntity {
 			
 			
 			
-
+			
 			// need deal with DatacenterBroker
 			
-			
-			double Totaldown = 0;
-			int sizeOfsuccess = CloudletTransferSuccessReq.get(task_vm).size();
-			for (int sindex = 0; sindex < sizeOfsuccess; sindex++) {
-				UplinkRequest successUpr = CloudletTransferSuccessReq.get(task_vm).get(sindex);
+			if(task.isBandwidthCompetitive == false) {
+				double Totaldown = 0;
+				int sizeOfsuccess = CloudletTransferSuccessReq.get(task_vm).size();
+				for (int sindex = 0; sindex < sizeOfsuccess; sindex++) {
+					UplinkRequest successUpr = CloudletTransferSuccessReq.get(task_vm).get(sindex);
+					double[] data = new double[3];
+					data[0] = task.positionOfDataID[successUpr.dataindex];
+					data[1] = successUpr.requestedUpbandwidth;
+					data[2] = 0;
+					sendNow(task.getUserId(), CloudSimTags.BANDWIDTH_MINUS,data);
+					task.requiredBandwidth[successUpr.dataindex] = successUpr.requestedUpbandwidth;
+					Totaldown += successUpr.requestedUpbandwidth;
+				}
+				
 				double[] data = new double[3];
-				data[0] = task.positionOfDataID[successUpr.dataindex];
-				data[1] = successUpr.requestedUpbandwidth;
-				data[2] = 0;
+				data[0] = getId();
+				data[1] = 0;
+				data[2] = Totaldown;
 				sendNow(task.getUserId(), CloudSimTags.BANDWIDTH_MINUS,data);
-				task.requiredBandwidth[successUpr.dataindex] = successUpr.requestedUpbandwidth;
-				Totaldown += successUpr.requestedUpbandwidth;
 			}
 			
-			double[] data = new double[3];
-			data[0] = getId();
-			data[1] = 0;
-			data[2] = Totaldown;
-			sendNow(task.getUserId(), CloudSimTags.BANDWIDTH_MINUS,data);
 			
 //			sendNow(task.getUserId(), CloudSimTags.UPDATE_TASK_USED_BANDWIDTH,task);
 			

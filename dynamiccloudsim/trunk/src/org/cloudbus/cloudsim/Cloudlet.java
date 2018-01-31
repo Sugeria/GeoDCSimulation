@@ -181,6 +181,8 @@ public class Cloudlet {
 	public double usedBandxTime = 0d;
 	public double earliestStartTime = -1.0d;
     public int submitDCIndex;
+    
+    public boolean isBandwidthCompetitive = false;
 	
 	public int getAssignmentDCId() {
 		return assignmentDCId;
