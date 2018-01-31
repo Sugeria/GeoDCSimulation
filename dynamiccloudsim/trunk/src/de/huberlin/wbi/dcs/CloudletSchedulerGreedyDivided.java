@@ -322,6 +322,10 @@ public class CloudletSchedulerGreedyDivided extends CloudletSchedulerTimeShared 
 					band = bw_mu*cl.transferDataSize[cl.assignmentDCindex][dataindex]
 							/cl.TotalTransferDataSize[cl.assignmentDCindex];
 					double dataDelay = Parameters.delayAmongDCIndex[cl.positionOfData[dataindex]][cl.assignmentDCindex];
+					if(dataDelay > 1e20d) {
+						int b = 1;
+						b = b + 1;
+					}
 					band_delayOfData = band * 
 							(cl.transferDataSize[cl.assignmentDCindex][dataindex]
 									/(cl.transferDataSize[cl.assignmentDCindex][dataindex]+dataDelay*band));

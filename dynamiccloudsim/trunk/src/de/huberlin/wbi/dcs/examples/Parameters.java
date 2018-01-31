@@ -915,8 +915,11 @@ public class Parameters {
 			for(int dcj = 0; dcj < Parameters.numberOfDC; dcj++) {
 				delayAmongDCIndex[dci][dcj] = delayMatrix.getDelay(dci,dcj);
 				if(delayAmongDCIndex[dci][dcj] < 1e20d) {
-					delayAmongDCIndex[dci][dcj] *= 100;
+
+					delayAmongDCIndex[dci][dcj]*=100;
 				}
+//				delayAmongDCIndex[dci][dcj]*=100;
+
 			}
 			degreeNumberOfDC[dci] = delayMatrix.getDegree(dci);
 		}
