@@ -1841,11 +1841,13 @@ public class WorkflowScheduler extends DatacenterBroker {
 		speculativeTask.transferDataSize = new double[Parameters.numberOfDC][Parameters.ubOfData];
 		speculativeTask.bandwidth = new double[Parameters.numberOfDC][Parameters.ubOfData];
 		speculativeTask.orderedDClist = new int[Parameters.numberOfDC];
+		speculativeTask.rateExpectation = new double[Parameters.numberOfDC];
 		speculativeTask.uselessDC = new int[Parameters.numberOfDC];
 		for(int dcindex = 0; dcindex < Parameters.numberOfDC; dcindex++) {
 			speculativeTask.numberOfTransferData[dcindex] = task.numberOfTransferData[dcindex];
 			speculativeTask.TotalTransferDataSize[dcindex] = task.TotalTransferDataSize[dcindex];
 			speculativeTask.orderedDClist[dcindex] = task.orderedDClist[dcindex];
+			speculativeTask.rateExpectation[dcindex] = task.rateExpectation[dcindex];
 			speculativeTask.uselessDC[dcindex] = task.uselessDC[dcindex];
 			for(int dataindex = 0; dataindex < speculativeTask.numberOfData; dataindex++) {
 				speculativeTask.bandwidth[dcindex][dataindex] = task.bandwidth[dcindex][dataindex];

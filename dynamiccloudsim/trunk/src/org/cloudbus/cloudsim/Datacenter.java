@@ -562,19 +562,25 @@ public class Datacenter extends SimEntity {
 				
 				try {
 					double slowco = characteristics.getStragglerPerformanceCoefficient();
-					task.isBandwidthCompetitive = true;
-					task.setCloudletLength((long) (task.getCloudletLength() 
-							/slowco));
-//					task.setCloudletStatus(Cloudlet.FAILED);
-//					CloudletTransferRequest.remove(task_vm);
-//					CloudletTransferSuccessReq.remove(task_vm);
-//					CloudletTransferFailReq.remove(task_vm);
-//					sendNow(task.getUserId(), CloudSimTags.CLOUDLET_RETURN, task);
+//					task.isBandwidthCompetitive = true;
+//					task.setCloudletLength((long) (task.getCloudletLength() 
+//							/slowco));
+					task.setCloudletStatus(Cloudlet.FAILED);
+					CloudletTransferRequest.remove(task_vm);
+					CloudletTransferSuccessReq.remove(task_vm);
+					CloudletTransferFailReq.remove(task_vm);
+					if(task.rateExpectation[task.assignmentDCindex] == 0) {
+						int a = 1;
+						a = a + 1;
+					}
+					double bandDelay = task.getCloudletLength()
+							/(task.rateExpectation[task.assignmentDCindex]*slowco);
+					send(task.getUserId(),bandDelay,CloudSimTags.CLOUDLET_RETURN, task);
 				} catch (Exception e) {
 					e.printStackTrace();
 				}
 				
-//				return ;
+				return ;
 			}
 			
 			
