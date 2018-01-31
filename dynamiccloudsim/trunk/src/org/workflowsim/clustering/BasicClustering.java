@@ -354,6 +354,7 @@ public class BasicClustering implements ClusteringInterface {
 				task.TotalTransferDataSize = new double[Parameters.numberOfDC];
 				task.transferDataSize = new double[Parameters.numberOfDC][Parameters.ubOfData];
 				task.orderedDClist = new int[Parameters.numberOfDC];
+				task.rateExpectation = new double[Parameters.numberOfDC];
 				task.bandwidth = new double[Parameters.numberOfDC][Parameters.ubOfData];
 				task.uselessDC = new int[Parameters.numberOfDC];
 				task.usedVM = 0;
