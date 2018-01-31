@@ -407,7 +407,7 @@ public class MinRateSchedulingAlgorithm extends BaseSchedulingAlgorithm{
             			objTimeParaOfTaskInDC.get(task.getCloudletId()).put(dcindex, 
             					1e20d);
         			}
-        			
+        			task.rateExpectation[dcindex] = objParaOfTaskInDC.get(task.getCloudletId()).get(dcindex);
 				}
 				tasklist.set(taskindex, task);
 			}

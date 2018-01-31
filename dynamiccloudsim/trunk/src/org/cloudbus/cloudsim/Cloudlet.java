@@ -172,6 +172,7 @@ public class Cloudlet {
 	public double[] TotalTransferDataSize;
 	public double[][] transferDataSize;
 	public int[] orderedDClist;
+	public double[] rateExpectation;
 	public double[][] bandwidth;
 	public int[] uselessDC;
 	public double arrivalTime;
