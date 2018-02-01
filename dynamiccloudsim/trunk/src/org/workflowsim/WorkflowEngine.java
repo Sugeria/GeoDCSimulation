@@ -596,6 +596,11 @@ public final class WorkflowEngine extends SimEntity {
 				// clear cloudsim.future
 				sendNow(CloudSim.getEntity("planner_0").getId(), CloudSimTags.RUN_INITIAL,null);
 				
+				
+				if(Parameters.isConcernUnstable == false) {
+					Parameters.r = 0;
+				}
+				
 				for (int dcindex = 0;dcindex < Parameters.numberOfDC; dcindex++) {
 					sendNow(CloudSim.getEntity("Datacenter_"+dcindex).getId(),CloudSimTags.INITIAL_LASTTIME,null);
 				}
