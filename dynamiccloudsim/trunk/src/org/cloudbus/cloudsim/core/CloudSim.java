@@ -761,6 +761,10 @@ public class CloudSim {
 				SimEvent ev = new SimEvent(SimEvent.SEND, clock(), -1,entitiesByName.get("planner_0").getId(),CloudSimTags.RUN_INITIAL,null);
 				future.addEvent(ev);
 				
+				if(Parameters.isConcernUnstable == false) {
+					Parameters.r = 0;
+				}
+				
 				for (int dcindex = 0;dcindex < Parameters.numberOfDC; dcindex++) {
 					SimEvent dcev = new SimEvent(SimEvent.SEND, clock(), -1,entitiesByName.get("Datacenter_"+dcindex).getId(),CloudSimTags.INITIAL_LASTTIME,null);
 					future.addEvent(dcev);

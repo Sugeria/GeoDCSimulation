@@ -111,6 +111,8 @@ public class Parameters {
     
     public static boolean isConcernDCFail = true;
     
+    public static double DCFailThreshold = 0.2d;
+    
     public static boolean isConcernUnstable = true;
     
     public static boolean isConcernGeoNet = true;

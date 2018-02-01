@@ -357,6 +357,7 @@ public class Datacenter extends SimEntity {
 					data_dura[1] = DCfailduration;
 					sendNow(attributedBrokerId,CloudSimTags.DC_FAIL,data_dura);
 					failCloudletProcessing();
+					checkCloudletCompletion();
 					setLastProcessTime(CloudSim.clock());
 				}
 				break;
