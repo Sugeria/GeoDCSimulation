@@ -119,7 +119,7 @@ public class Parameters {
     
     public static boolean isUselessDCuseful = true;
     
-    public static boolean isExtracte = false;
+    public static boolean isExtracte = true;
     
     public static boolean isDCFailHappen = false;
     
@@ -137,7 +137,7 @@ public class Parameters {
     public static double lambda = 0.00578;
     // default 3 days workflow
     // defend time exceed INT.MAX_VALUE
-    public static double seconds = 6*60*60;
+    public static double seconds = 60*60;
     
     /**
      * Scheduling mode
