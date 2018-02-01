@@ -379,21 +379,27 @@ public class MinRateSchedulingAlgorithm extends BaseSchedulingAlgorithm{
             			// allRateMuArray allRateSigmaArray
             			if(delay_para < 1e20d) {
             				
-	            			double delay_co = task_workload/(task_workload + muParaOfTaskInDC[xindex] * delay_para);
+//	            			double delay_co = task_workload/(task_workload + muParaOfTaskInDC[xindex] * delay_para);
 	            			
-	            			allRateMuArray[0][xindex] = muParaOfTaskInDC[xindex] * delay_co;
-	            			
-	            			double mi_sigma = mi_mu * unstablecoOfDC[dcindex] * delay_co * mi_sigmaco;
-	    					double io_sigma = io_mu * unstablecoOfDC[dcindex] * delay_co * io_sigmaco;
+//	            			allRateMuArray[0][xindex] = muParaOfTaskInDC[xindex] * delay_co;
+//	            			
+//	            			double mi_sigma = mi_mu * unstablecoOfDC[dcindex] * delay_co * mi_sigmaco;
+//	    					double io_sigma = io_mu * unstablecoOfDC[dcindex] * delay_co * io_sigmaco;
+//	    					allRateSigmaArray[0][xindex] = Math.sqrt(Math.pow(mi_sigma, 2)
+//	            					+Math.pow(io_sigma, 2)+Math.pow((bw_mu_dataDelay*unstablecoOfDC[dcindex]
+//	            							*delay_co*bw_sigmaco), 2));
+            				allRateMuArray[0][xindex] = muParaOfTaskInDC[xindex];
+//	            			
+	            			double mi_sigma = mi_mu * unstablecoOfDC[dcindex] * mi_sigmaco;
+	    					double io_sigma = io_mu * unstablecoOfDC[dcindex] * io_sigmaco;
 	    					allRateSigmaArray[0][xindex] = Math.sqrt(Math.pow(mi_sigma, 2)
 	            					+Math.pow(io_sigma, 2)+Math.pow((bw_mu_dataDelay*unstablecoOfDC[dcindex]
-	            							*delay_co*bw_sigmaco), 2));
-	            			
+	            							*bw_sigmaco), 2));
 	//            			allRateSigmaArray[0][xindex] = sigmaParaOfTaskInDC[xindex];
 	            			objParaOfTaskInDC.get(task.getCloudletId()).put(dcindex, 
 	            					allRateMuArray[0][xindex]
 	            					- Parameters.r * allRateSigmaArray[0][xindex]);
-	            			double time = unstablecoOfDC[dcindex]*task_workload/(allRateMuArray[0][xindex]
+	            			double time = delay_para + unstablecoOfDC[dcindex]*task_workload/(allRateMuArray[0][xindex]
                 					- Parameters.r * allRateSigmaArray[0][xindex]);
 	            			objTimeParaOfTaskInDC.get(task.getCloudletId()).put(dcindex, 
 	            					time);
