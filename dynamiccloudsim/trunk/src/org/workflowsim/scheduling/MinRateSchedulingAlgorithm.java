@@ -710,7 +710,8 @@ public class MinRateSchedulingAlgorithm extends BaseSchedulingAlgorithm{
     								if(allRateMuArray[0][xindex]==0) {
     									itermOfTask[xindex] = cplex.prod(1e20d, var[xindex]);
     								}else {
-    									itermOfTask[xindex] = cplex.prod((workloadArray[xindex]/(allRateMuArray[0][xindex]
+    									itermOfTask[xindex] = cplex.prod(Parameters.delayAmongDCIndex[job.submitDCIndex][dcindex]
+    											+ (workloadArray[xindex]/(allRateMuArray[0][xindex]
         										- Parameters.r * allRateSigmaArray[0][xindex])), var[xindex]);
     								}
     								
@@ -922,7 +923,8 @@ public class MinRateSchedulingAlgorithm extends BaseSchedulingAlgorithm{
         								int a = 1;
         								a = a + 1;
         							}
-    								rate = workloadArray[xindex]/(allRateMuArray[0][xindex] - Parameters.r * allRateSigmaArray[0][xindex]);
+    								rate = Parameters.delayAmongDCIndex[job.submitDCIndex][dcindex] 
+    										+ workloadArray[xindex]/(allRateMuArray[0][xindex] - Parameters.r * allRateSigmaArray[0][xindex]);
     								pos = dcindex;
     								greatAssignSuccess = true;
     								break;
@@ -1041,7 +1043,8 @@ public class MinRateSchedulingAlgorithm extends BaseSchedulingAlgorithm{
     								int a = 1;
     								a = a + 1;
     							}
-    							job.currentGreateRate.put(taskId, workloadArray[xindex]/(allRateMuArray[0][xindex]
+    							job.currentGreateRate.put(taskId, Parameters.delayAmongDCIndex[job.submitDCIndex][successDC]
+    									+ workloadArray[xindex]/(allRateMuArray[0][xindex]
     									- Parameters.r * allRateSigmaArray[0][xindex]));
     							job.currentGreatePosition.put(taskId, successDC);
     							x[xindex] = 1;
@@ -1092,7 +1095,8 @@ public class MinRateSchedulingAlgorithm extends BaseSchedulingAlgorithm{
     								if(allRateMuArray[0][xindex] == 0) {
     									expr.addTerm(1e20d, vars[xindex]);
     								}else {
-    									expr.addTerm((workloadArray[xindex]/(allRateMuArray[0][xindex]
+    									expr.addTerm(Parameters.delayAmongDCIndex[job.submitDCIndex][dcindex]
+    											+ (workloadArray[xindex]/(allRateMuArray[0][xindex]
         										- Parameters.r * allRateSigmaArray[0][xindex])), vars[xindex]);
     								}
     								
@@ -1308,7 +1312,8 @@ public class MinRateSchedulingAlgorithm extends BaseSchedulingAlgorithm{
     									int a = 1;
     									a = a + 1;
     								}
-    								rate = workloadArray[xindex]/(allRateMuArray[0][xindex] - Parameters.r * allRateSigmaArray[0][xindex]);
+    								rate = Parameters.delayAmongDCIndex[job.submitDCIndex][dcindex]
+    										+ workloadArray[xindex]/(allRateMuArray[0][xindex] - Parameters.r * allRateSigmaArray[0][xindex]);
     								pos = dcindex;
     								greatAssignSuccess = true;
     								break;
@@ -1424,7 +1429,8 @@ public class MinRateSchedulingAlgorithm extends BaseSchedulingAlgorithm{
     								int a = 1;
     								a = a + 1;
     							}
-    							job.currentGreateRate.put(taskId, workloadArray[xindex]/(allRateMuArray[0][xindex]
+    							job.currentGreateRate.put(taskId, Parameters.delayAmongDCIndex[job.submitDCIndex][successDC]
+    									+ workloadArray[xindex]/(allRateMuArray[0][xindex]
     									- Parameters.r * allRateSigmaArray[0][xindex]));
     							job.currentGreatePosition.put(taskId, successDC);
     							x[xindex] = 1;
