@@ -1254,10 +1254,13 @@ public class WorkflowScheduler extends DatacenterBroker {
             		MWNumericArray Slot = null;
             		MWNumericArray Up = null;
             		MWNumericArray Down = null;
+            		MWNumericArray DCFailPro = null;
+            		MWNumericArray FailThreshold = null;
             		MWNumericArray uselessDCforTask = null;
             		MWNumericArray r = null;
             		MWNumericArray slotlimit = null;
             		MWNumericArray isGeoNet = null;
+            		MWNumericArray isDCFail = null;
             		Object[] result = null;	/* Stores the result */
             		MWNumericArray xAssign = null;	/* Location of minimal value */
             		MWNumericArray UpdatedSlot = null;	/* solvable flag */
@@ -1278,12 +1281,16 @@ public class WorkflowScheduler extends DatacenterBroker {
 						r = MWNumericArray.newInstance(dims, MWClassID.DOUBLE,MWComplexity.REAL);
 						slotlimit = MWNumericArray.newInstance(dims, MWClassID.INT64,MWComplexity.REAL);
 						isGeoNet = MWNumericArray.newInstance(dims, MWClassID.INT16,MWComplexity.REAL);
+						isDCFail = MWNumericArray.newInstance(dims, MWClassID.INT16,MWComplexity.REAL);
+						FailThreshold = MWNumericArray.newInstance(dims, MWClassID.DOUBLE,MWComplexity.REAL);
+						
 						dims[1] = unscheduledTaskNum;
 						data = MWNumericArray.newInstance(dims, MWClassID.INT64,MWComplexity.REAL);
 						dims[1] = Parameters.numberOfDC;
 						Slot = MWNumericArray.newInstance(dims, MWClassID.DOUBLE,MWComplexity.REAL);
 						Up = MWNumericArray.newInstance(dims, MWClassID.DOUBLE,MWComplexity.REAL);
 						Down = MWNumericArray.newInstance(dims, MWClassID.DOUBLE,MWComplexity.REAL);
+						DCFailPro = MWNumericArray.newInstance(dims, MWClassID.DOUBLE,MWComplexity.REAL);
 						dims[1] = vnum;
 						xOrig = MWNumericArray.newInstance(dims, MWClassID.DOUBLE,MWComplexity.REAL);
 						allRateMuArray = MWNumericArray.newInstance(dims, MWClassID.DOUBLE,MWComplexity.REAL);
@@ -1306,6 +1313,13 @@ public class WorkflowScheduler extends DatacenterBroker {
 							isGeoNet.set(1, 1);
 						else
 							isGeoNet.set(1, 0);
+						
+						if(Parameters.isConcernDCFail == true)
+							isDCFail.set(1, 1);
+						else
+							isDCFail.set(1, 0);
+						
+						FailThreshold.set(1, Parameters.DCFailThreshold);
 						
 						int[] pos = new int[2];
 						
@@ -1345,20 +1359,21 @@ public class WorkflowScheduler extends DatacenterBroker {
 							Slot.set(pos, SlotArray[0][dcindex]);
 							Up.set(pos, UpArray[0][dcindex]);
 							Down.set(pos, DownArray[0][dcindex]);
+							DCFailPro.set(pos, Parameters.likelihoodOfDCFailure[dcindex]);
 						}
 						
 						switch(Parameters.copystrategy) {
 						case 1:
-							result = taskAssign.copyStrategy(4,xOrig,tasknum,dcnum,allRateMuArray,allRateSigmaArray,workloadArray,TotalTransferDataSize,data,datapos,bandwidth,Slot,Up,Down,uselessDCforTask,r,slotlimit,isGeoNet);
+							result = taskAssign.copyStrategy(4,xOrig,tasknum,dcnum,allRateMuArray,allRateSigmaArray,workloadArray,TotalTransferDataSize,data,datapos,bandwidth,Slot,Up,Down,uselessDCforTask,r,slotlimit,isGeoNet,isDCFail,DCFailPro,FailThreshold);
 							break;
 						case 2:
-							result = taskAssign.copyStrategy_optimizeExp_Traverse(4,xOrig,tasknum,dcnum,allRateMuArray,allRateSigmaArray,workloadArray,TotalTransferDataSize,data,datapos,bandwidth,Slot,Up,Down,uselessDCforTask,r,slotlimit,isGeoNet);
+							result = taskAssign.copyStrategy_optimizeExp_Traverse(4,xOrig,tasknum,dcnum,allRateMuArray,allRateSigmaArray,workloadArray,TotalTransferDataSize,data,datapos,bandwidth,Slot,Up,Down,uselessDCforTask,r,slotlimit,isGeoNet,isDCFail,DCFailPro,FailThreshold);
 							break;
 						case 3:
-							result = taskAssign.copyStrategy_optimizeAll_orderedRes(4,xOrig,tasknum,dcnum,allRateMuArray,allRateSigmaArray,workloadArray,TotalTransferDataSize,data,datapos,bandwidth,Slot,Up,Down,uselessDCforTask,r,slotlimit,isGeoNet);
+							result = taskAssign.copyStrategy_optimizeAll_orderedRes(4,xOrig,tasknum,dcnum,allRateMuArray,allRateSigmaArray,workloadArray,TotalTransferDataSize,data,datapos,bandwidth,Slot,Up,Down,uselessDCforTask,r,slotlimit,isGeoNet,isDCFail,DCFailPro,FailThreshold);
 							break;
 						case 4:
-							result = taskAssign.copyStrategy_optimizeAll_Traverse(4,xOrig,tasknum,dcnum,allRateMuArray,allRateSigmaArray,workloadArray,TotalTransferDataSize,data,datapos,bandwidth,Slot,Up,Down,uselessDCforTask,r,slotlimit,isGeoNet);
+							result = taskAssign.copyStrategy_optimizeAll_Traverse(4,xOrig,tasknum,dcnum,allRateMuArray,allRateSigmaArray,workloadArray,TotalTransferDataSize,data,datapos,bandwidth,Slot,Up,Down,uselessDCforTask,r,slotlimit,isGeoNet,isDCFail,DCFailPro,FailThreshold);
 							break;
 						default:
 							break;
@@ -1446,6 +1461,7 @@ public class WorkflowScheduler extends DatacenterBroker {
 						MWNumericArray.disposeArray(tasknum);
 						MWNumericArray.disposeArray(dcnum);
 						MWNumericArray.disposeArray(isGeoNet);
+						MWNumericArray.disposeArray(isDCFail);
 						MWNumericArray.disposeArray(allRateMuArray);
 						MWNumericArray.disposeArray(allRateSigmaArray);
 						MWNumericArray.disposeArray(TotalTransferDataSize);
@@ -1455,6 +1471,7 @@ public class WorkflowScheduler extends DatacenterBroker {
 						MWNumericArray.disposeArray(Slot);
 						MWNumericArray.disposeArray(Up);
 						MWNumericArray.disposeArray(Down);
+						MWNumericArray.disposeArray(DCFailPro);
 						MWNumericArray.disposeArray(uselessDCforTask);
 						MWNumericArray.disposeArray(r);
 						MWNumericArray.disposeArray(slotlimit);
