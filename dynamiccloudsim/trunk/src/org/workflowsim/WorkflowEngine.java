@@ -348,6 +348,7 @@ public final class WorkflowEngine extends SimEntity {
 			}
 			out.write(DataSize/1024+"\t");
 			out.write(job.getTaskList().get(0).getMi()+"\t");
+			out.write(job.submitDCIndex+"\t");
 			out.write(job.getTaskList().size()+"\t");
 			out.write("\r\n");
 			for(int tindex = 0; tindex < job.getTaskList().size(); tindex++) {
