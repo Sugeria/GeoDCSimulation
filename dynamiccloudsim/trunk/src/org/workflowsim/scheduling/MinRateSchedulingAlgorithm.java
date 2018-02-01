@@ -508,7 +508,7 @@ public class MinRateSchedulingAlgorithm extends BaseSchedulingAlgorithm{
 					job.unscheduledGreatePosition.put(taskId, new ArrayList<>());
 					job.unscheduledGreatePosition.get(taskId).add(job.sortedListOfTask.get(taskId).get(0).getKey());
 					for(int posindex = 1; posindex < Parameters.numberOfDC; posindex++) {
-						if(job.unscheduledGreateRate.get(taskId) > job.sortedListOfTask.get(taskId).get(posindex).getValue()) {
+						if(job.unscheduledGreateRate.get(taskId) < job.sortedListOfTask.get(taskId).get(posindex).getValue()) {
 							break;
 						}else {
 							job.unscheduledGreatePosition.get(taskId).add(job.sortedListOfTask.get(taskId).get(posindex).getKey());
