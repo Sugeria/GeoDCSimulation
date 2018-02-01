@@ -415,7 +415,7 @@ public class WorkflowScheduler extends DatacenterBroker {
         }
         
         
-        
+        int assignedTaskNumber = 0;
         int lastjobindex = 0;
         int srptJobNum = (int)Math.ceil(jobNumInOneLoop*Parameters.epsilon);
         // use break exit loop
@@ -1440,12 +1440,14 @@ public class WorkflowScheduler extends DatacenterBroker {
 											speculativeTask.setSpeculativeCopy(true);
 											speculativeTask.incBw((long)(task.TotalTransferDataSize[dcindex]/1024d));
 											speculativeTasks.get(speculativeTask.getCloudletId()).add(speculativeTask);
+											assignedTaskNumber++;
 											submitSpeculativeTask(speculativeTask, vm);
 										} else {
 											task.setAssignmentDCId(dcindex + DCbase);
 											task.assignmentDCindex = dcindex;
 											task.incBw((long)(task.TotalTransferDataSize[dcindex]/1024d));
 											tasks.put(task.getCloudletId(), task);
+											assignedTaskNumber++;
 											submitTask(task, vm);
 											speculativeTasks.put(task.getCloudletId(), new LinkedList<>());
 										}
@@ -1551,7 +1553,10 @@ public class WorkflowScheduler extends DatacenterBroker {
 					+ DownArray[0][dcindex]+"\t"+(DownArray[0][dcindex]/ori_downlinkOfDC.get(dcindex+DCbase))+"\t";
 			log.info(resourcelog);
         }
-        
+        if(assignedTaskNumber == 0) {
+        	int a = 1;
+        	a = a + 1;
+        }
 
     }
 

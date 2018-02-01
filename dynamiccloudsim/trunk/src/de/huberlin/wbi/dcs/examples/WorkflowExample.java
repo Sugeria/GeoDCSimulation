@@ -390,6 +390,8 @@ public class WorkflowExample {
 			dc.setDownlink(Parameters.downlinkOfDC[dcindex]);
 			dc.setUplink(Parameters.uplinkOfDC[dcindex]);
 			DatacenterCharacteristics dcc = dc.getCharacteristics();
+			dcc.setLikelihoodOfStraggler(Parameters.likelihoodOfStragglerOfDC[dcindex]);
+			dcc.setStragglerPerformanceCoefficient(Parameters.stragglerPerformanceCoefficientOfDC[dcindex]);
 			dcc.setLikelihoodOfFailure(Parameters.likelihoodOfFailure[dcindex]);
 			dcc.setRuntimeFactorIncaseOfFailure(Parameters.runtimeFactorInCaseOfFailure[dcindex]);
 			dcc.setLikelihoodOfDCFailure(Parameters.likelihoodOfDCFailure[dcindex]);
