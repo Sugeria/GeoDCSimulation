@@ -2436,6 +2436,10 @@ public class WorkflowScheduler extends DatacenterBroker {
 			// new original
 		}else {
 			
+			if(!tasks.containsKey(task.getCloudletId())) {
+				return;
+			}
+			
 			LinkedList<Task> speculativeTaskOfTask = (LinkedList<Task>)speculativeTasks.remove(task.getCloudletId());
 			
 			
