@@ -397,10 +397,10 @@ public class MinRateSchedulingAlgorithm extends BaseSchedulingAlgorithm{
 //	            							*delay_co*bw_sigmaco), 2));
             				allRateMuArray[0][xindex] = muParaOfTaskInDC[xindex];
 //	            			
-	            			double mi_sigma = mi_mu * unstablecoOfDC[dcindex] * mi_sigmaco;
-	    					double io_sigma = io_mu * unstablecoOfDC[dcindex] * io_sigmaco;
+	            			double mi_sigma = mi_mu * mi_sigmaco;
+	    					double io_sigma = io_mu * io_sigmaco;
 	    					allRateSigmaArray[0][xindex] = Math.sqrt(Math.pow(mi_sigma, 2)
-	            					+Math.pow(io_sigma, 2)+Math.pow((bw_mu_dataDelay*unstablecoOfDC[dcindex]
+	            					+Math.pow(io_sigma, 2)+Math.pow((bw_mu_dataDelay
 	            							*bw_sigmaco), 2));
 	//            			allRateSigmaArray[0][xindex] = sigmaParaOfTaskInDC[xindex];
 	            			objParaOfTaskInDC.get(task.getCloudletId()).put(dcindex, 
