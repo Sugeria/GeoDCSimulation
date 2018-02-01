@@ -573,7 +573,8 @@ public class MinRateSchedulingAlgorithm extends BaseSchedulingAlgorithm{
 				double minTime = job.unscheduledGreateRate.get(taskId);
 				int minPosNum = job.unscheduledGreatePosition.get(taskId).size();
 				int minPosIndex = (int)((Math.random()*minPosNum) % minPosNum);
-				int minXIndex = taskindex * Parameters.numberOfDC + minPosIndex;
+				int minDCIndex = job.unscheduledGreatePosition.get(taskId).get(minPosIndex);
+				int minXIndex = taskindex * Parameters.numberOfDC + minDCIndex;
 				for(int dcindex = 0; dcindex < Parameters.numberOfDC; dcindex++) {
 					int xindex = taskindex * Parameters.numberOfDC + dcindex;
 					if(Parameters.isUselessDCuseful == true) {
