@@ -344,16 +344,16 @@ public class CloudletSchedulerGreedyDivided extends CloudletSchedulerTimeShared 
 		
 		
 		double resource = mips.get(taskSlot) + iops.get(taskSlot) + band_delay;
-		double delay_para = (double)Parameters.delayAmongDCIndex[cl.submitDCIndex][cl.assignmentDCindex];
-		if(delay_para > 1e20d) {
-			int a = 1;
-			a = a + 1;
-		}
-		double task_workload = cl.getCloudletLength();
-		double resource_delay = resource * 
-				(task_workload/(task_workload + resource * delay_para));
+//		double delay_para = (double)Parameters.delayAmongDCIndex[cl.submitDCIndex][cl.assignmentDCindex];
+//		if(delay_para > 1e20d) {
+//			int a = 1;
+//			a = a + 1;
+//		}
+//		double task_workload = cl.getCloudletLength();
+//		double resource_delay = resource * 
+//				(task_workload/(task_workload + resource * delay_para));
 		
-		return resource_delay;
+		return resource;
 	}
 
 	private double getTotalMips(List<Double> mipsShare) {

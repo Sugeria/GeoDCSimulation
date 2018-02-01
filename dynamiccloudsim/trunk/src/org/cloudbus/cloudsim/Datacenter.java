@@ -1404,7 +1404,8 @@ public class Datacenter extends SimEntity {
 //						CloudletTransferRequest.remove(cl.getCloudletId());
 //						CloudletTransferSuccessReq.remove(cl.getCloudletId());
 //						CloudletTransferFailReq.remove(cl.getCloudletId());
-						sendNow(cl.getUserId(), CloudSimTags.CLOUDLET_RETURN, cl);
+						double delay_time = Parameters.delayAmongDCIndex[cl.submitDCIndex][cl.assignmentDCindex];
+						send(cl.getUserId(), delay_time,CloudSimTags.CLOUDLET_RETURN, cl);
 					}
 				}
 			}
