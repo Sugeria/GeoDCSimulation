@@ -574,7 +574,8 @@ public class Datacenter extends SimEntity {
 						int a = 1;
 						a = a + 1;
 					}
-					double bandDelay = task.getCloudletLength()
+					double bandDelay = Parameters.delayAmongDCIndex[task.submitDCIndex][task.assignmentDCindex] 
+							+ task.getCloudletLength()
 							/(task.rateExpectation[task.assignmentDCindex]*slowco);
 					send(task.getUserId(),bandDelay,CloudSimTags.CLOUDLET_RETURN, task);
 				} catch (Exception e) {
