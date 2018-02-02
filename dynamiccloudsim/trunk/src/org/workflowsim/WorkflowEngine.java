@@ -309,6 +309,7 @@ public final class WorkflowEngine extends SimEntity {
         	}
         }
         WorkflowScheduler.log.info("Resource");
+        WorkflowScheduler.log.info(CloudSim.clock + "\t");
         WorkflowScheduler scheduler_0 = scheduler.get(0);
         int DCbase = scheduler_0.DCbase;
         for(int dcindex = 0; dcindex < Parameters.numberOfDC; dcindex++) {

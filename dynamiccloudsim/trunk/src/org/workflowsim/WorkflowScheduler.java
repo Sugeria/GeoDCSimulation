@@ -388,6 +388,7 @@ public class WorkflowScheduler extends DatacenterBroker {
 		
         //current SlotArray UpArray DownArray
 		log.info("Resource");
+		log.info(CloudSim.clock()+"\t");
   		for(int dcindex = 0; dcindex < Parameters.numberOfDC; dcindex++) {
   			if(healthyStateOfDC.get(dcindex + DCbase) == true) {
   				SlotArray[0][dcindex] = idleTaskSlotsOfDC.get(dcindex + DCbase).size();
@@ -1547,6 +1548,7 @@ public class WorkflowScheduler extends DatacenterBroker {
         }
         lastProcessTime = CloudSim.clock();
         log.info("Resource");
+        log.info(CloudSim.clock+"\t");
         for(int dcindex = 0; dcindex < Parameters.numberOfDC; dcindex++) {
         	String resourcelog = SlotArray[0][dcindex]+"\t"+(SlotArray[0][dcindex]/ori_idleTaskSlotsOfDC.get(dcindex+DCbase))+"\t"
 					+ UpArray[0][dcindex]+"\t"+(UpArray[0][dcindex]/ori_uplinkOfDC.get(dcindex+DCbase))+"\t"
