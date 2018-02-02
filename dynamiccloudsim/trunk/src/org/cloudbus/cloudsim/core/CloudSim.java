@@ -79,7 +79,7 @@ public class CloudSim {
 	/** The termination time. */
 	private static double terminateAt = -1;
 	
-	public static int totalRunIndex = 0;
+	public static int totalRunIndex = 24;
 
 	/**
 	 * Initialises all the common attributes.
@@ -547,7 +547,7 @@ public class CloudSim {
 
 		} else {
 			
-			if(CloudSim.totalRunIndex < 23) {
+			if(CloudSim.totalRunIndex < 50) {
 //				List<Job> outputList0 = WorkflowEngine.getJobsReceivedList();
 //        		WorkflowExample.sortJobId(outputList0);
 //				WorkflowExample.record(outputList0);
@@ -743,6 +743,100 @@ public class CloudSim {
 					Parameters.isConcernUnstable = true;
 					Parameters.isConcernGeoNet = true;
 					Parameters.isUselessDCuseful = false;
+					break;
+				case 24:
+					Parameters.copystrategy = 0;
+					Parameters.isConcernDCFail = true;
+					Parameters.isConcernUnstable = true;
+					Parameters.isConcernGeoNet = true;
+					Parameters.isUselessDCuseful = true;
+					Parameters.epsilon = 0.1;
+					break;
+				case 25:
+					Parameters.copystrategy = 1;
+					break;
+				case 26:
+					Parameters.copystrategy = 5;
+					break;
+				case 27:
+					Parameters.copystrategy = 0;
+					Parameters.epsilon = 0.2;
+					break;
+				case 28:
+					Parameters.copystrategy = 1;
+					break;
+				case 29:
+					Parameters.copystrategy = 5;
+					break;
+				case 30:
+					Parameters.copystrategy = 0;
+					Parameters.epsilon = 0.3;
+					break;
+				case 31:
+					Parameters.copystrategy = 1;
+					break;
+				case 32:
+					Parameters.copystrategy = 5;
+					break;
+				case 33:
+					Parameters.copystrategy = 0;
+					Parameters.epsilon = 0.4;
+					break;
+				case 34:
+					Parameters.copystrategy = 1;
+					break;
+				case 35:
+					Parameters.copystrategy = 5;
+					break;
+				case 36:
+					Parameters.copystrategy = 0;
+					Parameters.epsilon = 0.5;
+					break;
+				case 37:
+					Parameters.copystrategy = 1;
+					break;
+				case 38:
+					Parameters.copystrategy = 5;
+					break;
+				case 39:
+					Parameters.copystrategy = 0;
+					Parameters.epsilon = 0.7;
+					break;
+				case 40:
+					Parameters.copystrategy = 1;
+					break;
+				case 41:
+					Parameters.copystrategy = 5;
+					break;
+				case 42:
+					Parameters.copystrategy = 0;
+					Parameters.epsilon = 0.8;
+					break;
+				case 43:
+					Parameters.copystrategy = 1;
+					break;
+				case 44:
+					Parameters.copystrategy = 5;
+					break;
+				case 45:
+					Parameters.copystrategy = 0;
+					Parameters.epsilon = 0.9;
+					break;
+				case 46:
+					Parameters.copystrategy = 1;
+					break;
+				case 47:
+					Parameters.copystrategy = 5;
+					break;
+				case 48:
+					Parameters.copystrategy = 0;
+					Parameters.epsilon = 1;
+					break;
+				case 49:
+					Parameters.copystrategy = 1;
+					break;
+				case 50:
+					Parameters.copystrategy = 5;
 					break;
 				default:
 					break;
