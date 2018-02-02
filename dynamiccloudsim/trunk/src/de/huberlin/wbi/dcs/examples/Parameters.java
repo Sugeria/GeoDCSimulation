@@ -119,7 +119,7 @@ public class Parameters {
     
     public static boolean isUselessDCuseful = true;
     
-    public static boolean isExtracte = false;
+    public static boolean isExtracte = true;
     
     public static boolean isDCFailHappen = false;
     
@@ -687,7 +687,7 @@ public class Parameters {
 
     public static double r = 1d;
     
-    public static double epsilon = 0.6d;
+    public static double epsilon = 0.1d;
     
 	public static boolean considerDataLocality = false;
 	
