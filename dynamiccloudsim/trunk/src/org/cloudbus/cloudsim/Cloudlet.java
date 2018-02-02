@@ -863,6 +863,8 @@ public class Cloudlet {
 	public double getExecStartTime() {
 		return execStartTime;
 	}
+	
+	
 
 	/**
 	 * Sets this Cloudlet's execution parameters. These parameters are set by the CloudResource

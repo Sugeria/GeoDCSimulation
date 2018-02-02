@@ -203,13 +203,13 @@ public final class WorkflowEngine extends SimEntity {
     }
 
     private void processWorkflowInfo(SimEvent ev) {
-		Map<Integer, Integer> jobSizeInfo = (HashMap<Integer, Integer>)ev.getData();
-		this.jobSizeOfWorkflow.putAll(jobSizeInfo);
-		for(Integer key : jobSizeInfo.keySet()) {
-			this.successJobSizeOfWorkflow.put(key, 0);
-			this.startTimeOfWorkflow.put(key, Double.MAX_VALUE);
-			this.finishTimeOfWorkflow.put(key, Double.MIN_VALUE);
-		}
+//		Map<Integer, Integer> jobSizeInfo = (HashMap<Integer, Integer>)ev.getData();
+//		this.jobSizeOfWorkflow.putAll(jobSizeInfo);
+//		for(Integer key : jobSizeInfo.keySet()) {
+//			this.successJobSizeOfWorkflow.put(key, 0);
+//			this.startTimeOfWorkflow.put(key, Double.MAX_VALUE);
+//			this.finishTimeOfWorkflow.put(key, Double.MIN_VALUE);
+//		}
 	}
 
 	/**
@@ -280,27 +280,27 @@ public final class WorkflowEngine extends SimEntity {
         
         
         jobsSubmitted--;
-        int attributedWorkflowId = job.workflowId;
-        int jobAck = successJobSizeOfWorkflow.get(attributedWorkflowId);
-        jobAck++;
-        successJobSizeOfWorkflow.put(attributedWorkflowId, jobAck);
-        if (jobAck == jobSizeOfWorkflow.get(attributedWorkflowId)) {
-        	if(job.getExecStartTime() < startTimeOfWorkflow.get(attributedWorkflowId)) {
-        		startTimeOfWorkflow.put(attributedWorkflowId, job.getExecStartTime());
-        	}
-        	if(job.getFinishTime() > finishTimeOfWorkflow.get(attributedWorkflowId)) {
-        		finishTimeOfWorkflow.put(attributedWorkflowId, job.getFinishTime());
-        	}
-        	double exeDura = finishTimeOfWorkflow.get(attributedWorkflowId) - startTimeOfWorkflow.get(attributedWorkflowId);
-        	executionTimeOfWorkflow.put(attributedWorkflowId, exeDura);
-        }else {
-        	if(job.getExecStartTime() < startTimeOfWorkflow.get(attributedWorkflowId)) {
-        		startTimeOfWorkflow.put(attributedWorkflowId, job.getExecStartTime());
-        	}
-        	if(job.getFinishTime() > finishTimeOfWorkflow.get(attributedWorkflowId)) {
-        		finishTimeOfWorkflow.put(attributedWorkflowId, job.getFinishTime());
-        	}
-        }
+//        int attributedWorkflowId = job.workflowId;
+//        int jobAck = successJobSizeOfWorkflow.get(attributedWorkflowId);
+//        jobAck++;
+//        successJobSizeOfWorkflow.put(attributedWorkflowId, jobAck);
+//        if (jobAck == jobSizeOfWorkflow.get(attributedWorkflowId)) {
+//        	if(job.getExecStartTime() < startTimeOfWorkflow.get(attributedWorkflowId)) {
+//        		startTimeOfWorkflow.put(attributedWorkflowId, job.getExecStartTime());
+//        	}
+//        	if(job.getFinishTime() > finishTimeOfWorkflow.get(attributedWorkflowId)) {
+//        		finishTimeOfWorkflow.put(attributedWorkflowId, job.getFinishTime());
+//        	}
+//        	double exeDura = finishTimeOfWorkflow.get(attributedWorkflowId) - startTimeOfWorkflow.get(attributedWorkflowId);
+//        	executionTimeOfWorkflow.put(attributedWorkflowId, exeDura);
+//        }else {
+//        	if(job.getExecStartTime() < startTimeOfWorkflow.get(attributedWorkflowId)) {
+//        		startTimeOfWorkflow.put(attributedWorkflowId, job.getExecStartTime());
+//        	}
+//        	if(job.getFinishTime() > finishTimeOfWorkflow.get(attributedWorkflowId)) {
+//        		finishTimeOfWorkflow.put(attributedWorkflowId, job.getFinishTime());
+//        	}
+//        }
         boolean isAllDCFail = true;
         for(int dcindex = 0; dcindex < Parameters.numberOfDC; dcindex++) {
         	if(getScheduler(0).healthyStateOfDC.get(getScheduler(0).DCbase + dcindex) == true) {
