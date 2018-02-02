@@ -440,7 +440,10 @@ public class Datacenter extends SimEntity {
 				CloudletTransferRequest.remove(task_vm);
 				CloudletTransferSuccessReq.remove(task_vm);
 				CloudletTransferFailReq.remove(task_vm);
-				sendNow(task.getUserId(), CloudSimTags.CLOUDLET_RETURN, task);
+				double submitDelay = Parameters.delayAmongDCIndex[task.submitDCIndex][task.assignmentDCindex];
+				task.setExecStartTime(CloudSim.clock());
+				task.setFinishTime(CloudSim.clock + submitDelay);
+				send(task.getUserId(), submitDelay ,CloudSimTags.CLOUDLET_RETURN, task);
 			} catch (Exception e) {
 				e.printStackTrace();
 			}
@@ -456,7 +459,10 @@ public class Datacenter extends SimEntity {
 		Cloudlet cl = (Cloudlet) ev.getData();
 		try {
 			cl.setCloudletStatus(Cloudlet.FAILED);
-			sendNow(cl.getUserId(), CloudSimTags.CLOUDLET_RETURN, cl);
+			cl.setExecStartTime(CloudSim.clock);
+			double delay_time = Parameters.delayAmongDCIndex[cl.submitDCIndex][cl.assignmentDCindex];
+			cl.setFinishTime(CloudSim.clock + delay_time);
+			send(cl.getUserId(), delay_time,CloudSimTags.CLOUDLET_RETURN, cl);
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -577,6 +583,8 @@ public class Datacenter extends SimEntity {
 					double bandDelay = Parameters.delayAmongDCIndex[task.submitDCIndex][task.assignmentDCindex] 
 							+ task.getCloudletLength()
 							/(task.rateExpectation[task.assignmentDCindex]*slowco);
+					task.setExecStartTime(CloudSim.clock());
+					task.setFinishTime(CloudSim.clock() + bandDelay);
 					send(task.getUserId(),bandDelay,CloudSimTags.CLOUDLET_RETURN, task);
 				} catch (Exception e) {
 					e.printStackTrace();
@@ -1233,8 +1241,9 @@ public class Datacenter extends SimEntity {
 				CloudletTransferRequest.remove(cl_vm);
 				CloudletTransferSuccessReq.remove(cl_vm);
 				CloudletTransferFailReq.remove(cl_vm);
-				checkCloudletCompletion();
+				
 			}
+			
 			
 			
 
@@ -1246,6 +1255,8 @@ public class Datacenter extends SimEntity {
 			Log.printLine(getName() + ".processCloudletSubmit(): " + "Exception error.");
 			e.printStackTrace();
 		}
+		
+		checkCloudletCompletion();
 
 		
 	}
@@ -1406,6 +1417,7 @@ public class Datacenter extends SimEntity {
 //						CloudletTransferSuccessReq.remove(cl.getCloudletId());
 //						CloudletTransferFailReq.remove(cl.getCloudletId());
 						double delay_time = Parameters.delayAmongDCIndex[cl.submitDCIndex][cl.assignmentDCindex];
+						cl.setFinishTime(CloudSim.clock + delay_time);
 						send(cl.getUserId(), delay_time,CloudSimTags.CLOUDLET_RETURN, cl);
 					}
 				}

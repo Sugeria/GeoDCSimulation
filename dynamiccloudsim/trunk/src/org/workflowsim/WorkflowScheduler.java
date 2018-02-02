@@ -2690,37 +2690,7 @@ public class WorkflowScheduler extends DatacenterBroker {
         	// modify the job state and return the job to the WorkflowEngine
         	Job completeJob = JobFactory.get(attributedJobId);
         	List<Task> completeTaskList = completeJob.getTaskList();
-        	if(completeTaskList.size() == 0) {
-        		getCloudletReceivedList().add(completeJob);
-                getCloudletSubmittedList().remove(completeJob);
-                if(completeJob.getStatus() == Cloudlet.SUCCESS) {
-                	schedule(this.workflowEngineId, 0.0, CloudSimTags.CLOUDLET_RETURN, completeJob);
-
-                    taskOfJob.remove(attributedJobId);
-                    ackTaskOfJob.remove(attributedJobId);
-                    scheduledTaskOfJob.remove(attributedJobId);
-                    JobFactory.remove(attributedJobId);
-                    usedSlotsOfJob.remove(attributedJobId);
-                    
-                    cloudletsSubmitted--;
-                    //not really update right now, should wait 1 s until many jobs have returned
-                    schedule(this.getId(), 0.0, WorkflowSimTags.CLOUDLET_UPDATE);
-                }else {
-                	resetTask(completeJob);
-                    schedule(this.workflowEngineId, 0.0, CloudSimTags.CLOUDLET_RETURN, completeJob);
-
-                    taskOfJob.remove(attributedJobId);
-                    scheduledTaskOfJob.remove(attributedJobId);
-                    ackTaskOfJob.remove(attributedJobId);
-                    JobFactory.remove(attributedJobId);
-                    usedSlotsOfJob.remove(attributedJobId);
-                    
-                    cloudletsSubmitted--;
-                    //not really update right now, should wait 1 s until many jobs have returned
-                    schedule(this.getId(), 0.0, WorkflowSimTags.CLOUDLET_UPDATE);
-                }
-                return ;
-        	}
+        	
         	boolean successflag = true;
         	// jobExeStartTime is the earliest Execution time among tasks
         	double JobExeStartTime = Double.MAX_VALUE;
@@ -2744,13 +2714,6 @@ public class WorkflowScheduler extends DatacenterBroker {
             			JobFinishedTime = taskfinishtime;
             		}
             		completeJob.successTaskList.add(completeTask);
-        		}else {
-        			double taskstarttime = completeTask.getExecStartTime();
-        			if(taskstarttime < JobExeStartTime) {
-            			JobExeStartTime = taskstarttime;
-            		}
-        			resetTask(completeTask);
-        			completeJob.getTaskList().set(taskindex, completeTask);
         		}
         		
 //        		if (successflag == true && completeTask.getStatus() == Cloudlet.FAILED) {
