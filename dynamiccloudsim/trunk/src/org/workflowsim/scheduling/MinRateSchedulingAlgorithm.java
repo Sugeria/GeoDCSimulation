@@ -577,68 +577,46 @@ public class MinRateSchedulingAlgorithm extends BaseSchedulingAlgorithm{
 				int minXIndex = taskindex * Parameters.numberOfDC + minDCIndex;
 				for(int dcindex = 0; dcindex < Parameters.numberOfDC; dcindex++) {
 					int xindex = taskindex * Parameters.numberOfDC + dcindex;
-					if(Parameters.isUselessDCuseful == true) {
-						if(objTimeParaOfTaskInDC.get(taskId).get(dcindex) > ((minTime * (1+Parameters.epsilon) 
-								* workloadArray[xindex])/workloadArray[minXIndex])) {
+					if(Parameters.isConcernGeoNet == false) {
+						// need extra limit to defend transfer error not the transfer delay
+						boolean whetherAvailable = true;
+						double submitDelay = Parameters.delayAmongDCIndex[task.submitDCIndex][dcindex];
+						if(submitDelay > 1e20d) {
+							whetherAvailable = false;
+						}
+						if(whetherAvailable == true && task.numberOfData > 0) {
+							int datanum = task.numberOfData;
+							for(int dataindex = 0; dataindex < datanum; dataindex++) {
+								double dataTransDelay = Parameters.delayAmongDCIndex[task.positionOfData[dataindex]][dcindex];
+								if(dataTransDelay > 1e20d) {
+									whetherAvailable = false;
+									break;
+									
+								}
+							}
+						}
+						if(whetherAvailable == false) {
 							uselessDCforTask[xindex] = 0;
 							task.uselessDC[dcindex] = 0;
 							uselessConstraintsNum += 1;
-						}else if(Parameters.isConcernGeoNet == false) {
-							// need extra limit to defend transfer error not the transfer delay
-							boolean whetherAvailable = true;
-							double submitDelay = Parameters.delayAmongDCIndex[task.submitDCIndex][dcindex];
-							if(submitDelay > 1e20d) {
-								whetherAvailable = false;
-							}
-							if(whetherAvailable == true && task.numberOfData > 0) {
-								int datanum = task.numberOfData;
-								for(int dataindex = 0; dataindex < datanum; dataindex++) {
-									double dataTransDelay = Parameters.delayAmongDCIndex[task.positionOfData[dataindex]][dcindex];
-									if(dataTransDelay > 1e20d) {
-										whetherAvailable = false;
-										break;
-										
-									}
-								}
-							}
-							if(whetherAvailable == false) {
+						}
+						
+					}else {
+						if(Parameters.isUselessDCuseful == true) {
+							if(objTimeParaOfTaskInDC.get(taskId).get(dcindex) > ((minTime * (1+Parameters.epsilon) 
+									* workloadArray[xindex])/workloadArray[minXIndex])) {
 								uselessDCforTask[xindex] = 0;
 								task.uselessDC[dcindex] = 0;
 								uselessConstraintsNum += 1;
 							}
-							
-						}
-					}else {
-						if(objParaOfTaskInDC.get(taskId).get(dcindex) < 1d) {
-							uselessDCforTask[xindex] = 0;
-							task.uselessDC[dcindex] = 0;
-							uselessConstraintsNum += 1;
-						}else if(Parameters.isConcernGeoNet == false) {
-							// need extra limit to defend error
-							boolean whetherAvailable = true;
-							double submitDelay = Parameters.delayAmongDCIndex[task.submitDCIndex][dcindex];
-							if(submitDelay > 1e20d) {
-								whetherAvailable = false;
-							}
-							if(whetherAvailable == true && task.numberOfData > 0) {
-								int datanum = task.numberOfData;
-								for(int dataindex = 0; dataindex < datanum; dataindex++) {
-									double dataTransDelay = Parameters.delayAmongDCIndex[task.positionOfData[dataindex]][dcindex];
-									if(dataTransDelay > 1e20d) {
-										whetherAvailable = false;
-										break;
-										
-									}
-								}
-							}
-							if(whetherAvailable == false) {
+						}else {
+							if(objParaOfTaskInDC.get(taskId).get(dcindex) < 1d) {
 								uselessDCforTask[xindex] = 0;
 								task.uselessDC[dcindex] = 0;
 								uselessConstraintsNum += 1;
 							}
 						}
 					}
-					
 				}
 				boolean noCandidateDCflag = true;
 				for(int dcindex = 0; dcindex < Parameters.numberOfDC; dcindex++) {
