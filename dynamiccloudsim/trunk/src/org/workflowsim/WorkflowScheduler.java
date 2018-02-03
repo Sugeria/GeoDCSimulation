@@ -424,6 +424,10 @@ public class WorkflowScheduler extends DatacenterBroker {
     	
         for (int jobindex = lastjobindex; jobindex < srptJobNum; jobindex++) {
         	Job job = (Job)rankedList.get(jobindex);
+        	if(job.getCloudletId() == 104) {
+        		int a = 1;
+        		a = a + 1;
+        	}
         	// submitTasks while update JobList info
 			if(!taskOfJob.containsKey(job.getCloudletId())) {
 				if(job.getTaskList().size() == 0) {
