@@ -79,7 +79,7 @@ public class CloudSim {
 	/** The termination time. */
 	private static double terminateAt = -1;
 	
-	public static int totalRunIndex = 24;
+	public static int totalRunIndex = 0;
 
 	/**
 	 * Initialises all the common attributes.
