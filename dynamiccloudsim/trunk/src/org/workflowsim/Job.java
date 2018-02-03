@@ -142,7 +142,7 @@ public class Job extends Task {
     		}
     		
 //    		double task_workload = task.getMi()+task.getIo()+task.TotalTransferDataSize[pos];
-    		utility = Math.max(utility, rate);
+    		utility += rate;
     	}
     	return utility;
     }
