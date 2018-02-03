@@ -1443,17 +1443,17 @@ public class MinRateSchedulingAlgorithm extends BaseSchedulingAlgorithm{
         
         
         for (int i = 0; i < size; i++) {
-            int maxIndex = 0;
-            Job maxJob = null;
+            int minIndex = 0;
+            Job minJob = null;
             for (int j = 0; j < size; j++) {
                 Job job = (Job) getCloudletList().get(j);
                 if (!hasChecked.get(j)) {
-                    maxJob = job;
-                    maxIndex = j;
+                    minJob = job;
+                    minIndex = j;
                     break;
                 }
             }
-            if (maxJob == null) {
+            if (minJob == null) {
                 break;
             }
 
@@ -1464,16 +1464,16 @@ public class MinRateSchedulingAlgorithm extends BaseSchedulingAlgorithm{
                     continue;
                 }
                 double utility = job.getJobUtility();
-                if (utility > maxJob.getJobUtility()) {
-                    maxJob = job;
-                    maxIndex = j;
+                if (utility < minJob.getJobUtility()) {
+                    minJob = job;
+                    minIndex = j;
                 }
             }
-            hasChecked.set(maxIndex, true);
+            hasChecked.set(minIndex, true);
 
             
             //getScheduledList().add(minCloudlet);
-            getRankedList().add(maxJob);
+            getRankedList().add(minJob);
         }
     }
 
