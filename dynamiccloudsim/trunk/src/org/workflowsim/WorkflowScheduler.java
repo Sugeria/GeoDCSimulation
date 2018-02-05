@@ -56,6 +56,7 @@ import com.mathworks.toolbox.javabuilder.MWClassID;
 import com.mathworks.toolbox.javabuilder.MWComplexity;
 import com.mathworks.toolbox.javabuilder.MWException;
 import com.mathworks.toolbox.javabuilder.MWNumericArray;
+import com.sun.org.apache.xalan.internal.xsltc.runtime.Parameter;
 
 import de.huberlin.wbi.dcs.DynamicVm;
 import de.huberlin.wbi.dcs.examples.Parameters;
@@ -1183,7 +1184,127 @@ public class WorkflowScheduler extends DatacenterBroker {
 					}
         		}
         		
-        		if(allzeroflag == false && (Parameters.copystrategy == 5 || Parameters.copystrategy == 0 || preAssignedSlots <= 0)) {
+        		if(allzeroflag == false && (Parameters.copystrategy == 5 || Parameters.copystrategy == 0 || Parameters.copystrategy == 6 || preAssignedSlots <= 0)) {
+        			
+        			if(Parameters.copystrategy == 6 && preAssignedSlots > 0) {
+        				//assign task copy in singlex
+            			double taskNumOfJob = job.getTaskList().size();
+            			for (int tindex = 0; tindex < unscheduledTaskNum; tindex++) {
+            				
+            				int originalDCindex = -1;
+            				double taskPro = 0d;
+            				for(int dcindex = 0; dcindex < Parameters.numberOfDC; dcindex++) {
+            					if(singlex[tindex*Parameters.numberOfDC + dcindex]!=0) {
+            						originalDCindex = dcindex;
+            						taskPro = Parameters.likelihoodOfFailure[dcindex];
+            						break;
+            					}
+            				}
+            				if(originalDCindex != -1) {
+            					Task task = job.unscheduledTaskList.get(tindex);
+                				
+                				int numberOfCopy = (int) (Math.log(1
+                						-Math.pow(Parameters.acceptProOfJob, 1/taskNumOfJob))/Math.log(taskPro));
+                				int numberOfExeCopy = Math.max(1, numberOfCopy);
+                				double judgePro = Math.pow(taskPro, numberOfExeCopy);
+                				for(int copyindex = 0; copyindex < (numberOfExeCopy-1); copyindex++) {
+                					if(preAssignedSlots <= 0)
+                						break;
+                					// greedy choose the vm
+                    				int taskId = task.getCloudletId();
+                    				int datanumber = task.numberOfData;
+                    				boolean success = true;
+                    				int successDC = -1;
+                    				for(int listindex = 0; listindex < Parameters.numberOfDC; listindex++) {
+                    					int dcindex = Parameters.sortedlikelihoodOfFailure[listindex];
+                    					int xindex = tindex * Parameters.numberOfDC + dcindex;
+                    					if(task.uselessDC[dcindex] == 0) {
+                    						success = false;
+                    						continue;
+                    					}
+                    					
+                    					if(Parameters.likelihoodOfFailure[dcindex]*taskPro <= judgePro) {
+                    						continue;
+                    					}
+                    					
+                    					success = true;
+                    					// when the dc is not too far
+//                    					if(job.uselessDCforTask[xindex] != 0) {
+                    						// verify that the resource is enough
+                    						
+                    						// machines
+                    						if((SlotArray[0][dcindex]-1)<0) {
+                    							success = false;
+                    							continue;
+                    						}
+                    						
+                    						
+                    						totalBandwidth = 0d;
+                    						// uplink
+                    						bwOfSrcPos = new HashMap<>();
+                    						if(Parameters.isConcernGeoNet == true) {
+                    							if(task.TotalTransferDataSize[dcindex]>0) {
+                    								for(int dataindex = 0; dataindex < datanumber; dataindex++) {
+                    									double neededBw = task.bandwidth[dcindex][dataindex];
+                    									totalBandwidth += totalBandwidth;
+                    									int srcPos = (int) task.positionOfData[dataindex];
+                    									if(bwOfSrcPos.containsKey(srcPos)) {
+                    										double oldvalue = bwOfSrcPos.get(srcPos);
+                    										bwOfSrcPos.put(srcPos, oldvalue + neededBw);
+                    									}else {
+                    										bwOfSrcPos.put(srcPos, 0 + neededBw);
+                    									}
+                    								}
+                    								for(int pos : bwOfSrcPos.keySet()) {
+                    									if((UpArray[0][pos]-bwOfSrcPos.get(pos))<0) {
+                    										success = false;
+                    										break;
+                    									}
+                    								}
+                    							}
+                    							
+                    							// downlink
+                    							if(task.TotalTransferDataSize[dcindex]>0 && success == true) {
+                    								if((DownArray[0][dcindex]-totalBandwidth)<0) {
+                    									success = false;
+                    									continue;
+                    								}
+                    							}
+                    						}
+                    						
+                    						
+                    						
+                    						if(success == true) {
+                    							SlotArray[0][dcindex] -= 1;
+                    							
+                    							if(Parameters.isConcernGeoNet == true) {
+                    								if(task.TotalTransferDataSize[dcindex]>0) {
+                    									DownArray[0][dcindex] -= totalBandwidth;
+
+                    								}
+                    								for(int pos : bwOfSrcPos.keySet()) {
+                    									UpArray[0][pos]-=bwOfSrcPos.get(pos);
+                    								}
+                    							}
+                    							singlex[xindex] += 1;
+                    							preAssignedSlots -= 1;
+                    							successDC = dcindex;
+                    							taskPro *= Parameters.likelihoodOfFailure[dcindex];
+                    							break;
+                    						}
+//                    					}
+                    				}
+                    				
+                				}
+                				
+                			}
+            			}
+            			
+        			}
+        			
+        			
+        			
+        			
         			// Queue<Vm> taskSlotsKeptIdle = new LinkedList<>();
 					Queue<Task> taskSubmitted = new LinkedList<>();
 					// successful assignment

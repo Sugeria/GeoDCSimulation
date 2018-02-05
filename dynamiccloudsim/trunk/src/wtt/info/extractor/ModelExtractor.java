@@ -114,6 +114,7 @@ public class ModelExtractor {
 		Parameters.likelihoodOfStragglerOfDC = new double[numberOfDC];
 		Parameters.stragglerPerformanceCoefficientOfDC = new double[numberOfDC];
 		Parameters.likelihoodOfFailure = new double[numberOfDC];
+		Parameters.sortedlikelihoodOfFailure = new int[numberOfDC];
 		Parameters.runtimeFactorInCaseOfFailure = new double[numberOfDC];
 		Parameters.likelihoodOfDCFailure = new double[numberOfDC];
 		Parameters.uplinkOfDC = new double[numberOfDC];
@@ -244,8 +245,11 @@ public class ModelExtractor {
 			Parameters.lbOfDCFailureDuration[rowindex] = Double.parseDouble(para_string[rowindex]);
 		}
 		in.close();
+		double[] value = new double[Parameters.numberOfDC];
 		
 		for(int dcindex = 0; dcindex < dim[0]; dcindex++) {
+			value[dcindex] = Parameters.likelihoodOfFailure[dcindex];
+			Parameters.sortedlikelihoodOfFailure[dcindex] = dcindex;
 			Parameters.cpuHeterogeneityDistributionOfDC[dcindex] = Distribution.NORMAL;
 			
 			Parameters.ioHeterogeneityDistributionOfDC[dcindex] = Distribution.NORMAL;
@@ -265,7 +269,21 @@ public class ModelExtractor {
 			
 			Parameters.bwNoiseDistributionOfDC[dcindex] = Distribution.NORMAL;
 		}
-
+		
+		// sort the likelihoodFailureOfDC
+		for (int i = 0; i < Parameters.numberOfDC-1; i++) {
+			for (int j = i+1; j < Parameters.numberOfDC; j++) {
+				if(value[i]>value[j]){
+					double temp = value[i];
+					int p = Parameters.sortedlikelihoodOfFailure[i];
+					value[i] = value[j];
+					Parameters.sortedlikelihoodOfFailure[i] = Parameters.sortedlikelihoodOfFailure[j];
+					value[j] = temp;
+					Parameters.sortedlikelihoodOfFailure[j] = p; 
+				}
+			}
+		}
+		
 	}
 
 }
