@@ -687,7 +687,7 @@ public class Parameters {
 
     public static double r = 1d;
     
-    public static double epsilon = 0.6d;
+    public static double epsilon = 0.7d;
     
 	public static boolean considerDataLocality = false;
 	
