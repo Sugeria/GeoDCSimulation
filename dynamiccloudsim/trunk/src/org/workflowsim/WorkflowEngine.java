@@ -670,6 +670,126 @@ public final class WorkflowEngine extends SimEntity {
 				case 50:
 					Parameters.copystrategy = 5;
 					break;
+				case 51:
+					Parameters.copystrategy = 6;
+					Parameters.isConcernDCFail = false;
+					Parameters.isConcernUnstable = false;
+					Parameters.isConcernGeoNet = false;
+					Parameters.isUselessDCuseful = false;
+					Parameters.epsilon = 0.6d;
+					break;
+				case 52:
+					Parameters.copystrategy = 6;
+					Parameters.isConcernDCFail = true;
+					Parameters.isConcernUnstable = true;
+					Parameters.isConcernGeoNet = true;
+					Parameters.isUselessDCuseful = true;
+					Parameters.epsilon = 0.6d;
+					break;
+				case 53:
+					Parameters.copystrategy = 6;
+					Parameters.isConcernDCFail = false;
+					Parameters.isConcernUnstable = true;
+					Parameters.isConcernGeoNet = true;
+					Parameters.isUselessDCuseful = true;
+					Parameters.epsilon = 0.6d;
+					break;
+				case 54:
+					Parameters.copystrategy = 6;
+					Parameters.isConcernDCFail = true;
+					Parameters.isConcernUnstable = false;
+					Parameters.isConcernGeoNet = true;
+					Parameters.isUselessDCuseful = true;
+					Parameters.epsilon = 0.6d;
+					break;
+				case 55:
+					Parameters.copystrategy = 6;
+					Parameters.isConcernDCFail = true;
+					Parameters.isConcernUnstable = true;
+					Parameters.isConcernGeoNet = false;
+					Parameters.isUselessDCuseful = true;
+					Parameters.epsilon = 0.6d;
+					break;
+				case 56:
+					Parameters.copystrategy = 6;
+					Parameters.isConcernDCFail = true;
+					Parameters.isConcernUnstable = true;
+					Parameters.isConcernGeoNet = true;
+					Parameters.isUselessDCuseful = false;
+					Parameters.epsilon = 0.6d;
+					break;
+				case 57:
+					Parameters.copystrategy = 6;
+					Parameters.isConcernDCFail = true;
+					Parameters.isConcernUnstable = true;
+					Parameters.isConcernGeoNet = true;
+					Parameters.isUselessDCuseful = true;
+					Parameters.epsilon = 0.1d;
+					break;
+				case 58:
+					Parameters.copystrategy = 6;
+					Parameters.isConcernDCFail = true;
+					Parameters.isConcernUnstable = true;
+					Parameters.isConcernGeoNet = true;
+					Parameters.isUselessDCuseful = true;
+					Parameters.epsilon = 0.2d;
+					break;
+				case 59:
+					Parameters.copystrategy = 6;
+					Parameters.isConcernDCFail = true;
+					Parameters.isConcernUnstable = true;
+					Parameters.isConcernGeoNet = true;
+					Parameters.isUselessDCuseful = true;
+					Parameters.epsilon = 0.3d;
+					break;
+				case 60:
+					Parameters.copystrategy = 6;
+					Parameters.isConcernDCFail = true;
+					Parameters.isConcernUnstable = true;
+					Parameters.isConcernGeoNet = true;
+					Parameters.isUselessDCuseful = true;
+					Parameters.epsilon = 0.4d;
+					break;
+				case 61:
+					Parameters.copystrategy = 6;
+					Parameters.isConcernDCFail = true;
+					Parameters.isConcernUnstable = true;
+					Parameters.isConcernGeoNet = true;
+					Parameters.isUselessDCuseful = true;
+					Parameters.epsilon = 0.5d;
+					break;
+				case 62:
+					Parameters.copystrategy = 6;
+					Parameters.isConcernDCFail = true;
+					Parameters.isConcernUnstable = true;
+					Parameters.isConcernGeoNet = true;
+					Parameters.isUselessDCuseful = true;
+					Parameters.epsilon = 0.7d;
+					break;
+				case 63:
+					Parameters.copystrategy = 6;
+					Parameters.isConcernDCFail = true;
+					Parameters.isConcernUnstable = true;
+					Parameters.isConcernGeoNet = true;
+					Parameters.isUselessDCuseful = true;
+					Parameters.epsilon = 0.8d;
+					break;
+				case 64:
+					Parameters.copystrategy = 6;
+					Parameters.isConcernDCFail = true;
+					Parameters.isConcernUnstable = true;
+					Parameters.isConcernGeoNet = true;
+					Parameters.isUselessDCuseful = true;
+					Parameters.epsilon = 0.9d;
+					break;
+				case 65:
+					Parameters.copystrategy = 6;
+					Parameters.isConcernDCFail = true;
+					Parameters.isConcernUnstable = true;
+					Parameters.isConcernGeoNet = true;
+					Parameters.isUselessDCuseful = true;
+					Parameters.epsilon = 1d;
+					break;
 				default:
 					break;
 				}
