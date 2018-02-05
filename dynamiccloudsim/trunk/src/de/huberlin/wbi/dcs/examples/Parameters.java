@@ -109,7 +109,7 @@ public class Parameters {
     
     public static boolean isGurobi = true;
     
-    public static boolean isConcernDCFail = true;
+    public static boolean isConcernDCFail = false;
     
     public static double DCFailThreshold = 0.2d;
     
