@@ -103,6 +103,7 @@ public class Parameters {
     
 //    public static double dcFailTime = 1d;
     
+    
     public static int failNumOfDC = 5;
     
     public static boolean isDebug = false;
@@ -114,6 +115,8 @@ public class Parameters {
     public static double DCFailThreshold = 0.2d;
     
     public static boolean isConcernUnstable = true;
+    
+    public static double acceptProOfJob = 0.05d;
     
     public static boolean isConcernGeoNet = true;
     
@@ -960,6 +963,7 @@ public class Parameters {
 		likelihoodOfStragglerOfDC = new double[numberOfDC];
 		stragglerPerformanceCoefficientOfDC = new double[numberOfDC];
 		likelihoodOfFailure = new double[numberOfDC];
+		sortedlikelihoodOfFailure = new int[numberOfDC];
 		runtimeFactorInCaseOfFailure = new double[numberOfDC];
 		likelihoodOfDCFailure = new double[numberOfDC];
 		uplinkOfDC = new double[numberOfDC];
@@ -1013,6 +1017,7 @@ public class Parameters {
 		int Large_part = (int)(numberOfDC * 0.05);
 		int Medium_part = (int)(numberOfDC * 0.2) + Large_part;
 		int dcindex = 0;
+		double[] value = new double[Parameters.numberOfDC];
 		for(int dccounter = 0; dccounter < numberOfDC; dccounter++) {
 			dcindex = I[dccounter]-1;
 			if(dccounter < Large_part) {
@@ -1233,6 +1238,22 @@ public class Parameters {
 				lbOfDCFailureDuration[dcindex] = Math.random()*(10-8)+8;
 				
 			}
+			value[dcindex] = Parameters.likelihoodOfFailure[dcindex];
+			Parameters.sortedlikelihoodOfFailure[dcindex] = dcindex;
+		}
+		
+		// sort the likelihoodFailureOfDC
+		for (int i = 0; i < Parameters.numberOfDC-1; i++) {
+			for (int j = i+1; j < Parameters.numberOfDC; j++) {
+				if(value[i]>value[j]){
+					double temp = value[i];
+					int p = Parameters.sortedlikelihoodOfFailure[i];
+					value[i] = value[j];
+					Parameters.sortedlikelihoodOfFailure[i] = Parameters.sortedlikelihoodOfFailure[j];
+					value[j] = temp;
+					Parameters.sortedlikelihoodOfFailure[j] = p; 
+				}
+			}
 		}
 		
 	}
@@ -1410,6 +1431,7 @@ public class Parameters {
 	// the probability for a task to end in failure instead of success once it's
 	// execution time has passed
 	public static double[] likelihoodOfFailure = {0.002,0.002};
+	public static int[] sortedlikelihoodOfFailure = null;
 	public static double[] runtimeFactorInCaseOfFailure = {20d,20d};
 	
 	// the probability for a datacenter failure
