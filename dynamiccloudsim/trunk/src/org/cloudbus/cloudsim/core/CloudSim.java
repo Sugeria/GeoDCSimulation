@@ -79,7 +79,7 @@ public class CloudSim {
 	/** The termination time. */
 	private static double terminateAt = -1;
 	
-	public static int totalRunIndex = 39;
+	public static int totalRunIndex = 0;
 
 	/**
 	 * Initialises all the common attributes.
@@ -547,7 +547,8 @@ public class CloudSim {
 
 		} else {
 			
-			if(CloudSim.totalRunIndex < 41) {
+			if((Parameters.isRunExeList == false && CloudSim.totalRunIndex < 65)
+					|| (Parameters.isRunExeList == true && Parameters.exeIndex < (Parameters.exelist.length - 1))) {
 //				List<Job> outputList0 = WorkflowEngine.getJobsReceivedList();
 //        		WorkflowExample.sortJobId(outputList0);
 //				WorkflowExample.record(outputList0);
@@ -581,7 +582,15 @@ public class CloudSim {
 				
 				Parameters.isExtracte = true;
 				queue_empty = false;
-				CloudSim.totalRunIndex = CloudSim.totalRunIndex + 1;
+				
+				if(Parameters.isRunExeList == false) {
+					CloudSim.totalRunIndex = CloudSim.totalRunIndex + 1;
+				}else {
+					Parameters.exeIndex += 1;
+					CloudSim.totalRunIndex = Parameters.exelist[Parameters.exeIndex];
+				}
+				
+				
 				
 				switch (totalRunIndex) {
 				case 1:

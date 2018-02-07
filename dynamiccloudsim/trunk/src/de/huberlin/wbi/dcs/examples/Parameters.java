@@ -104,7 +104,7 @@ public class Parameters {
 //    public static double dcFailTime = 1d;
     
     
-    public static int failNumOfDC = 5;
+    public static int failNumOfDC = 2;
     
     public static boolean isDebug = false;
     
@@ -122,9 +122,15 @@ public class Parameters {
     
     public static boolean isUselessDCuseful = true;
     
-    public static boolean isExtracte = true;
+    public static boolean isExtracte = false;
     
     public static boolean isDCFailHappen = false;
+    
+    public static int[] exelist = {0,1,2,3,13,16,19};
+    
+    public static boolean isRunExeList = true;
+    
+    public static int exeIndex = 0;
     
     // 1-4
     public static int copystrategy = 0;
@@ -137,7 +143,7 @@ public class Parameters {
     
     // workflow
     // default 5 workflows each minutes
-    public static double lambda = 0.00578;
+    public static double lambda = 0.01;
     // default 3 days workflow
     // defend time exceed INT.MAX_VALUE
     public static double seconds = 6*60*60;
@@ -348,7 +354,7 @@ public class Parameters {
     		out.write("\r\n");
         	int successfulindex = 0;
         	while(successfulindex < Parameters.failNumOfDC) {
-        		double dcFailTime = 1+Math.random()*(12d*24*60*60);
+        		double dcFailTime = 1+Math.random()*(800);
         		int[] whetherFail = new int[Parameters.numberOfDC];
         		double[] failDuration = new double[Parameters.numberOfDC];
         		int failNum = 0;
@@ -690,7 +696,7 @@ public class Parameters {
 
     public static double r = 1d;
     
-    public static double epsilon = 0.7d;
+    public static double epsilon = 0.6d;
     
 	public static boolean considerDataLocality = false;
 	
