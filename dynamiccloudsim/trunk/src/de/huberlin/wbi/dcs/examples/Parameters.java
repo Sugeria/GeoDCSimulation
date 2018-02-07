@@ -110,17 +110,17 @@ public class Parameters {
     
     public static boolean isGurobi = true;
     
-    public static boolean isConcernDCFail = true;
+    public static boolean isConcernDCFail = false;
     
     public static double DCFailThreshold = 0.2d;
     
-    public static boolean isConcernUnstable = true;
+    public static boolean isConcernUnstable = false;
     
     public static double acceptProOfJob = 0.05d;
     
-    public static boolean isConcernGeoNet = true;
+    public static boolean isConcernGeoNet = false;
     
-    public static boolean isUselessDCuseful = true;
+    public static boolean isUselessDCuseful = false;
     
     public static boolean isExtracte = true;
     

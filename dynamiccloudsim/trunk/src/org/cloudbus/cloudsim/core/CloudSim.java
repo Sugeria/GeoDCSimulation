@@ -79,7 +79,7 @@ public class CloudSim {
 	/** The termination time. */
 	private static double terminateAt = -1;
 	
-	public static int totalRunIndex = 0;
+	public static int totalRunIndex = 1;
 
 	/**
 	 * Initialises all the common attributes.
@@ -547,7 +547,7 @@ public class CloudSim {
 
 		} else {
 			
-			if(CloudSim.totalRunIndex < 23) {
+			if(CloudSim.totalRunIndex < 3) {
 //				List<Job> outputList0 = WorkflowEngine.getJobsReceivedList();
 //        		WorkflowExample.sortJobId(outputList0);
 //				WorkflowExample.record(outputList0);
