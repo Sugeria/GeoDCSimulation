@@ -127,7 +127,7 @@ public class Parameters {
     public static boolean isDCFailHappen = false;
     
     // 1-4
-    public static int copystrategy = 0;
+    public static int copystrategy = 6;
     
     public static int numberOfStrategy = 6;
 
