@@ -120,7 +120,7 @@ public class Parameters {
     
     public static boolean isConcernGeoNet = true;
     
-    public static boolean isUselessDCuseful = true;
+    public static boolean isUselessDCuseful = false;
     
     public static boolean isExtracte = true;
     
