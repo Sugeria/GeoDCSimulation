@@ -110,15 +110,15 @@ public class Parameters {
     
     public static boolean isGurobi = true;
     
-    public static boolean isConcernDCFail = true;
+    public static boolean isConcernDCFail = false;
     
     public static double DCFailThreshold = 0.2d;
     
-    public static boolean isConcernUnstable = true;
+    public static boolean isConcernUnstable = false;
     
     public static double acceptProOfJob = 0.05d;
     
-    public static boolean isConcernGeoNet = true;
+    public static boolean isConcernGeoNet = false;
     
     public static boolean isUselessDCuseful = false;
     
@@ -127,7 +127,7 @@ public class Parameters {
     public static boolean isDCFailHappen = false;
     
     // 1-4
-    public static int copystrategy = 0;
+    public static int copystrategy = 6;
     
     public static int numberOfStrategy = 6;
 
