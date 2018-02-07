@@ -381,8 +381,7 @@ public final class WorkflowEngine extends SimEntity {
         if (getJobsList().isEmpty() && jobsSubmitted == 0 && isAllDCFail == false && CloudSim.futureSize() == 0) {
             
         	
-        	if((Parameters.isRunExeList == false && CloudSim.totalRunIndex < 65)
-					|| (Parameters.isRunExeList == true && Parameters.exeIndex < (Parameters.exelist.length - 1))) {
+        	if(CloudSim.totalRunIndex < 65) {
 //        		List<Job> outputList0 = getJobsReceivedList();
 //        		WorkflowExample.sortJobId(outputList0);
 //				WorkflowExample.record(outputList0);
@@ -414,7 +413,6 @@ public final class WorkflowEngine extends SimEntity {
 				}
 				
 				Parameters.isExtracte = true;
-				
 				if(Parameters.isRunExeList == false) {
 					CloudSim.totalRunIndex = CloudSim.totalRunIndex + 1;
 				}else {
@@ -422,7 +420,6 @@ public final class WorkflowEngine extends SimEntity {
 					CloudSim.totalRunIndex = Parameters.exelist[Parameters.exeIndex];
 				}
 				
-				CloudSim.totalRunIndex = CloudSim.totalRunIndex + 1;
 				
 				switch (CloudSim.totalRunIndex) {
 				case 1:
