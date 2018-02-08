@@ -140,7 +140,7 @@ public class Parameters {
     public static int OriginalVmChooseStrategy = 0;
     
     // 1-4
-    public static int copystrategy = 1;
+    public static int copystrategy = 5;
     
     public static int numberOfStrategy = 6;
 
@@ -297,7 +297,7 @@ public class Parameters {
 	  		} catch (IOException e) {
 	  			e.printStackTrace();
 	  		}
- //       	generateDCfailEvent();
+        	generateDCfailEvent();
         }
         
 

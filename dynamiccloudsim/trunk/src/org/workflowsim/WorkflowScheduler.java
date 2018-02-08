@@ -1665,7 +1665,7 @@ public class WorkflowScheduler extends DatacenterBroker {
     }
         
         
-	    if(Parameters.copystrategy == 5) {
+	    if(Parameters.copystrategy == 5 || Parameters.copystrategy == 1) {
 	    	// assign speculative for the running tasks
 	    	LateStrategy(SlotArray[0],UpArray[0],DownArray[0]);
 	    }
