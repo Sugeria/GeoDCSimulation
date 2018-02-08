@@ -348,10 +348,10 @@ public class DatacenterBroker extends SimEntity {
 		return stragglerPerformanceCoefficientOfDC;
 	}
 	
-	 public double failDCtime;
-	 public int failDCNum;
-	 public int[] failDCindex;
-	 public double[] failDCduration;
+//	 public double failDCtime;
+//	 public int failDCNum;
+//	 public int[] failDCindex;
+//	 public double[] failDCduration;
 	
 	
 	
@@ -410,29 +410,37 @@ public class DatacenterBroker extends SimEntity {
 		// TODO Auto-generated method stub
 		try {
     		File file = new File("./model/modelInfo-dcfail.txt");
-			BufferedReader in = new BufferedReader(new FileReader(file));
+    		File file2 = new File("./model/number-dcfail.txt");
+    		
+			BufferedReader in = new BufferedReader(new FileReader(file2));
     		String line;
     		line = in.readLine();
     		String[] para_string = line.split("\t");
     		int totalNum = Integer.parseInt(para_string[0]);
+    		in.close();
+    		
+    		in = new BufferedReader(new FileReader(file));
     		int totalindex = 0;
     		while(totalindex < totalNum) {
     			line = in.readLine();
         		para_string = line.split("\t");
-        		failDCtime = Double.parseDouble(para_string[0]);
-        		failDCNum = Integer.parseInt(para_string[1]);
-        		if(failDCNum > 0) {
-        			failDCindex = new int[failDCNum];
-        			failDCduration = new double[failDCNum];
-        			for(int lindex = 0; lindex < failDCNum; lindex++) {
-        				line = in.readLine();
-        				para_string = line.split("\t");
-        				failDCindex[lindex] = Integer.parseInt(para_string[0]);
-        				failDCduration[lindex] = Double.parseDouble(para_string[1]);
-        				// send Event
-        				send(failDCindex[lindex]+DCbase, failDCtime, CloudSimTags.DC_FAIL_INFO,failDCduration[lindex]);
-        			}
-        		}
+        		double failDCtime = Double.parseDouble(para_string[0]);
+        		int failDCIndex = Integer.parseInt(para_string[1]);
+        		double failDuration = Double.parseDouble(para_string[2]);
+        		send(failDCIndex+DCbase, failDCtime, CloudSimTags.DC_FAIL_INFO,failDuration);
+    			
+//        		if(failDCNum > 0) {
+//        			failDCindex = new int[failDCNum];
+//        			failDCduration = new double[failDCNum];
+//        			for(int lindex = 0; lindex < failDCNum; lindex++) {
+//        				line = in.readLine();
+//        				para_string = line.split("\t");
+//        				failDCindex[lindex] = Integer.parseInt(para_string[0]);
+//        				failDCduration[lindex] = Double.parseDouble(para_string[1]);
+//        				// send Event
+//        				send(failDCindex[lindex]+DCbase, failDCtime, CloudSimTags.DC_FAIL_INFO,failDCduration[lindex]);
+//        			}
+//        		}
         		totalindex++;
     		}
     		

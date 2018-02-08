@@ -353,45 +353,68 @@ public class Parameters {
     	// default: ten DCfail during the 12day execution time
 //    	double[] failTimeOfDC = new double[Parameters.failNumOfDC];
 //    	int[] failNumOfTime = new int[Parameters.failNumOfDC];
-    	
+    	int failNum = 0;
     	File file = new File("./model/modelInfo-dcfail.txt");
+    	File file2 = new File("./model/number-dcfail.txt");
     	try {
     		FileWriter out = new FileWriter(file);
-    		out.write(Parameters.failNumOfDC+"\t");
-    		out.write("\r\n");
-        	int successfulindex = 0;
-        	while(successfulindex < Parameters.failNumOfDC) {
-        		double dcFailTime = 1+Math.random()*(800);
-        		int[] whetherFail = new int[Parameters.numberOfDC];
-        		double[] failDuration = new double[Parameters.numberOfDC];
-        		int failNum = 0;
-        		for(int dcindex = 0; dcindex < Parameters.numberOfDC; dcindex++) {
+    		
+    		for(int secindex = 1; secindex < Parameters.seconds; secindex++) {
+    			for(int dcindex = 0; dcindex < Parameters.numberOfDC; dcindex++) {
         			double pro = Math.random();
         			if(pro < Parameters.likelihoodOfDCFailure[dcindex]) {
-        				whetherFail[dcindex] = 1;
-        				failDuration[dcindex] = Parameters.lbOfDCFailureDuration[dcindex] + Math.random()
+        				double failduration = Parameters.lbOfDCFailureDuration[dcindex] + Math.random()
         				*(Parameters.ubOfDCFailureDuration[dcindex] 
         						- Parameters.lbOfDCFailureDuration[dcindex]);
         				failNum++;
-        			}else {
-        				whetherFail[dcindex] = 0;
+        				out.write(secindex+"\t"+dcindex+"\t"+failduration+"\t");
+        				out.write("\r\n");
         			}
         		}
-        		if(failNum == 0)
-        			continue;
-        		out.write(dcFailTime+"\t"+failNum+"\t");
-    			out.write("\r\n");
-    			for(int dcindex = 0; dcindex < Parameters.numberOfDC; dcindex++) {
-    				if(whetherFail[dcindex] == 1) {
-    					out.write(dcindex+"\t"+failDuration[dcindex]+"\t");
-    					out.write("\r\n");
-    				}
-    			}
-    			
-        		successfulindex++;
-        		
-        	}
-        	out.close();
+    		}
+    		out.close();
+    		
+    		out = new FileWriter(file2);
+    		out.write(failNum+"\t");
+    		out.write("\r\n");
+    		out.close();
+    		
+    		
+//    		out.write(Parameters.failNumOfDC+"\t");
+//    		out.write("\r\n");
+//        	int successfulindex = 0;
+//        	while(successfulindex < Parameters.failNumOfDC) {
+//        		double dcFailTime = 1+Math.random()*(800);
+//        		int[] whetherFail = new int[Parameters.numberOfDC];
+//        		double[] failDuration = new double[Parameters.numberOfDC];
+//        		int failNum = 0;
+//        		for(int dcindex = 0; dcindex < Parameters.numberOfDC; dcindex++) {
+//        			double pro = Math.random();
+//        			if(pro < Parameters.likelihoodOfDCFailure[dcindex]) {
+//        				whetherFail[dcindex] = 1;
+//        				failDuration[dcindex] = Parameters.lbOfDCFailureDuration[dcindex] + Math.random()
+//        				*(Parameters.ubOfDCFailureDuration[dcindex] 
+//        						- Parameters.lbOfDCFailureDuration[dcindex]);
+//        				failNum++;
+//        			}else {
+//        				whetherFail[dcindex] = 0;
+//        			}
+//        		}
+//        		if(failNum == 0)
+//        			continue;
+//        		out.write(dcFailTime+"\t"+failNum+"\t");
+//    			out.write("\r\n");
+//    			for(int dcindex = 0; dcindex < Parameters.numberOfDC; dcindex++) {
+//    				if(whetherFail[dcindex] == 1) {
+//    					out.write(dcindex+"\t"+failDuration[dcindex]+"\t");
+//    					out.write("\r\n");
+//    				}
+//    			}
+//    			
+//        		successfulindex++;
+//        		
+//        	}
+//        	out.close();
     	}catch (IOException e) {
 			// TODO: handle exception
     		e.printStackTrace();
