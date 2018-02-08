@@ -122,13 +122,13 @@ public class Parameters {
     
     public static boolean isUselessDCuseful = true;
     
-    public static boolean isExtracte = false;
+    public static boolean isExtracte = true;
     
     public static boolean isDCFailHappen = false;
     
     public static int[] exelist = {0,1,2,3,13,16,19};
     
-    public static boolean isRunExeList = true;
+    public static boolean isRunExeList = false;
     
     public static int exeIndex = 0;
     

@@ -381,7 +381,7 @@ public final class WorkflowEngine extends SimEntity {
         if (getJobsList().isEmpty() && jobsSubmitted == 0 && isAllDCFail == false && CloudSim.futureSize() == 0) {
             
         	
-        	if((Parameters.isRunExeList == false && CloudSim.totalRunIndex < 65)
+        	if((Parameters.isRunExeList == false && CloudSim.totalRunIndex < 1)
 					|| (Parameters.isRunExeList == true && Parameters.exeIndex < (Parameters.exelist.length - 1))) {
 //        		List<Job> outputList0 = getJobsReceivedList();
 //        		WorkflowExample.sortJobId(outputList0);
