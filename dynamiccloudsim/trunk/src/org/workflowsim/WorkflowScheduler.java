@@ -1872,85 +1872,109 @@ public class WorkflowScheduler extends DatacenterBroker {
 			}
 			
 			Task task = candidates.get((candidates.size() - 1 - cindex));
-			// randome choose the vm
-			
-			// greedy choose the vm
 			int taskId = task.getCloudletId();
 			int datanumber = task.numberOfData;
 			boolean success = true;
 			int successDC = -1;
-			for(int listindex = 0; listindex < Parameters.numberOfDC; listindex++) {
-				int dcindex = task.orderedDClist[listindex];
-				if(task.uselessDC[dcindex] == 0) {
+			
+			switch (Parameters.OriginalVmChooseStrategy) {
+			case 0:
+				// stay in original datacenter
+				successDC = task.assignmentDCindex;
+				if((SlotArray[successDC]-1)<0) {
 					success = false;
-					continue;
+				}else {
+					SlotArray[successDC] -= 1;
 				}
+				break;
+			case 2:
+				// greedy choose the vm
 				
-				success = true;
-				// when the dc is not too far
-//				if(job.uselessDCforTask[xindex] != 0) {
-					// verify that the resource is enough
-					
-					// machines
-					if((SlotArray[dcindex]-1)<0) {
+				for(int listindex = 0; listindex < Parameters.numberOfDC; listindex++) {
+					int dcindex = task.orderedDClist[listindex];
+					if(task.uselessDC[dcindex] == 0) {
 						success = false;
 						continue;
 					}
 					
-					
-					double totalBandwidth = 0d;
-					// uplink
-					Map<Integer, Double> bwOfSrcPos = new HashMap<>();
-					if(Parameters.isConcernGeoNet == true) {
-						if(task.TotalTransferDataSize[dcindex]>0) {
-							for(int dataindex = 0; dataindex < datanumber; dataindex++) {
-								double neededBw = task.bandwidth[dcindex][dataindex];
-								totalBandwidth += totalBandwidth;
-								int srcPos = (int) task.positionOfData[dataindex];
-								if(bwOfSrcPos.containsKey(srcPos)) {
-									double oldvalue = bwOfSrcPos.get(srcPos);
-									bwOfSrcPos.put(srcPos, oldvalue + neededBw);
-								}else {
-									bwOfSrcPos.put(srcPos, 0 + neededBw);
-								}
-							}
-							for(int pos : bwOfSrcPos.keySet()) {
-								if((UpArray[pos]-bwOfSrcPos.get(pos))<0) {
-									success = false;
-									break;
-								}
-							}
+					success = true;
+					// when the dc is not too far
+//					if(job.uselessDCforTask[xindex] != 0) {
+						// verify that the resource is enough
+						
+						// machines
+						if((SlotArray[dcindex]-1)<0) {
+							success = false;
+							continue;
 						}
 						
-						// downlink
-						if(task.TotalTransferDataSize[dcindex]>0 && success == true) {
-							if((DownArray[dcindex]-totalBandwidth)<0) {
-								success = false;
-								continue;
-							}
-						}
-					}
-					
-					
-					
-					if(success == true) {
-						SlotArray[dcindex] -= 1;
 						
+						double totalBandwidth = 0d;
+						// uplink
+						Map<Integer, Double> bwOfSrcPos = new HashMap<>();
 						if(Parameters.isConcernGeoNet == true) {
 							if(task.TotalTransferDataSize[dcindex]>0) {
-								DownArray[dcindex] -= totalBandwidth;
-
+								for(int dataindex = 0; dataindex < datanumber; dataindex++) {
+									double neededBw = task.bandwidth[dcindex][dataindex];
+									totalBandwidth += totalBandwidth;
+									int srcPos = (int) task.positionOfData[dataindex];
+									if(bwOfSrcPos.containsKey(srcPos)) {
+										double oldvalue = bwOfSrcPos.get(srcPos);
+										bwOfSrcPos.put(srcPos, oldvalue + neededBw);
+									}else {
+										bwOfSrcPos.put(srcPos, 0 + neededBw);
+									}
+								}
+								for(int pos : bwOfSrcPos.keySet()) {
+									if((UpArray[pos]-bwOfSrcPos.get(pos))<0) {
+										success = false;
+										break;
+									}
+								}
 							}
-							for(int pos : bwOfSrcPos.keySet()) {
-								UpArray[pos]-=bwOfSrcPos.get(pos);
+							
+							// downlink
+							if(task.TotalTransferDataSize[dcindex]>0 && success == true) {
+								if((DownArray[dcindex]-totalBandwidth)<0) {
+									success = false;
+									continue;
+								}
 							}
 						}
 						
-						successDC = dcindex;
-						break;
-					}
-//				}
+						
+						
+						if(success == true) {
+							SlotArray[dcindex] -= 1;
+							
+							if(Parameters.isConcernGeoNet == true) {
+								if(task.TotalTransferDataSize[dcindex]>0) {
+									DownArray[dcindex] -= totalBandwidth;
+
+								}
+								for(int pos : bwOfSrcPos.keySet()) {
+									UpArray[pos]-=bwOfSrcPos.get(pos);
+								}
+							}
+							
+							successDC = dcindex;
+							break;
+						}
+//					}
+				}
+				break;
+			default:
+				break;
 			}
+			
+			
+			
+			
+			// randome choose the vm
+			
+			
+			
+			
 			if(success == true && successDC != -1) {
 				
 				

@@ -29,6 +29,7 @@ import org.workflowsim.ClusteringEngine;
 import org.workflowsim.FileItem;
 import org.workflowsim.Job;
 
+import de.huberlin.wbi.cuneiform.core.semanticmodel.Param;
 import de.huberlin.wbi.dcs.examples.Parameters;
 import de.huberlin.wbi.dcs.examples.Parameters.ClassType;
 import de.huberlin.wbi.dcs.examples.Parameters.FileType;
@@ -357,6 +358,9 @@ public class BasicClustering implements ClusteringInterface {
 				task.rateExpectation = new double[Parameters.numberOfDC];
 				task.bandwidth = new double[Parameters.numberOfDC][Parameters.ubOfData];
 				task.uselessDC = new int[Parameters.numberOfDC];
+				for(int dcindex = 0; dcindex < Parameters.numberOfDC; dcindex++) {
+					task.uselessDC[dcindex] = -1;
+				}
 				task.usedVM = 0;
 				task.usedBandwidth = 0d;
 				task.usedVMxTime = 0d;

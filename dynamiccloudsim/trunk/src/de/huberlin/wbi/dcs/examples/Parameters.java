@@ -116,7 +116,7 @@ public class Parameters {
     
     public static boolean isConcernUnstable = true;
     
-    public static double acceptProOfJob = 0.05d;
+    public static double acceptProOfJob = 0.001d;
     
     public static boolean isConcernGeoNet = true;
     
@@ -132,8 +132,13 @@ public class Parameters {
     
     public static int exeIndex = 0;
     
+    // 0#the same as original dc
+    // 1#random
+    // 2#greedy
+    public static int OriginalVmChooseStrategy = 0;
+    
     // 1-4
-    public static int copystrategy = 0;
+    public static int copystrategy = 6;
     
     public static int numberOfStrategy = 6;
 
