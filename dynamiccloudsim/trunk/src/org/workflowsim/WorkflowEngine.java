@@ -382,7 +382,7 @@ public final class WorkflowEngine extends SimEntity {
             
         	
 
-        	if((Parameters.isRunExeList == false && CloudSim.totalRunIndex < 65)
+        	if((Parameters.isRunExeList == false && CloudSim.totalRunIndex < 2)
 					|| (Parameters.isRunExeList == true && Parameters.exeIndex < (Parameters.exelist.length - 1))) {
 //        		List<Job> outputList0 = getJobsReceivedList();
 //        		WorkflowExample.sortJobId(outputList0);
@@ -429,6 +429,7 @@ public final class WorkflowEngine extends SimEntity {
 					Parameters.isConcernUnstable = false;
 					Parameters.isConcernGeoNet = false;
 					Parameters.isUselessDCuseful = false;
+					Parameters.isHappendUnstable = true;
 					break;
 				case 2:
 					Parameters.copystrategy = 1;

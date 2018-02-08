@@ -56,10 +56,6 @@ public class MinRateSchedulingAlgorithm extends BaseSchedulingAlgorithm{
         	Job job = (Job)getCloudletList().get(jobindex);
         	
         	int jobId = job.getCloudletId();
-        	if(jobId == 1) {
-        		int a = 1;
-        		a = a + 1;
-        	}
         	List<Task> tasklist = job.unscheduledTaskList;
         	int numberOfTask = tasklist.size();
         	int vnumplusone = 1 + tasklist.size()*Parameters.numberOfDC;

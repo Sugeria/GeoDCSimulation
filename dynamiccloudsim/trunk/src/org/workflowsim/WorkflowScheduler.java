@@ -170,20 +170,20 @@ public class WorkflowScheduler extends DatacenterBroker {
 	// in-progress tasks on the node is below this threshold
 	// speculative tasks are not executed on slow nodes
 	// default: 25th percentile of node progress rates
-	protected final double slowNodeThreshold = 0.25;
+	protected final double slowNodeThreshold = 0.1;
 	protected double currentSlowNodeThreshold;
 
 	// A threshold that a task's progress rate is compared with to determine
 	// whether it is slow enough to be speculated upon
 	// default: 25th percentile of task progress rates
 	// 0.25
-	protected final double slowTaskThreshold = 0.4;
+	protected final double slowTaskThreshold = 0.25;
 	protected double currentSlowTaskThreshold;
 
 	// a cap on the number of speculative tasks that can be running at once
 	// (given as a percentage of task slots)
-	// default: 80% of available task slots
-	protected final double speculativeCap = 0.8;
+	// default: 10% of available task slots
+	protected final double speculativeCap = 0.1;
 	protected int speculativeCapAbs;
 
 	protected Map<Vm, Double> nSucceededTasksPerVm;
@@ -1204,28 +1204,34 @@ public class WorkflowScheduler extends DatacenterBroker {
             					Task task = job.unscheduledTaskList.get(tindex);
                 				
                 				int numberOfCopy = (int) (Math.log(1
-                						-Math.pow(Parameters.acceptProOfJob, 1/taskNumOfJob))/Math.log(taskPro));
+                						-Math.pow(1-Parameters.acceptProOfJob, 1/taskNumOfJob))/Math.log(taskPro)+0.5);
                 				int numberOfExeCopy = Math.max(1, numberOfCopy);
                 				double judgePro = Math.pow(taskPro, numberOfExeCopy);
+                				boolean success = true;
+                				int successDC = -1;
                 				for(int copyindex = 0; copyindex < (numberOfExeCopy-1); copyindex++) {
-                					if(preAssignedSlots <= 0)
+                					// when resource is not enough
+                					// when the last copy do not have the appropriate position
+                					// when the requirement is satisfied
+                					if(preAssignedSlots <= 0 || success == false || taskPro <= judgePro)
                 						break;
                 					// greedy choose the vm
                     				int taskId = task.getCloudletId();
                     				int datanumber = task.numberOfData;
-                    				boolean success = true;
-                    				int successDC = -1;
+                    				success = true;
+                    				successDC = -1;
                     				for(int listindex = 0; listindex < Parameters.numberOfDC; listindex++) {
                     					int dcindex = Parameters.sortedlikelihoodOfFailure[listindex];
                     					int xindex = tindex * Parameters.numberOfDC + dcindex;
                     					if(task.uselessDC[dcindex] == 0) {
-                    						success = false;
+                    						//success = false;
                     						continue;
                     					}
                     					
-                    					if(Parameters.likelihoodOfFailure[dcindex]*taskPro <= judgePro) {
-                    						continue;
-                    					}
+//                    					if(taskPro <= judgePro) {
+//                    						success = false;
+//                    						break;
+//                    					}
                     					
                     					success = true;
                     					// when the dc is not too far
@@ -2083,12 +2089,17 @@ public class WorkflowScheduler extends DatacenterBroker {
 				+ task.getParams() + " \"");
 		}
 		task.setVmId(vm.getId());
-		if (Parameters.numGen.nextDouble() < getLikelihoodOfFailureOfDC().get(task.getAssignmentDCId())) {
-			task.setScheduledToFail(true);
-			task.setCloudletLength((long) (task.getCloudletLength() * getRuntimeFactorIncaseOfFailureOfDC().get(task.getAssignmentDCId())));
-		} else {
+		if(Parameters.isHappendUnstable == false) {
 			task.setScheduledToFail(false);
+		}else {
+			if (Parameters.numGen.nextDouble() < getLikelihoodOfFailureOfDC().get(task.getAssignmentDCId())) {
+				task.setScheduledToFail(true);
+				task.setCloudletLength((long) (task.getCloudletLength() * getRuntimeFactorIncaseOfFailureOfDC().get(task.getAssignmentDCId())));
+			} else {
+				task.setScheduledToFail(false);
+			}
 		}
+		
 		int usedSlots = usedSlotsOfJob.get(task.jobId);
 		usedSlotsOfJob.put(task.jobId, usedSlots+1);
 		sendNow(getVmsToDatacentersMap().get(vm.getId()),
@@ -2109,11 +2120,15 @@ public class WorkflowScheduler extends DatacenterBroker {
 					+ task.getParams() + " \"");
 		}
 		task.setVmId(vm.getId());
-		if (Parameters.numGen.nextDouble() < getLikelihoodOfFailureOfDC().get(task.getAssignmentDCId())) {
-			task.setScheduledToFail(true);
-			task.setCloudletLength((long) (task.getCloudletLength() * getRuntimeFactorIncaseOfFailureOfDC().get(task.getAssignmentDCId())));
-		} else {
+		if(Parameters.isHappendUnstable == false) {
 			task.setScheduledToFail(false);
+		}else {
+			if (Parameters.numGen.nextDouble() < getLikelihoodOfFailureOfDC().get(task.getAssignmentDCId())) {
+				task.setScheduledToFail(true);
+				task.setCloudletLength((long) (task.getCloudletLength() * getRuntimeFactorIncaseOfFailureOfDC().get(task.getAssignmentDCId())));
+			} else {
+				task.setScheduledToFail(false);
+			}
 		}
 		int usedSlots = usedSlotsOfJob.get(task.jobId);
 		usedSlotsOfJob.put(task.jobId, usedSlots+1);
