@@ -324,7 +324,7 @@ public class Datacenter extends SimEntity {
 					checkCloudletCompletion();
 				}else {
 					failCloudletProcessing();
-					checkCloudletCompletion();
+					failCheckCloudletCompletion();
 				}
 				break;
 
@@ -357,7 +357,7 @@ public class Datacenter extends SimEntity {
 					data_dura[1] = DCfailduration;
 					sendNow(attributedBrokerId,CloudSimTags.DC_FAIL,data_dura);
 					failCloudletProcessing();
-					checkCloudletCompletion();
+					failCheckCloudletCompletion();
 					setLastProcessTime(CloudSim.clock());
 				}
 				break;
@@ -460,14 +460,16 @@ public class Datacenter extends SimEntity {
 		try {
 			cl.setCloudletStatus(Cloudlet.FAILED);
 			cl.setExecStartTime(CloudSim.clock);
-			double delay_time = Parameters.delayAmongDCIndex[cl.submitDCIndex][cl.assignmentDCindex];
-			cl.setFinishTime(CloudSim.clock + delay_time);
-			send(cl.getUserId(), delay_time,CloudSimTags.CLOUDLET_RETURN, cl);
-		} catch (Exception e) {
+			double bandDelay = Parameters.delayAmongDCIndex[cl.submitDCIndex][cl.assignmentDCindex] 
+					+ cl.getCloudletLength()
+					/(cl.rateExpectation[cl.assignmentDCindex]);
+			send(cl.getUserId(),bandDelay,CloudSimTags.CLOUDLET_RETURN, cl);
+		
+			} catch (Exception e) {
 			e.printStackTrace();
 		}
 		
-		checkCloudletCompletion();
+		failCheckCloudletCompletion();
 		
 	}
 
@@ -1398,6 +1400,37 @@ public class Datacenter extends SimEntity {
 		}
 	}
 
+	
+	protected void failCheckCloudletCompletion() {
+		List<? extends Host> list = getVmAllocationPolicy().getHostList();
+		for (int i = 0; i < list.size(); i++) {
+			Host host = list.get(i);
+			for (Vm vm : host.getVmList()) {
+				while (vm.getCloudletScheduler().isFinishedCloudlets()) {
+					ResCloudlet rcl = vm.getCloudletScheduler().getNextFinishedResCloudlet();
+					Cloudlet cl = rcl.getCloudlet();
+					if (rcl != null) {
+//						CloudletTransferRequest.remove(cl.getCloudletId());
+//						CloudletTransferSuccessReq.remove(cl.getCloudletId());
+//						CloudletTransferFailReq.remove(cl.getCloudletId());
+						double bandDelay = Parameters.delayAmongDCIndex[cl.submitDCIndex][cl.assignmentDCindex] 
+								+ rcl.getRemainingCloudletLength()
+								/(cl.rateExpectation[cl.assignmentDCindex]);
+						cl.setFinishTime(CloudSim.clock() + bandDelay);
+						send(cl.getUserId(),bandDelay,CloudSimTags.CLOUDLET_RETURN, cl);
+					
+					}
+				}
+			}
+		}
+	}
+	
+	
+	
+	
+	
+	
+	
 	/**
 	 * Verifies if some cloudlet inside this PowerDatacenter already finished. If yes, send it to
 	 * the User/Broker

@@ -124,7 +124,7 @@ public class Parameters {
     
     public static boolean isUselessDCuseful = true;
     
-    public static boolean isExtracte = true;
+    public static boolean isExtracte = false;
     
     public static boolean isDCFailHappen = false;
     
@@ -140,7 +140,7 @@ public class Parameters {
     public static int OriginalVmChooseStrategy = 0;
     
     // 1-4
-    public static int copystrategy = 1;
+    public static int copystrategy = 0;
     
     public static int numberOfStrategy = 6;
 
@@ -957,6 +957,8 @@ public class Parameters {
 				delayAmongDCIndex[dci][dcj] = delayMatrix.getDelay(dci,dcj);
 				if(delayAmongDCIndex[dci][dcj] < 1e20d) {
 					delayAmongDCIndex[dci][dcj]*=100;
+				}else {
+					delayAmongDCIndex[dci][dcj] = (float)(Math.random()*(1000-200)+200);
 				}
 //				delayAmongDCIndex[dci][dcj]*=100;
 			}
@@ -1073,58 +1075,58 @@ public class Parameters {
 //				}
 				cpuHeterogeneityDistributionOfDC[dcindex] = Distribution.NORMAL;
 				// 0.3 0.4 0.6
-				cpuHeterogeneityCVOfDC[dcindex] = Math.random()*(0.3);
+				cpuHeterogeneityCVOfDC[dcindex] = Math.random()*(0.6);
 				ioHeterogeneityDistributionOfDC[dcindex] = Distribution.NORMAL;
 				// 0.15 0.20 0.3
-				ioHeterogeneityCVOfDC[dcindex] = Math.random()*0.15;
+				ioHeterogeneityCVOfDC[dcindex] = Math.random()*0.3;
 				bwHeterogeneityDistributionOfDC[dcindex] = Distribution.NORMAL;
 				// 0.2 0.25 0.4
-				bwHeterogeneityCVOfDC[dcindex] = Math.random()*0.2;
+				bwHeterogeneityCVOfDC[dcindex] = Math.random()*0.4;
 				cpuDynamicsDistributionOfDC[dcindex] = Distribution.NORMAL;
 				// 0.054 0.06 0.09
-				cpuDynamicsCVOfDC[dcindex] = Math.random()*0.054;
+				cpuDynamicsCVOfDC[dcindex] = Math.random()*0.09;
 				// 0.5 0.6 0.9
-				cpuBaselineChangesPerHourOfDC[dcindex] = Math.random()*0.5;
+				cpuBaselineChangesPerHourOfDC[dcindex] = Math.random()*0.9;
 				ioDynamicsDistributionOfDC[dcindex] = Distribution.NORMAL;
 				// 0.033 0.053 0.073
-				ioDynamicsCVOfDC[dcindex] = Math.random()*0.033;
+				ioDynamicsCVOfDC[dcindex] = Math.random()*0.073;
 				// 0.5 0.6 0.7
-				ioBaselineChangesPerHourOfDC[dcindex] = Math.random()*0.5;
+				ioBaselineChangesPerHourOfDC[dcindex] = Math.random()*0.7;
 				bwDynamicsDistributionOfDC[dcindex] = Distribution.NORMAL;
 				// 0.04 0.06 0.09
-				bwDynamicsCVOfDC[dcindex] = Math.random()*0.04;
+				bwDynamicsCVOfDC[dcindex] = Math.random()*0.09;
 				// 0.5 0.7 0.8
-				bwBaselineChangesPerHourOfDC[dcindex] = Math.random()*0.5;
+				bwBaselineChangesPerHourOfDC[dcindex] = Math.random()*0.8;
 				cpuNoiseDistributionOfDC[dcindex] = Distribution.NORMAL;
 				// 0.028 0.04 0.08
-				cpuNoiseCVOfDC[dcindex] = Math.random()*0.028;
+				cpuNoiseCVOfDC[dcindex] = Math.random()*0.08;
 				ioNoiseDistributionOfDC[dcindex] = Distribution.NORMAL;
 				// 0.007 0.009 0.012
-				ioNoiseCVOfDC[dcindex] = Math.random()*0.007;
+				ioNoiseCVOfDC[dcindex] = Math.random()*0.012;
 				bwNoiseDistributionOfDC[dcindex] = Distribution.NORMAL;
 				// 0.01 0.03 0.06
-				bwNoiseCVOfDC[dcindex] = Math.random()*0.01;
+				bwNoiseCVOfDC[dcindex] = Math.random()*0.06;
 				
 				// 0.015 0.020 0.025
-				likelihoodOfStragglerOfDC[dcindex] = Math.random()*0.015;
+				likelihoodOfStragglerOfDC[dcindex] = Math.random()*0.025;
 				// 0.5 0.3 0.1;
 				stragglerPerformanceCoefficientOfDC[dcindex] = Math.random()*0.5;
 				
 				// 0.002 0.008 0.011
-				likelihoodOfFailure[dcindex] = Math.random()*0.002;
+				likelihoodOfFailure[dcindex] = Math.random()*0.011;
 				// 10d 13d 20d
-				runtimeFactorInCaseOfFailure[dcindex] = Math.random()*10d;
+				runtimeFactorInCaseOfFailure[dcindex] = Math.random()*20d;
 				
 				// 0.0001 0.0002 0.0004
-				likelihoodOfDCFailure[dcindex] = Math.random()*0.0001;
+				likelihoodOfDCFailure[dcindex] = Math.random()*0.0004;
 				
 				// 0.55 0.60 0.85
 				uplinkOfDC[dcindex] = Math.random()*numberOfVMperDC[dcindex]*200*1024*0.55;
 				downlinkOfDC[dcindex] = Math.random()*numberOfVMperDC[dcindex]*200*1024*0.55;
 				// 10 20 50 80
-				ubOfDCFailureDuration[dcindex] = Math.random()*(20-10)+10;
+				ubOfDCFailureDuration[dcindex] = Math.random()*(80-10)+10;
 				// 2 4 8 10
-				lbOfDCFailureDuration[dcindex] = Math.random()*(4-2)+2;
+				lbOfDCFailureDuration[dcindex] = Math.random()*(10-2)+2;
 				
 			}else if(dccounter < Medium_part) {
 				//Medium DC
@@ -1140,50 +1142,50 @@ public class Parameters {
 //				}
 				cpuHeterogeneityDistributionOfDC[dcindex] = Distribution.NORMAL;
 				// 0.3 0.4 0.6
-				cpuHeterogeneityCVOfDC[dcindex] = Math.random()*(0.4-0.3)+0.3;
+				cpuHeterogeneityCVOfDC[dcindex] = Math.random()*(0.6);
 				ioHeterogeneityDistributionOfDC[dcindex] = Distribution.NORMAL;
 				// 0.15 0.20 0.3
-				ioHeterogeneityCVOfDC[dcindex] = Math.random()*(0.20-0.15)+0.15;
+				ioHeterogeneityCVOfDC[dcindex] = Math.random()*0.3;
 				bwHeterogeneityDistributionOfDC[dcindex] = Distribution.NORMAL;
 				// 0.2 0.25 0.4
-				bwHeterogeneityCVOfDC[dcindex] = Math.random()*(0.25-0.2)+0.2;
+				bwHeterogeneityCVOfDC[dcindex] = Math.random()*0.4;
 				cpuDynamicsDistributionOfDC[dcindex] = Distribution.NORMAL;
 				// 0.054 0.06 0.09
-				cpuDynamicsCVOfDC[dcindex] = Math.random()*(0.06-0.054)+0.054;
+				cpuDynamicsCVOfDC[dcindex] = Math.random()*0.09;
 				// 0.5 0.6 0.9
-				cpuBaselineChangesPerHourOfDC[dcindex] = Math.random()*(0.6-0.5)+0.5;
+				cpuBaselineChangesPerHourOfDC[dcindex] = Math.random()*0.9;
 				ioDynamicsDistributionOfDC[dcindex] = Distribution.NORMAL;
 				// 0.033 0.053 0.073
-				ioDynamicsCVOfDC[dcindex] = Math.random()*(0.053-0.033)+0.033;
+				ioDynamicsCVOfDC[dcindex] = Math.random()*0.073;
 				// 0.5 0.6 0.7
-				ioBaselineChangesPerHourOfDC[dcindex] = Math.random()*(0.6-0.5)+0.5;
+				ioBaselineChangesPerHourOfDC[dcindex] = Math.random()*0.7;
 				bwDynamicsDistributionOfDC[dcindex] = Distribution.NORMAL;
 				// 0.04 0.06 0.09
-				bwDynamicsCVOfDC[dcindex] = Math.random()*(0.06-0.04)+0.04;
+				bwDynamicsCVOfDC[dcindex] = Math.random()*0.09;
 				// 0.5 0.7 0.8
-				bwBaselineChangesPerHourOfDC[dcindex] = Math.random()*(0.7-0.5)+0.5;
+				bwBaselineChangesPerHourOfDC[dcindex] = Math.random()*0.8;
 				cpuNoiseDistributionOfDC[dcindex] = Distribution.NORMAL;
 				// 0.028 0.04 0.08
-				cpuNoiseCVOfDC[dcindex] = Math.random()*(0.04-0.028)+0.028;
+				cpuNoiseCVOfDC[dcindex] = Math.random()*0.08;
 				ioNoiseDistributionOfDC[dcindex] = Distribution.NORMAL;
 				// 0.007 0.009 0.012
-				ioNoiseCVOfDC[dcindex] = Math.random()*(0.009-0.007)+0.007;
+				ioNoiseCVOfDC[dcindex] = Math.random()*0.012;
 				bwNoiseDistributionOfDC[dcindex] = Distribution.NORMAL;
 				// 0.01 0.03 0.06
-				bwNoiseCVOfDC[dcindex] = Math.random()*(0.03-0.01)+0.01;
+				bwNoiseCVOfDC[dcindex] = Math.random()*0.06;
 				
 				// 0.015 0.020 0.025
-				likelihoodOfStragglerOfDC[dcindex] = Math.random()*(0.020-0.015)+0.015;
+				likelihoodOfStragglerOfDC[dcindex] = Math.random()*0.025;
 				// 0.5 0.3 0.1;
-				stragglerPerformanceCoefficientOfDC[dcindex] = Math.random()*(0.5-0.3)+0.3;
+				stragglerPerformanceCoefficientOfDC[dcindex] = Math.random()*0.5;
 				
 				// 0.002 0.008 0.011
-				likelihoodOfFailure[dcindex] = Math.random()*(0.008-0.002)+0.002;
+				likelihoodOfFailure[dcindex] = Math.random()*0.011;
 				// 10d 13d 20d
-				runtimeFactorInCaseOfFailure[dcindex] = Math.random()*(13d-10d)+10d;
+				runtimeFactorInCaseOfFailure[dcindex] = Math.random()*20d;
 				
 				// 0.0001 0.0002 0.0004
-				likelihoodOfDCFailure[dcindex] = Math.random()*(0.0002-0.0001)+0.0001;
+				likelihoodOfDCFailure[dcindex] = Math.random()*0.0004;
 				
 				// 0.55 0.60 0.85
 				uplinkOfDC[dcindex] = Math.random()*numberOfVMperDC[dcindex]*200*1024*(0.60-0.55)+
@@ -1191,9 +1193,9 @@ public class Parameters {
 				downlinkOfDC[dcindex] = Math.random()*numberOfVMperDC[dcindex]*200*1024*(0.60-0.55)+
 						numberOfVMperDC[dcindex]*200*1024*0.55;
 				// 10 20 50 80
-				ubOfDCFailureDuration[dcindex] = Math.random()*(50-20)+20;
+				ubOfDCFailureDuration[dcindex] = Math.random()*(80-10)+10;
 				// 2 4 8 10
-				lbOfDCFailureDuration[dcindex] = Math.random()*(8-4)+4;
+				lbOfDCFailureDuration[dcindex] = Math.random()*(10-2)+2;
 				
 			}else {
 				//Small DC
@@ -1217,50 +1219,50 @@ public class Parameters {
 //				}
 				cpuHeterogeneityDistributionOfDC[dcindex] = Distribution.NORMAL;
 				// 0.3 0.4 0.6
-				cpuHeterogeneityCVOfDC[dcindex] = Math.random()*(0.6-0.4)+0.4;
+				cpuHeterogeneityCVOfDC[dcindex] = Math.random()*(0.6);
 				ioHeterogeneityDistributionOfDC[dcindex] = Distribution.NORMAL;
 				// 0.15 0.20 0.3
-				ioHeterogeneityCVOfDC[dcindex] = Math.random()*(0.30-0.2)+0.2;
+				ioHeterogeneityCVOfDC[dcindex] = Math.random()*0.3;
 				bwHeterogeneityDistributionOfDC[dcindex] = Distribution.NORMAL;
 				// 0.2 0.25 0.4
-				bwHeterogeneityCVOfDC[dcindex] = Math.random()*(0.4-0.25)+0.25;
+				bwHeterogeneityCVOfDC[dcindex] = Math.random()*0.4;
 				cpuDynamicsDistributionOfDC[dcindex] = Distribution.NORMAL;
 				// 0.054 0.06 0.09
-				cpuDynamicsCVOfDC[dcindex] = Math.random()*(0.09-0.06)+0.06;
+				cpuDynamicsCVOfDC[dcindex] = Math.random()*0.09;
 				// 0.5 0.6 0.9
-				cpuBaselineChangesPerHourOfDC[dcindex] = Math.random()*(0.9-0.6)+0.6;
+				cpuBaselineChangesPerHourOfDC[dcindex] = Math.random()*0.9;
 				ioDynamicsDistributionOfDC[dcindex] = Distribution.NORMAL;
 				// 0.033 0.053 0.073
-				ioDynamicsCVOfDC[dcindex] = Math.random()*(0.073-0.053)+0.053;
+				ioDynamicsCVOfDC[dcindex] = Math.random()*0.073;
 				// 0.5 0.6 0.7
-				ioBaselineChangesPerHourOfDC[dcindex] = Math.random()*(0.7-0.6)+0.6;
+				ioBaselineChangesPerHourOfDC[dcindex] = Math.random()*0.7;
 				bwDynamicsDistributionOfDC[dcindex] = Distribution.NORMAL;
 				// 0.04 0.06 0.09
-				bwDynamicsCVOfDC[dcindex] = Math.random()*(0.09-0.06)+0.06;
+				bwDynamicsCVOfDC[dcindex] = Math.random()*0.09;
 				// 0.5 0.7 0.8
-				bwBaselineChangesPerHourOfDC[dcindex] = Math.random()*(0.8-0.7)+0.7;
+				bwBaselineChangesPerHourOfDC[dcindex] = Math.random()*0.8;
 				cpuNoiseDistributionOfDC[dcindex] = Distribution.NORMAL;
 				// 0.028 0.04 0.08
-				cpuNoiseCVOfDC[dcindex] = Math.random()*(0.08-0.04)+0.04;
+				cpuNoiseCVOfDC[dcindex] = Math.random()*0.08;
 				ioNoiseDistributionOfDC[dcindex] = Distribution.NORMAL;
 				// 0.007 0.009 0.012
-				ioNoiseCVOfDC[dcindex] = Math.random()*(0.012-0.009)+0.009;
+				ioNoiseCVOfDC[dcindex] = Math.random()*0.012;
 				bwNoiseDistributionOfDC[dcindex] = Distribution.NORMAL;
 				// 0.01 0.03 0.06
-				bwNoiseCVOfDC[dcindex] = Math.random()*(0.06-0.03)+0.03;
+				bwNoiseCVOfDC[dcindex] = Math.random()*0.06;
 				
 				// 0.015 0.020 0.025
-				likelihoodOfStragglerOfDC[dcindex] = Math.random()*(0.025-0.020)+0.020;
+				likelihoodOfStragglerOfDC[dcindex] = Math.random()*0.025;
 				// 0.5 0.3 0.1;
-				stragglerPerformanceCoefficientOfDC[dcindex] = Math.random()*(0.3-0.1)+0.1;
+				stragglerPerformanceCoefficientOfDC[dcindex] = Math.random()*0.5;
 				
 				// 0.002 0.008 0.011
-				likelihoodOfFailure[dcindex] = Math.random()*(0.011-0.008)+0.008;
+				likelihoodOfFailure[dcindex] = Math.random()*0.011;
 				// 10d 13d 20d
-				runtimeFactorInCaseOfFailure[dcindex] = Math.random()*(20d-13d)+13d;
+				runtimeFactorInCaseOfFailure[dcindex] = Math.random()*20d;
 				
 				// 0.0001 0.0002 0.0004
-				likelihoodOfDCFailure[dcindex] = Math.random()*(0.0004-0.0002)+0.0002;
+				likelihoodOfDCFailure[dcindex] = Math.random()*0.0004;
 				
 				// 0.55 0.60 0.85
 				uplinkOfDC[dcindex] = Math.random()*numberOfVMperDC[dcindex]*200*1024*(0.85-0.60)+
@@ -1269,9 +1271,9 @@ public class Parameters {
 						numberOfVMperDC[dcindex]*200*1024*0.60;
 				
 				// 10 20 50 80
-				ubOfDCFailureDuration[dcindex] = Math.random()*(80-50)+50;
+				ubOfDCFailureDuration[dcindex] = Math.random()*(80-10)+10;
 				// 2 4 8 10
-				lbOfDCFailureDuration[dcindex] = Math.random()*(10-8)+8;
+				lbOfDCFailureDuration[dcindex] = Math.random()*(10-2)+2;
 				
 			}
 			value[dcindex] = Parameters.likelihoodOfFailure[dcindex];

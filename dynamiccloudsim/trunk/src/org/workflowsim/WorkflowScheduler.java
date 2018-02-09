@@ -1507,22 +1507,12 @@ public class WorkflowScheduler extends DatacenterBroker {
 						
 						switch(Parameters.copystrategy) {
 						case 1:
-							result = taskAssign.copyStrategy(4,xOrig,tasknum,dcnum,allRateMuArray,allRateSigmaArray,workloadArray
+							result = taskAssign.copyStrategy_simple(4,xOrig,tasknum,dcnum,allRateMuArray,allRateSigmaArray,workloadArray
 									,TotalTransferDataSize,data,datapos,bandwidth,Slot,Up,Down,uselessDCforTask,r,slotlimit
 									,isGeoNet,isDCFail,DCFailPro,FailThreshold,delayAmongDC,submittedIndex);
 							break;
-						case 2:
-							result = taskAssign.copyStrategy_optimizeExp_Traverse(4,xOrig,tasknum,dcnum,allRateMuArray,allRateSigmaArray,workloadArray
-									,TotalTransferDataSize,data,datapos,bandwidth,Slot,Up,Down,uselessDCforTask,r,slotlimit
-									,isGeoNet,isDCFail,DCFailPro,FailThreshold,delayAmongDC,submittedIndex);
-							break;
-						case 3:
-							result = taskAssign.copyStrategy_optimizeAll_orderedRes(4,xOrig,tasknum,dcnum,allRateMuArray,allRateSigmaArray,workloadArray
-									,TotalTransferDataSize,data,datapos,bandwidth,Slot,Up,Down,uselessDCforTask,r,slotlimit
-									,isGeoNet,isDCFail,DCFailPro,FailThreshold,delayAmongDC,submittedIndex);
-							break;
-						case 4:
-							result = taskAssign.copyStrategy_optimizeAll_Traverse(4,xOrig,tasknum,dcnum,allRateMuArray,allRateSigmaArray,workloadArray
+						case 7:
+							result = taskAssign.copyStrategy_simple(4,xOrig,tasknum,dcnum,allRateMuArray,allRateSigmaArray,workloadArray
 									,TotalTransferDataSize,data,datapos,bandwidth,Slot,Up,Down,uselessDCforTask,r,slotlimit
 									,isGeoNet,isDCFail,DCFailPro,FailThreshold,delayAmongDC,submittedIndex);
 							break;

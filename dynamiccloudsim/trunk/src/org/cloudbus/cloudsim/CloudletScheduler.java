@@ -143,6 +143,8 @@ public abstract class CloudletScheduler {
 	 * @post $none
 	 */
 	public abstract Cloudlet getNextFinishedCloudlet();
+	
+	public abstract ResCloudlet getNextFinishedResCloudlet();
 
 	/**
 	 * Returns the number of cloudlets runnning in the virtual machine.

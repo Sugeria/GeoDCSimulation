@@ -382,7 +382,7 @@ public final class WorkflowEngine extends SimEntity {
             
         	
 
-        	if((Parameters.isRunExeList == false && CloudSim.totalRunIndex < 2)
+        	if((Parameters.isRunExeList == false && CloudSim.totalRunIndex < 29)
 					|| (Parameters.isRunExeList == true && Parameters.exeIndex < (Parameters.exelist.length - 1))) {
 //        		List<Job> outputList0 = getJobsReceivedList();
 //        		WorkflowExample.sortJobId(outputList0);
@@ -424,12 +424,19 @@ public final class WorkflowEngine extends SimEntity {
 				
 				
 				switch (CloudSim.totalRunIndex) {
+				case 0:
+					Parameters.copystrategy = 0;
+					Parameters.isConcernDCFail = true;
+					Parameters.isConcernUnstable = true;
+					Parameters.isConcernGeoNet = true;
+					Parameters.isUselessDCuseful = true;
+					break;
 				case 1:
+					Parameters.copystrategy = 0;
 					Parameters.isConcernDCFail = false;
 					Parameters.isConcernUnstable = false;
 					Parameters.isConcernGeoNet = false;
 					Parameters.isUselessDCuseful = false;
-					Parameters.isHappendUnstable = true;
 					break;
 				case 2:
 					Parameters.copystrategy = 1;
@@ -446,77 +453,77 @@ public final class WorkflowEngine extends SimEntity {
 					Parameters.isUselessDCuseful = false;
 					break;
 				case 4:
-					Parameters.copystrategy = 5;
+					Parameters.copystrategy = 7;
 					Parameters.isConcernDCFail = true;
 					Parameters.isConcernUnstable = true;
 					Parameters.isConcernGeoNet = true;
 					Parameters.isUselessDCuseful = true;
 					break;
 				case 5:
-					Parameters.copystrategy = 5;
+					Parameters.copystrategy = 7;
 					Parameters.isConcernDCFail = false;
 					Parameters.isConcernUnstable = false;
 					Parameters.isConcernGeoNet = false;
 					Parameters.isUselessDCuseful = false;
 					break;
 				case 6:
-					Parameters.copystrategy = 2;
+					Parameters.copystrategy = 5;
 					Parameters.isConcernDCFail = true;
 					Parameters.isConcernUnstable = true;
 					Parameters.isConcernGeoNet = true;
 					Parameters.isUselessDCuseful = true;
 					break;
 				case 7:
-					Parameters.copystrategy = 3;
-					Parameters.isConcernDCFail = true;
-					Parameters.isConcernUnstable = true;
-					Parameters.isConcernGeoNet = true;
-					Parameters.isUselessDCuseful = true;
+					Parameters.copystrategy = 5;
+					Parameters.isConcernDCFail = false;
+					Parameters.isConcernUnstable = false;
+					Parameters.isConcernGeoNet = false;
+					Parameters.isUselessDCuseful = false;
 					break;
 				case 8:
-					Parameters.copystrategy = 4;
+					Parameters.copystrategy = 6;
 					Parameters.isConcernDCFail = true;
 					Parameters.isConcernUnstable = true;
 					Parameters.isConcernGeoNet = true;
 					Parameters.isUselessDCuseful = true;
 					break;
 				case 9:
-					Parameters.copystrategy = 2;
+					Parameters.copystrategy = 6;
 					Parameters.isConcernDCFail = false;
 					Parameters.isConcernUnstable = false;
 					Parameters.isConcernGeoNet = false;
 					Parameters.isUselessDCuseful = false;
 					break;
 				case 10:
-					Parameters.copystrategy = 3;
-					Parameters.isConcernDCFail = false;
-					Parameters.isConcernUnstable = false;
-					Parameters.isConcernGeoNet = false;
-					Parameters.isUselessDCuseful = false;
-					break;
-				case 11:
-					Parameters.copystrategy = 4;
-					Parameters.isConcernDCFail = false;
-					Parameters.isConcernUnstable = false;
-					Parameters.isConcernGeoNet = false;
-					Parameters.isUselessDCuseful = false;
-					break;
-				case 12:
 					Parameters.copystrategy = 0;
 					Parameters.isConcernDCFail = false;
 					Parameters.isConcernUnstable = true;
 					Parameters.isConcernGeoNet = true;
 					Parameters.isUselessDCuseful = true;
 					break;
-				case 13:
+				case 11:
 					Parameters.copystrategy = 1;
 					Parameters.isConcernDCFail = false;
 					Parameters.isConcernUnstable = true;
 					Parameters.isConcernGeoNet = true;
 					Parameters.isUselessDCuseful = true;
 					break;
-				case 14:
+				case 12:
+					Parameters.copystrategy = 7;
+					Parameters.isConcernDCFail = false;
+					Parameters.isConcernUnstable = true;
+					Parameters.isConcernGeoNet = true;
+					Parameters.isUselessDCuseful = true;
+					break;
+				case 13:
 					Parameters.copystrategy = 5;
+					Parameters.isConcernDCFail = false;
+					Parameters.isConcernUnstable = true;
+					Parameters.isConcernGeoNet = true;
+					Parameters.isUselessDCuseful = true;
+					break;
+				case 14:
+					Parameters.copystrategy = 6;
 					Parameters.isConcernDCFail = false;
 					Parameters.isConcernUnstable = true;
 					Parameters.isConcernGeoNet = true;
@@ -537,77 +544,95 @@ public final class WorkflowEngine extends SimEntity {
 					Parameters.isUselessDCuseful = true;
 					break;
 				case 17:
-					Parameters.copystrategy = 5;
+					Parameters.copystrategy = 7;
 					Parameters.isConcernDCFail = true;
 					Parameters.isConcernUnstable = false;
 					Parameters.isConcernGeoNet = true;
 					Parameters.isUselessDCuseful = true;
 					break;
 				case 18:
-					Parameters.copystrategy = 0;
+					Parameters.copystrategy = 5;
 					Parameters.isConcernDCFail = true;
-					Parameters.isConcernUnstable = true;
-					Parameters.isConcernGeoNet = false;
+					Parameters.isConcernUnstable = false;
+					Parameters.isConcernGeoNet = true;
 					Parameters.isUselessDCuseful = true;
 					break;
 				case 19:
-					Parameters.copystrategy = 1;
+					Parameters.copystrategy = 6;
 					Parameters.isConcernDCFail = true;
-					Parameters.isConcernUnstable = true;
-					Parameters.isConcernGeoNet = false;
+					Parameters.isConcernUnstable = false;
+					Parameters.isConcernGeoNet = true;
 					Parameters.isUselessDCuseful = true;
 					break;
 				case 20:
-					Parameters.copystrategy = 5;
+					Parameters.copystrategy = 0;
 					Parameters.isConcernDCFail = true;
 					Parameters.isConcernUnstable = true;
 					Parameters.isConcernGeoNet = false;
 					Parameters.isUselessDCuseful = true;
 					break;
 				case 21:
-					Parameters.copystrategy = 0;
-					Parameters.isConcernDCFail = true;
-					Parameters.isConcernUnstable = true;
-					Parameters.isConcernGeoNet = true;
-					Parameters.isUselessDCuseful = false;
-					break;
-				case 22:
 					Parameters.copystrategy = 1;
 					Parameters.isConcernDCFail = true;
 					Parameters.isConcernUnstable = true;
-					Parameters.isConcernGeoNet = true;
-					Parameters.isUselessDCuseful = false;
+					Parameters.isConcernGeoNet = false;
+					Parameters.isUselessDCuseful = true;
+					break;
+				case 22:
+					Parameters.copystrategy = 7;
+					Parameters.isConcernDCFail = true;
+					Parameters.isConcernUnstable = true;
+					Parameters.isConcernGeoNet = false;
+					Parameters.isUselessDCuseful = true;
 					break;
 				case 23:
 					Parameters.copystrategy = 5;
 					Parameters.isConcernDCFail = true;
 					Parameters.isConcernUnstable = true;
-					Parameters.isConcernGeoNet = true;
-					Parameters.isUselessDCuseful = false;
+					Parameters.isConcernGeoNet = false;
+					Parameters.isUselessDCuseful = true;
 					break;
 				case 24:
+					Parameters.copystrategy = 6;
+					Parameters.isConcernDCFail = true;
+					Parameters.isConcernUnstable = true;
+					Parameters.isConcernGeoNet = false;
+					Parameters.isUselessDCuseful = true;
+					break;
+				case 25:
 					Parameters.copystrategy = 0;
 					Parameters.isConcernDCFail = true;
 					Parameters.isConcernUnstable = true;
 					Parameters.isConcernGeoNet = true;
-					Parameters.isUselessDCuseful = true;
-					Parameters.epsilon = 0.1;
-					break;
-				case 25:
-					Parameters.copystrategy = 1;
+					Parameters.isUselessDCuseful = false;
 					break;
 				case 26:
-					Parameters.copystrategy = 5;
+					Parameters.copystrategy = 1;
+					Parameters.isConcernDCFail = true;
+					Parameters.isConcernUnstable = true;
+					Parameters.isConcernGeoNet = true;
+					Parameters.isUselessDCuseful = false;
 					break;
 				case 27:
-					Parameters.copystrategy = 0;
-					Parameters.epsilon = 0.2;
+					Parameters.copystrategy = 7;
+					Parameters.isConcernDCFail = true;
+					Parameters.isConcernUnstable = true;
+					Parameters.isConcernGeoNet = true;
+					Parameters.isUselessDCuseful = false;
 					break;
 				case 28:
-					Parameters.copystrategy = 1;
+					Parameters.copystrategy = 5;
+					Parameters.isConcernDCFail = true;
+					Parameters.isConcernUnstable = true;
+					Parameters.isConcernGeoNet = true;
+					Parameters.isUselessDCuseful = false;
 					break;
 				case 29:
-					Parameters.copystrategy = 5;
+					Parameters.copystrategy = 6;
+					Parameters.isConcernDCFail = true;
+					Parameters.isConcernUnstable = true;
+					Parameters.isConcernGeoNet = true;
+					Parameters.isUselessDCuseful = false;
 					break;
 				case 30:
 					Parameters.copystrategy = 0;

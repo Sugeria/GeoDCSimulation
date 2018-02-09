@@ -396,6 +396,14 @@ public class CloudletSchedulerTimeShared extends CloudletScheduler {
 		}
 		return null;
 	}
+	
+	@Override
+	public ResCloudlet getNextFinishedResCloudlet() {
+		if (getCloudletFinishedList().size() > 0) {
+			return getCloudletFinishedList().remove(0);
+		}
+		return null;
+	}
 
 	/**
 	 * Returns the number of cloudlets runnning in the virtual machine.
