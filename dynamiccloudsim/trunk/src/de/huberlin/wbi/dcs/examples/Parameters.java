@@ -1004,6 +1004,7 @@ public class Parameters {
 		sortedlikelihoodOfFailure = new int[numberOfDC];
 		runtimeFactorInCaseOfFailure = new double[numberOfDC];
 		likelihoodOfDCFailure = new double[numberOfDC];
+		sortedlikelihoodOfDCFailure = new int[numberOfDC];
 		uplinkOfDC = new double[numberOfDC];
 		downlinkOfDC = new double[numberOfDC];
 		numberOfVMperDC = new int[numberOfDC];
@@ -1056,6 +1057,7 @@ public class Parameters {
 		int Medium_part = (int)(numberOfDC * 0.2) + Large_part;
 		int dcindex = 0;
 		double[] value = new double[Parameters.numberOfDC];
+		double[] valueDCfail = new double[Parameters.numberOfDC];
 		for(int dccounter = 0; dccounter < numberOfDC; dccounter++) {
 			dcindex = I[dccounter]-1;
 			if(dccounter < Large_part) {
@@ -1278,6 +1280,8 @@ public class Parameters {
 			}
 			value[dcindex] = Parameters.likelihoodOfFailure[dcindex];
 			Parameters.sortedlikelihoodOfFailure[dcindex] = dcindex;
+			valueDCfail[dcindex] = Parameters.likelihoodOfDCFailure[dcindex];
+			Parameters.sortedlikelihoodOfDCFailure[dcindex] = dcindex;
 		}
 		
 		// sort the likelihoodFailureOfDC
@@ -1290,6 +1294,20 @@ public class Parameters {
 					Parameters.sortedlikelihoodOfFailure[i] = Parameters.sortedlikelihoodOfFailure[j];
 					value[j] = temp;
 					Parameters.sortedlikelihoodOfFailure[j] = p; 
+				}
+			}
+		}
+		
+		// sort the likelihoodDCFailureOfDC
+		for (int i = 0; i < Parameters.numberOfDC-1; i++) {
+			for (int j = i+1; j < Parameters.numberOfDC; j++) {
+				if(valueDCfail[i]>valueDCfail[j]){
+					double temp = valueDCfail[i];
+					int p = Parameters.sortedlikelihoodOfDCFailure[i];
+					valueDCfail[i] = valueDCfail[j];
+					Parameters.sortedlikelihoodOfDCFailure[i] = Parameters.sortedlikelihoodOfDCFailure[j];
+					valueDCfail[j] = temp;
+					Parameters.sortedlikelihoodOfDCFailure[j] = p; 
 				}
 			}
 		}
@@ -1474,7 +1492,7 @@ public class Parameters {
 	
 	// the probability for a datacenter failure
 	public static double[] likelihoodOfDCFailure = {0.2,0.0001};
-	
+	public static int[] sortedlikelihoodOfDCFailure = null;
 	public static double[] ubOfDCFailureDuration = {50d,50d};
 	public static double[] lbOfDCFailureDuration = {5d,5d};
 

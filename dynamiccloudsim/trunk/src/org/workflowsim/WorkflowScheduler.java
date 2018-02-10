@@ -58,6 +58,7 @@ import com.mathworks.toolbox.javabuilder.MWException;
 import com.mathworks.toolbox.javabuilder.MWNumericArray;
 import com.sun.org.apache.xalan.internal.xsltc.runtime.Parameter;
 
+import EDU.oswego.cs.dl.util.concurrent.FJTask.Par;
 import de.huberlin.wbi.dcs.DynamicVm;
 import de.huberlin.wbi.dcs.examples.Parameters;
 import de.huberlin.wbi.dcs.examples.Parameters.SchedulingAlgorithm;
@@ -1368,10 +1369,240 @@ public class WorkflowScheduler extends DatacenterBroker {
         		}
         		
         		// judge whether x is all zero
-        		double[] x = null;
-        		if(allzeroflag == false) {
+        		double lastMaxTime = Double.MAX_VALUE;
+        		double maxTime = Double.MIN_VALUE;
+        		if(allzeroflag == false && (Parameters.copystrategy == 1 || Parameters.copystrategy == 7)) {
         			// copy based on the fresh assignment
-            		
+            		// x = singlex
+        			// obtain the tasks which used the max time
+        			// when resource is enough optimize tasks with the second max time
+        			int DCfailBarrier = (int)(Parameters.DCFailThreshold * Parameters.numberOfDC + 0.5);
+        			while(true) {
+        				maxTime = Double.MIN_VALUE;
+        				for (int tindex = 0; tindex < unscheduledTaskNum; tindex++) {
+            				Task task = job.unscheduledTaskList.get(tindex);
+            				for(int dcindex = 0; dcindex < Parameters.numberOfDC; dcindex++) {
+            					int xindex = tindex * Parameters.numberOfDC + dcindex;
+            					if(singlex[xindex]!=0) {
+            						double timeOfTask = job.objTimeParaOfTaskInDC.get(task.getCloudletId()).get(dcindex);
+            						if(timeOfTask < lastMaxTime) {
+            							if(timeOfTask > maxTime) {
+            								maxTime = timeOfTask;
+            							}
+            						}
+            						break;
+            					}
+            				}
+            			}
+            			
+            			if(maxTime == Double.MIN_VALUE)
+            				break;
+            			lastMaxTime = maxTime;
+            			
+            			for (int tindex = 0; tindex < unscheduledTaskNum; tindex++) {
+            				if(preAssignedSlots <= 0)
+        						break;
+            				Task task = job.unscheduledTaskList.get(tindex);
+            				int originalDC = -1;
+            				int copyDC = -1;
+            				for(int bdcindex = 0; bdcindex < Parameters.numberOfDC; bdcindex++) {
+            					int bxindex = tindex * Parameters.numberOfDC + bdcindex;
+            					if(singlex[bxindex]!=0) {
+            						
+            						originalDC = bdcindex;
+            						double timeOfTask = job.objTimeParaOfTaskInDC.get(task.getCloudletId()).get(bdcindex);
+            						if(timeOfTask == maxTime) {
+            							// deal copy
+            							// if DCfail is too large then assign extra copy in other DC
+            							// else assign the copy in the best DC
+            							int taskId = task.getCloudletId();
+        								int datanumber = task.numberOfData;
+        								boolean success = true;
+        								int successDC = -1;
+        								for(Map.Entry<Integer, Double> iterm:job.sortedListOfTask.get(taskId)) {
+        									int dcindex = iterm.getKey();
+        									int xindex = tindex * Parameters.numberOfDC + dcindex;
+        									success = true;
+        									if(job.uselessDCforTask[xindex] == 0) {
+        										success = false;
+        										break;
+        									}
+        									
+        									// when the dc is not too far
+//            									if(job.uselessDCforTask[xindex] != 0) {
+        										// verify that the resource is enough
+        										
+        										// machines
+        										if((SlotArray[0][dcindex]-1)<0) {
+        											success = false;
+        											continue;
+        										}
+        										
+        										
+        										totalBandwidth = 0d;
+        										// uplink
+        										bwOfSrcPos = new HashMap<>();
+        										if(Parameters.isConcernGeoNet == true) {
+        											if(job.TotalTransferDataSize[xindex]>0) {
+            											for(int dataindex = 0; dataindex < datanumber; dataindex++) {
+            												double neededBw = job.bandwidth[xindex][dataindex];
+            												totalBandwidth += neededBw;
+            												int srcPos = (int) job.datapos[tindex][dataindex];
+            												if(bwOfSrcPos.containsKey(srcPos)) {
+            													double oldvalue = bwOfSrcPos.get(srcPos);
+            													bwOfSrcPos.put(srcPos, oldvalue + neededBw);
+            												}else {
+            													bwOfSrcPos.put(srcPos, 0 + neededBw);
+            												}
+            											}
+            											for(int pos : bwOfSrcPos.keySet()) {
+            												if((UpArray[0][pos]-bwOfSrcPos.get(pos))<0) {
+            													success = false;
+            													break;
+            												}
+            											}
+            										}
+            										
+            										
+            										// downlink
+            										if(job.TotalTransferDataSize[xindex]>0 && success == true) {
+            											if((DownArray[0][dcindex]-totalBandwidth)<0) {
+            												success = false;
+            												continue;
+            											}
+            										}
+        										}
+        										
+        										if(success == true) {
+        											SlotArray[0][dcindex] -= 1;
+        											
+        											if(Parameters.isConcernGeoNet == true) {
+        												if(job.TotalTransferDataSize[xindex]>0) {
+            												DownArray[0][dcindex] -= totalBandwidth;
+
+            											}
+            											for(int pos : bwOfSrcPos.keySet()) {
+            												UpArray[0][pos]-=bwOfSrcPos.get(pos);
+            											}
+        											}
+        											
+        											successDC = dcindex;
+        											break;
+        										}
+//            									}
+        								}
+        								if(success == true && successDC != -1) {
+        									copyDC = successDC;
+        									// store the greatest assignment info in the job with the current resource
+        									int xindex = tindex * Parameters.numberOfDC + successDC;
+        									allzeroflag = false;
+        									singlex[xindex] += 1;
+        									preAssignedSlots -= 1;
+        								}
+                        				
+        								
+        								// judge whether need assign another DC copy
+        								if(copyDC == originalDC && preAssignedSlots > 0) {
+        									
+        									for(int posindex = 0; posindex < Parameters.numberOfDC; posindex++) {
+        										if(Parameters.sortedlikelihoodOfDCFailure[Parameters.numberOfDC-1-posindex] == originalDC) {
+        											if(posindex <= DCfailBarrier) {
+        												// assign another copy
+        												success = true;
+        												successDC = -1;
+        												for(Map.Entry<Integer, Double> iterm:job.sortedListOfTask.get(taskId)) {
+        		        									int dcindex = iterm.getKey();
+        		        									int xindex = tindex * Parameters.numberOfDC + dcindex;
+        		        									success = true;
+        		        									if(job.uselessDCforTask[xindex] == 0 || dcindex == originalDC) {
+        		        										success = false;
+        		        										break;
+        		        									}
+        		        									
+        		        									// when the dc is not too far
+//        		            									if(job.uselessDCforTask[xindex] != 0) {
+        		        										// verify that the resource is enough
+        		        										
+        		        										// machines
+        		        										if((SlotArray[0][dcindex]-1)<0) {
+        		        											success = false;
+        		        											continue;
+        		        										}
+        		        										
+        		        										
+        		        										totalBandwidth = 0d;
+        		        										// uplink
+        		        										bwOfSrcPos = new HashMap<>();
+        		        										if(Parameters.isConcernGeoNet == true) {
+        		        											if(job.TotalTransferDataSize[xindex]>0) {
+        		            											for(int dataindex = 0; dataindex < datanumber; dataindex++) {
+        		            												double neededBw = job.bandwidth[xindex][dataindex];
+        		            												totalBandwidth += neededBw;
+        		            												int srcPos = (int) job.datapos[tindex][dataindex];
+        		            												if(bwOfSrcPos.containsKey(srcPos)) {
+        		            													double oldvalue = bwOfSrcPos.get(srcPos);
+        		            													bwOfSrcPos.put(srcPos, oldvalue + neededBw);
+        		            												}else {
+        		            													bwOfSrcPos.put(srcPos, 0 + neededBw);
+        		            												}
+        		            											}
+        		            											for(int pos : bwOfSrcPos.keySet()) {
+        		            												if((UpArray[0][pos]-bwOfSrcPos.get(pos))<0) {
+        		            													success = false;
+        		            													break;
+        		            												}
+        		            											}
+        		            										}
+        		            										
+        		            										
+        		            										// downlink
+        		            										if(job.TotalTransferDataSize[xindex]>0 && success == true) {
+        		            											if((DownArray[0][dcindex]-totalBandwidth)<0) {
+        		            												success = false;
+        		            												continue;
+        		            											}
+        		            										}
+        		        										}
+        		        										
+        		        										if(success == true) {
+        		        											SlotArray[0][dcindex] -= 1;
+        		        											
+        		        											if(Parameters.isConcernGeoNet == true) {
+        		        												if(job.TotalTransferDataSize[xindex]>0) {
+        		            												DownArray[0][dcindex] -= totalBandwidth;
+
+        		            											}
+        		            											for(int pos : bwOfSrcPos.keySet()) {
+        		            												UpArray[0][pos]-=bwOfSrcPos.get(pos);
+        		            											}
+        		        											}
+        		        											
+        		        											successDC = dcindex;
+        		        											break;
+        		        										}
+//        		            									}
+        		        								}
+        		        								if(success == true && successDC != -1) {
+        		        									// store the greatest assignment info in the job with the current resource
+        		        									int xindex = tindex * Parameters.numberOfDC + successDC;
+        		        									allzeroflag = false;
+        		        									singlex[xindex] += 1;
+        		        									preAssignedSlots -= 1;
+        		        								}
+        											}
+        										}
+        									}
+        								}
+        								
+            						}
+            						break;
+            					}
+            				}
+            			}
+        			}
+        			
+        			
+        			
 	                    
 					// Queue<Vm> taskSlotsKeptIdle = new LinkedList<>();
 					Queue<Task> taskSubmitted = new LinkedList<>();
@@ -1381,11 +1612,11 @@ public class WorkflowScheduler extends DatacenterBroker {
 						Task task = job.unscheduledTaskList.get(tindex);
 						boolean submitflag = false;
 						for (int dcindex = 0; dcindex < Parameters.numberOfDC; dcindex++) {
-							if (x[tindex*Parameters.numberOfDC + dcindex] > 0) {
+							if (singlex[tindex*Parameters.numberOfDC + dcindex] > 0) {
 								if(submitflag == false) {
 									submitflag = true;
 								}
-								int submittedNum = (int) x[tindex*Parameters.numberOfDC + dcindex];
+								int submittedNum = (int) singlex[tindex*Parameters.numberOfDC + dcindex];
 								for(int copyindex = 0; copyindex < submittedNum; copyindex++) {
 									Vm vm = idleTaskSlotsOfDC.get(dcindex + DCbase).remove();
 									if (tasks.containsKey(task.getCloudletId())) {
