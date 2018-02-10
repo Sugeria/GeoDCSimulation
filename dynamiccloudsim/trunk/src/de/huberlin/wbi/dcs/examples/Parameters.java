@@ -124,7 +124,7 @@ public class Parameters {
     
     public static boolean isUselessDCuseful = true;
     
-    public static boolean isExtracte = false;
+    public static boolean isExtracte = true;
     
     public static boolean isDCFailHappen = false;
     
