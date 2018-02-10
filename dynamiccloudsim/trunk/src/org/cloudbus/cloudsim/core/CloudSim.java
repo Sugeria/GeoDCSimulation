@@ -607,6 +607,7 @@ public class CloudSim {
 					Parameters.isConcernUnstable = false;
 					Parameters.isConcernGeoNet = false;
 					Parameters.isUselessDCuseful = false;
+					Parameters.isExtracte = true;
 					break;
 				case 2:
 					Parameters.copystrategy = 1;
