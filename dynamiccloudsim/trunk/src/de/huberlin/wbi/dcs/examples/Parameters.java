@@ -1119,8 +1119,8 @@ public class Parameters {
 				// 10d 13d 20d
 				runtimeFactorInCaseOfFailure[dcindex] = Math.random()*20d;
 				
-				// 0.0001 0.0002 0.0004
-				likelihoodOfDCFailure[dcindex] = Math.random()*0.0004;
+				// 0.000001 0.000002 0.000004
+				likelihoodOfDCFailure[dcindex] = Math.random()*0.000004;
 				
 				// 0.55 0.60 0.85
 				uplinkOfDC[dcindex] = Math.random()*numberOfVMperDC[dcindex]*200*1024*0.55;
@@ -1186,8 +1186,8 @@ public class Parameters {
 				// 10d 13d 20d
 				runtimeFactorInCaseOfFailure[dcindex] = Math.random()*20d;
 				
-				// 0.0001 0.0002 0.0004
-				likelihoodOfDCFailure[dcindex] = Math.random()*0.0004;
+				// 0.000001 0.000002 0.000004
+				likelihoodOfDCFailure[dcindex] = Math.random()*0.000004;
 				
 				// 0.55 0.60 0.85
 				uplinkOfDC[dcindex] = Math.random()*numberOfVMperDC[dcindex]*200*1024*(0.60-0.55)+
@@ -1263,8 +1263,8 @@ public class Parameters {
 				// 10d 13d 20d
 				runtimeFactorInCaseOfFailure[dcindex] = Math.random()*20d;
 				
-				// 0.0001 0.0002 0.0004
-				likelihoodOfDCFailure[dcindex] = Math.random()*0.0004;
+				// 0.000001 0.000002 0.000004
+				likelihoodOfDCFailure[dcindex] = Math.random()*0.000004;
 				
 				// 0.55 0.60 0.85
 				uplinkOfDC[dcindex] = Math.random()*numberOfVMperDC[dcindex]*200*1024*(0.85-0.60)+
