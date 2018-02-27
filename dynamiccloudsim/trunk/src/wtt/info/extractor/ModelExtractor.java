@@ -92,10 +92,13 @@ public class ModelExtractor {
 		
 		Parameters.cpuHeterogeneityDistributionOfDC = new Distribution[numberOfDC];
 		Parameters.cpuHeterogeneityCVOfDC = new double[numberOfDC];
+		Parameters.ori_cpuHeterogeneityCVOfDC = new double[numberOfDC];
 		Parameters.ioHeterogeneityDistributionOfDC = new Distribution[numberOfDC];
 		Parameters.ioHeterogeneityCVOfDC = new double[numberOfDC];
+		Parameters.ori_ioHeterogeneityCVOfDC = new double[numberOfDC];
 		Parameters.bwHeterogeneityDistributionOfDC = new Distribution[numberOfDC];
 		Parameters.bwHeterogeneityCVOfDC = new double[numberOfDC];
+		Parameters.ori_bwHeterogeneityCVOfDC = new double[numberOfDC];
 		Parameters.cpuDynamicsDistributionOfDC = new Distribution[numberOfDC];
 		Parameters.cpuDynamicsCVOfDC = new double[numberOfDC];
 		Parameters.cpuBaselineChangesPerHourOfDC = new double[numberOfDC];
@@ -124,6 +127,9 @@ public class ModelExtractor {
 		Parameters.MIPSbaselineOfDC = new double[numberOfDC];
 		Parameters.bwBaselineOfDC = new double[numberOfDC];
 		Parameters.ioBaselineOfDC = new double[numberOfDC];
+		Parameters.ori_MIPSbaselineOfDC = new double[numberOfDC];
+		Parameters.ori_bwBaselineOfDC = new double[numberOfDC];
+		Parameters.ori_ioBaselineOfDC = new double[numberOfDC];
 		Parameters.ubOfDCFailureDuration = new double[numberOfDC];
 		Parameters.lbOfDCFailureDuration = new double[numberOfDC];
 		line = in.readLine();

@@ -87,8 +87,8 @@ public class DatacenterBroker extends SimEntity {
 	public Map<Integer, Double> ori_uplinkOfDC;
 	public Map<Integer, Double> ori_downlinkOfDC;
 	
-	private Map<Integer, Double> uplinkOfDC;
-	private Map<Integer, Double> downlinkOfDC;
+	public Map<Integer, Double> uplinkOfDC;
+	public Map<Integer, Double> downlinkOfDC;
 	private Map<Integer, Double> likelihoodOfFailureOfDC;
 	private Map<Integer, Double> runtimeFactorIncaseOfFailureOfDC;
 	private Map<Integer, Double> likelihoodOfDCFailureOfDC;

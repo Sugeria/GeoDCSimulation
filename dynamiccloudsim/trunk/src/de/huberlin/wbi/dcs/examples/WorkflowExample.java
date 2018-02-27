@@ -612,6 +612,10 @@ public class WorkflowExample {
 				Parameters.ioBaselineOfDC[dcindex] = iopsmean;
 				Parameters.MIPSbaselineOfDC[dcindex] = mipsmean;
 				
+				Parameters.ori_bwBaselineOfDC[dcindex] = bwpsmean;
+				Parameters.ori_ioBaselineOfDC[dcindex] = iopsmean;
+				Parameters.ori_MIPSbaselineOfDC[dcindex] = mipsmean;
+				
 				out.write(bwpsmean+"\t");
 				out.write(iopsmean+"\t");
 				out.write(mipsmean+"\t");
@@ -636,6 +640,10 @@ public class WorkflowExample {
 				Parameters.bwHeterogeneityCVOfDC[dcindex] = bwpsCOV;
 				Parameters.ioHeterogeneityCVOfDC[dcindex] = iopsCOV;
 				Parameters.cpuHeterogeneityCVOfDC[dcindex] = mipsCOV;
+				
+				Parameters.ori_bwHeterogeneityCVOfDC[dcindex] = bwpsCOV;
+				Parameters.ori_ioHeterogeneityCVOfDC[dcindex] = iopsCOV;
+				Parameters.ori_cpuHeterogeneityCVOfDC[dcindex] = mipsCOV;
 				out.write(bwpsCOV+"\t");
 				out.write(iopsCOV+"\t");
 				out.write(mipsCOV+"\t");
@@ -646,11 +654,19 @@ public class WorkflowExample {
 				Parameters.bwBaselineOfDC[dcindex] = Double.parseDouble(para_string[0]);
 				Parameters.ioBaselineOfDC[dcindex] = Double.parseDouble(para_string[1]);
 				Parameters.MIPSbaselineOfDC[dcindex] = Double.parseDouble(para_string[2]);
+				
+				Parameters.ori_bwBaselineOfDC[dcindex] = Double.parseDouble(para_string[0]);
+				Parameters.ori_ioBaselineOfDC[dcindex] = Double.parseDouble(para_string[1]);
+				Parameters.ori_MIPSbaselineOfDC[dcindex] = Double.parseDouble(para_string[2]);
 				line = in.readLine();
 				para_string = line.split("\t");
 				Parameters.bwHeterogeneityCVOfDC[dcindex] = Double.parseDouble(para_string[0]);
 				Parameters.ioHeterogeneityCVOfDC[dcindex] = Double.parseDouble(para_string[1]);
 				Parameters.cpuHeterogeneityCVOfDC[dcindex] = Double.parseDouble(para_string[2]);
+				
+				Parameters.ori_bwHeterogeneityCVOfDC[dcindex] = Double.parseDouble(para_string[0]);
+				Parameters.ori_ioHeterogeneityCVOfDC[dcindex] = Double.parseDouble(para_string[1]);
+				Parameters.ori_cpuHeterogeneityCVOfDC[dcindex] = Double.parseDouble(para_string[2]);
 				
 			}
 			

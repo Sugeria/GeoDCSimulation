@@ -110,21 +110,21 @@ public class Parameters {
     
     public static boolean isGurobi = true;
     
-    public static boolean isConcernDCFail = true;
+    public static boolean isConcernDCFail = false;
     
     public static double DCFailThreshold = 0.2d;
     
-    public static boolean isConcernUnstable = true;
+    public static boolean isConcernUnstable = false;
     
     public static boolean isHappendUnstable = true;
     
-    public static double acceptProOfJob = 0.001d;
+    public static double acceptProOfJob = 0.05d;
     
-    public static boolean isConcernGeoNet = true;
+    public static boolean isConcernGeoNet = false;
     
-    public static boolean isUselessDCuseful = true;
+    public static boolean isUselessDCuseful = false;
     
-    public static boolean isExtracte = false;
+    public static boolean isExtracte = true;
     
     public static boolean isDCFailHappen = false;
     
@@ -150,11 +150,11 @@ public class Parameters {
     
     // workflow
     // default 5 workflows each minutes
-    public static double lambda = 0.01;
+    public static double lambda = 0.75d;
     // default 3 days workflow
     // defend time exceed INT.MAX_VALUE
-    public static double seconds = 6*60*60;
-    
+    public static double seconds = 1800d;
+    public static double greedyTaskNumThreshold = 0;
     /**
      * Scheduling mode
      */
@@ -726,7 +726,7 @@ public class Parameters {
 
     public static double r = 1d;
     
-    public static double epsilon = 0.6d;
+    public static double epsilon = 0.7d;
     
 	public static boolean considerDataLocality = false;
 	
@@ -782,6 +782,7 @@ public class Parameters {
 	// CPU Heterogeneity
 	public static Distribution[] cpuHeterogeneityDistributionOfDC = {Distribution.NORMAL,Distribution.NORMAL};
 	public static double[] cpuHeterogeneityCVOfDC = {0.4,0.4};
+	public static double[] ori_cpuHeterogeneityCVOfDC = {0.4,0.4};
 	public static int[] cpuHeterogeneityAlphaOfDC = {0,0};
 	public static double[] cpuHeterogeneityBetaOfDC = {0d,0d};
 	public static double[] cpuHeterogeneityShapeOfDC = {0d,0d};
@@ -811,6 +812,7 @@ public class Parameters {
 	// IO Heterogeneity
 	public static Distribution[] ioHeterogeneityDistributionOfDC = {Distribution.NORMAL,Distribution.NORMAL};
 	public static double[] ioHeterogeneityCVOfDC = {0.15,0.15};
+	public static double[] ori_ioHeterogeneityCVOfDC = {0.15,0.15};
 	public static int[] ioHeterogeneityAlphaOfDC = {0,0};
 	public static double[] ioHeterogeneityBetaOfDC = {0d,0d};
 	public static double[] ioHeterogeneityShapeOfDC = {0d,0d};
@@ -837,6 +839,7 @@ public class Parameters {
 	// BW Heterogeneity
 	public static Distribution[] bwHeterogeneityDistributionOfDC = {Distribution.NORMAL,Distribution.NORMAL};
 	public static double[] bwHeterogeneityCVOfDC = {0.2,0.2};
+	public static double[] ori_bwHeterogeneityCVOfDC = {0.2,0.2};
 	public static int[] bwHeterogeneityAlphaOfDC = {0,0};
 	public static double[] bwHeterogeneityBetaOfDC = {0d,0d};
 	public static double[] bwHeterogeneityShapeOfDC = {0d,0d};
@@ -979,10 +982,13 @@ public class Parameters {
 		nOpteronOfMachineTypeOfDC = new int[numberOfDC][machineType];
 		cpuHeterogeneityDistributionOfDC = new Distribution[numberOfDC];
 		cpuHeterogeneityCVOfDC = new double[numberOfDC];
+		ori_cpuHeterogeneityCVOfDC = new double[numberOfDC];
 		ioHeterogeneityDistributionOfDC = new Distribution[numberOfDC];
 		ioHeterogeneityCVOfDC = new double[numberOfDC];
+		ori_ioHeterogeneityCVOfDC = new double[numberOfDC];
 		bwHeterogeneityDistributionOfDC = new Distribution[numberOfDC];
 		bwHeterogeneityCVOfDC = new double[numberOfDC];
+		ori_bwHeterogeneityCVOfDC = new double[numberOfDC];
 		cpuDynamicsDistributionOfDC = new Distribution[numberOfDC];
 		cpuDynamicsCVOfDC = new double[numberOfDC];
 		cpuBaselineChangesPerHourOfDC = new double[numberOfDC];
@@ -1011,6 +1017,9 @@ public class Parameters {
 		MIPSbaselineOfDC = new double[numberOfDC];
 		bwBaselineOfDC = new double[numberOfDC];
 		ioBaselineOfDC = new double[numberOfDC];
+		ori_MIPSbaselineOfDC = new double[numberOfDC];
+		ori_bwBaselineOfDC = new double[numberOfDC];
+		ori_ioBaselineOfDC = new double[numberOfDC];
 		ubOfDCFailureDuration = new double[numberOfDC];
 		lbOfDCFailureDuration = new double[numberOfDC];
 		// degree rank
@@ -1132,7 +1141,7 @@ public class Parameters {
 				
 			}else if(dccounter < Medium_part) {
 				//Medium DC
-				numberOfVMperDC[dcindex] = (int)(Math.random()*1000 + 500);
+				numberOfVMperDC[dcindex] = (int)(Math.random()*500 + 500);
 //				int Type = (int)(Math.random()*(machineType-1));
 //				for(int typeindex = 0; typeindex < machineType; typeindex++) {
 //					if(Type == typeindex) {
@@ -1201,7 +1210,7 @@ public class Parameters {
 				
 			}else {
 				//Small DC
-				numberOfVMperDC[dcindex] = (int)(Math.random()*500 + 50);
+				numberOfVMperDC[dcindex] = (int)(Math.random()*50 + 50);
 //				int Type = (int)(Math.random()*(machineType-1));
 //				for(int typeindex = 0; typeindex < machineType; typeindex++) {
 //					try {
@@ -1425,10 +1434,10 @@ public class Parameters {
 	
 	
 	// datacenter number
-	public static int numberOfDC = 10;
-	public static String BriteFileName = "./10.brite";
+	public static int numberOfDC = 100;
+	public static String BriteFileName = "./100.brite";
 	// upperbound of inputdata
-	public static int ubOfData = 5;
+	public static int ubOfData = 25;
 		
 	
 	// number of machineType in each datacenter
@@ -1454,7 +1463,9 @@ public class Parameters {
 	public static double[] MIPSbaselineOfDC;
 	public static double[] bwBaselineOfDC;
 	public static double[] ioBaselineOfDC;
-	
+	public static double[] ori_MIPSbaselineOfDC;
+	public static double[] ori_bwBaselineOfDC;
+	public static double[] ori_ioBaselineOfDC;
 	
 	//upperbound of datasize
 	public static long ubOfDataSize = 128L * 1024L * 1024L; // 128M

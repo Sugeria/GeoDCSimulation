@@ -318,11 +318,16 @@ public class BasicClustering implements ClusteringInterface {
                     	}else {
                     		line = ClusteringEngine.in.readLine();
                     		para_string = line.split("\t");
-                    		for (int dataindex = 0; dataindex < numberofData; dataindex++) {
-                    			positionOfData[dataindex] = Integer.parseInt(para_string[dataindex]);
-//                    			int datasrcindex = (int)(Math.random()*(dataSrcCandidates.size()-1));
-//                    			positionOfData[dataindex] = dataSrcCandidates.get(datasrcindex);
+                    		try {
+                    			for (int dataindex = 0; dataindex < numberofData; dataindex++) {
+                        			positionOfData[dataindex] = Integer.parseInt(para_string[dataindex]);
+//                        			int datasrcindex = (int)(Math.random()*(dataSrcCandidates.size()-1));
+//                        			positionOfData[dataindex] = dataSrcCandidates.get(datasrcindex);
+                        		}
+                    		}catch(ArrayIndexOutOfBoundsException e) {
+                    			e.printStackTrace();
                     		}
+                    		
                     	}
     					
     				} catch (IOException e) {
