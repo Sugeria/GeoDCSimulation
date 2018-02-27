@@ -24,12 +24,14 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.cloudbus.cloudsim.Datacenter;
 import org.cloudbus.cloudsim.Log;
 import org.cloudbus.cloudsim.core.predicates.Predicate;
 import org.cloudbus.cloudsim.core.predicates.PredicateAny;
 import org.cloudbus.cloudsim.core.predicates.PredicateNoCloudletSubmitAck;
 import org.cloudbus.cloudsim.core.predicates.PredicateNoCloudletUpdate;
 import org.cloudbus.cloudsim.core.predicates.PredicateNone;
+import org.cloudbus.cloudsim.core.predicates.PredicateVmProcessing;
 import org.workflowsim.ClusteringEngine;
 import org.workflowsim.Job;
 import org.workflowsim.WorkflowEngine;
@@ -343,6 +345,7 @@ public class CloudSim {
 	
 	public final static PredicateNoCloudletSubmitAck SIM_NO_SUBMIT_ACK = new PredicateNoCloudletSubmitAck();
 
+	public final static PredicateVmProcessing SIM_VM_PROCESSING = new PredicateVmProcessing();
 	/** A standard predicate that does not match any events. */
 	public final static PredicateNone SIM_NONE = new PredicateNone();
 
@@ -1367,6 +1370,9 @@ public class CloudSim {
 			if(integerclock != lastclock) {
 				lastclock = integerclock;
 				System.out.println("Time: "+lastclock);
+				
+				// VmProcessing in one new second
+//				Datacenter.isVmProcessingDealedInSeconds = false;
 			}
 			if (runClockTick() || abruptTerminate) {
 				break;

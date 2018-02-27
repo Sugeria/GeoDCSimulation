@@ -399,6 +399,9 @@ public abstract class SimEntity implements Cloneable {
 		return getNextEvent(CloudSim.SIM_NO_SUBMIT_ACK);
 	}
 	
+	public SimEvent getNextEventVmProcessing() {
+		return getNextEvent(CloudSim.SIM_VM_PROCESSING);
+	}
 	
 	/**
 	 * This method is invoked by the {@link Simulation} class when the simulation is started. This

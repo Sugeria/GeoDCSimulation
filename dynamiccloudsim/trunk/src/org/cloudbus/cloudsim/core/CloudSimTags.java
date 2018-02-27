@@ -305,6 +305,8 @@ public class CloudSimTags {
 	public static final int INITIAL_LASTTIME = BASE + 62;
 	
 	public static final int DC_FAIL_INFO = BASE + 63;
+	
+	public static final int VM_PROCESSING = BASE + 64;
 
 	public static String TagText(int tagValue) {
 		switch (tagValue) {
@@ -448,6 +450,8 @@ public class CloudSimTags {
 			return "INITIAL_LASTTIME";
 		case 63:
 			return "DC_FAIL_INFO";
+		case 64:
+			return "VM_PROCESSING";
 		case 1002:
 			return "VM_STATUS_READY";
 		case 1003:

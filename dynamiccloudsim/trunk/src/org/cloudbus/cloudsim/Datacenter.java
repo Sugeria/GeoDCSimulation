@@ -19,6 +19,7 @@ import org.cloudbus.cloudsim.core.CloudSim;
 import org.cloudbus.cloudsim.core.CloudSimTags;
 import org.cloudbus.cloudsim.core.SimEntity;
 import org.cloudbus.cloudsim.core.SimEvent;
+import org.workflowsim.WorkflowSimTags;
 
 import de.huberlin.wbi.dcs.examples.Parameters;
 import de.huberlin.wbi.dcs.workflow.Task;
@@ -74,6 +75,8 @@ public class Datacenter extends SimEntity {
 	private boolean isFail = false;
 	
 	private int attributedBrokerId = -1;
+	
+//	public static boolean isVmProcessingDealedInSeconds = false;
 	/**
 	 * Allocates a new PowerDatacenter object.
 	 * 
@@ -319,6 +322,18 @@ public class Datacenter extends SimEntity {
 //						setLastProcessTime(CloudSim.clock());
 //					}
 //				}
+				
+				schedule(this.getId(), (Math.ceil(CloudSim.clock)+1)-CloudSim.clock, CloudSimTags.VM_PROCESSING);
+//				if(!isFail) {
+//					updateCloudletProcessing();
+//					checkCloudletCompletion();
+//				}else {
+//					failCloudletProcessing();
+//					failCheckCloudletCompletion();
+//				}
+				break;
+			
+			case CloudSimTags.VM_PROCESSING:
 				if(!isFail) {
 					updateCloudletProcessing();
 					checkCloudletCompletion();
@@ -327,7 +342,6 @@ public class Datacenter extends SimEntity {
 					failCheckCloudletCompletion();
 				}
 				break;
-
 			case CloudSimTags.UPLINK_RETURN:
 				processUpBandwidthReturn(ev);
 				break;
@@ -373,15 +387,30 @@ public class Datacenter extends SimEntity {
 
 	@Override
 	public void run() {
-		SimEvent ev = evbuf != null ? evbuf : getNextEventNoCloudletSubmitAck();
+		
+		
+		
+		SimEvent ev = evbuf != null ? evbuf : getNextEventVmProcessing();
 
 		if (state != RUNNABLE) {
 			ev = null;
 			return ;
 		}
-		while (ev != null) {
+		
+		if(ev == null) {
+			ev = getNextEventNoCloudletSubmitAck();
+		}else {
 			processEvent(ev);
 			ev = getNextEventNoCloudletSubmitAck();
+		}
+		
+		while (ev != null) {
+			if(ev.getTag() != CloudSimTags.VM_PROCESSING) {
+				processEvent(ev);
+				ev = getNextEventNoCloudletSubmitAck();
+			}else {
+				ev = getNextEventNoCloudletSubmitAck();
+			}
 		}
 		ev = getNextEvent();
 		while (ev != null) {
@@ -1112,7 +1141,8 @@ public class Datacenter extends SimEntity {
 		// once the cloudlet obtain the bandwidth,
 		// then the bandwidth will not be released until the transfer finished
 		// or the cloudlet finished
-		updateCloudletProcessing();
+//		updateCloudletProcessing();
+		schedule(this.getId(), (Math.ceil(CloudSim.clock)+1)-CloudSim.clock, CloudSimTags.VM_PROCESSING);
 
 		try {
 			// gets the Cloudlet object
