@@ -1119,10 +1119,16 @@ public class WorkflowScheduler extends DatacenterBroker {
 								int dcindex = iterm.getKey();
 								int xindex = tindex * Parameters.numberOfDC + dcindex;
 								success = true;
-								if(job.uselessDCforTask[xindex] == 0) {
-									success = false;
-									break;
+								try {
+									if(job.uselessDCforTask[xindex] == 0) {
+										success = false;
+										break;
+									}
+								}catch (ArrayIndexOutOfBoundsException e) {
+									// TODO: handle exception
+									e.printStackTrace();
 								}
+								
 								
 								// when the dc is not too far
 //									if(job.uselessDCforTask[xindex] != 0) {
@@ -1202,8 +1208,16 @@ public class WorkflowScheduler extends DatacenterBroker {
         		
         		if(allzeroflag == true) {
         			endUpdate = true;
+        			// update the unscheduledflag in the next jobs
+        			job.isLastScheduled = false;
+        			for(int unscheduledJobIndex = 0; unscheduledJobIndex < allNumOfJob; unscheduledJobIndex++) {
+        				Job unscheduledjob = (Job)rankedList.get(unscheduledJobIndex);
+        				unscheduledjob.isLastScheduled = false;
+        			}
         			break;
-        		}
+        		}else {
+					job.isLastScheduled = true;
+				}
         		
         		if(allzeroflag == false && (Parameters.copystrategy == 5 || Parameters.copystrategy == 0 || Parameters.copystrategy == 6 || Parameters.copystrategy == 8 || preAssignedSlots <= 0)) {
         			
@@ -2920,6 +2934,7 @@ public class WorkflowScheduler extends DatacenterBroker {
     	Job job = JobFactory.get(attributedJobId);
     	if(task.getStatus() == Cloudlet.FAILED) {
     		resetTask(task);
+    		job.isLastScheduled = true;
     		if(job.unscheduledTaskList.size() > 0) {
     			int numOfScheduledTask = scheduledTaskOfJob.get(job.getCloudletId());
     			scheduledTaskOfJob.put(job.getCloudletId(), numOfScheduledTask - 1);
