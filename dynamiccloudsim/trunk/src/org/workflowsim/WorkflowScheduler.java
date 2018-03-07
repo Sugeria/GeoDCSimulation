@@ -1205,7 +1205,7 @@ public class WorkflowScheduler extends DatacenterBroker {
         			break;
         		}
         		
-        		if(allzeroflag == false && (Parameters.copystrategy == 5 || Parameters.copystrategy == 0 || Parameters.copystrategy == 6 || preAssignedSlots <= 0)) {
+        		if(allzeroflag == false && (Parameters.copystrategy == 5 || Parameters.copystrategy == 0 || Parameters.copystrategy == 6 || Parameters.copystrategy == 8 || preAssignedSlots <= 0)) {
         			
         			if(Parameters.copystrategy == 6 && preAssignedSlots > 0) {
         				//assign task copy in singlex
@@ -2591,7 +2591,12 @@ public class WorkflowScheduler extends DatacenterBroker {
 			Vm originalVm = vms.get(originalTask.getVmId());
 			taskSucceeded(originalTask, originalVm);
 			idleTaskSlotsOfDC.get(originalVm.DCId).add(originalVm);
-			usedSlots = usedSlotsOfJob.get(originalTask.jobId);
+			try {
+				usedSlots = usedSlotsOfJob.get(originalTask.jobId);
+			}catch(NullPointerException e) {
+				e.printStackTrace();
+			}
+			
 			usedSlotsOfJob.put(originalTask.jobId, usedSlots-1);
 			
 			originalTask.usedVM++;
@@ -2919,19 +2924,19 @@ public class WorkflowScheduler extends DatacenterBroker {
     			int numOfScheduledTask = scheduledTaskOfJob.get(job.getCloudletId());
     			scheduledTaskOfJob.put(job.getCloudletId(), numOfScheduledTask - 1);
     			job.unscheduledTaskList.add(task);
-//    	    	if(ackTaskOfJob.get(attributedJobId).equals(scheduledTaskOfJob.get(attributedJobId))) {
-//    	    		//not really update right now, should wait 1 s until many jobs have returned
-//    	            schedule(this.getId(), 0.0, WorkflowSimTags.CLOUDLET_UPDATE);
-//    	    	}
+    	    	if(ackTaskOfJob.get(attributedJobId).equals(scheduledTaskOfJob.get(attributedJobId))) {
+    	    		//not really update right now, should wait 1 s until many jobs have returned
+    	            schedule(this.getId(), 0.0, WorkflowSimTags.CLOUDLET_UPDATE);
+    	    	}
     		}else {
     			int numOfScheduledTask = scheduledTaskOfJob.get(job.getCloudletId());
     			scheduledTaskOfJob.put(job.getCloudletId(), numOfScheduledTask - 1);
     			job.unscheduledTaskList.add(task);
     			getCloudletList().add(job);
-//    	    	if(ackTaskOfJob.get(attributedJobId).equals(scheduledTaskOfJob.get(attributedJobId))) {
-//    	    		//not really update right now, should wait 1 s until many jobs have returned
-//    	            schedule(this.getId(), 0.0, WorkflowSimTags.CLOUDLET_UPDATE);
-//    	    	}
+    	    	if(ackTaskOfJob.get(attributedJobId).equals(scheduledTaskOfJob.get(attributedJobId))) {
+    	    		//not really update right now, should wait 1 s until many jobs have returned
+    	            schedule(this.getId(), 0.0, WorkflowSimTags.CLOUDLET_UPDATE);
+    	    	}
     		}
 //    		schedule(this.getId(), 0.0, WorkflowSimTags.CLOUDLET_UPDATE);
     		return ;

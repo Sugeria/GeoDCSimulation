@@ -1226,7 +1226,15 @@ public class Datacenter extends SimEntity {
 						CloudletTransferRequest.remove(cl_vm);
 						CloudletTransferSuccessReq.remove(cl_vm);
 						CloudletTransferFailReq.remove(cl_vm);
-						sendNow(cl.getUserId(), CloudSimTags.CLOUDLET_RETURN, cl);
+						double slowco = characteristics.getStragglerPerformanceCoefficient();
+						double bandDelay = Parameters.delayAmongDCIndex[cl.submitDCIndex][cl.assignmentDCindex] 
+								+ cl.getCloudletLength()
+								/(cl.rateExpectation[cl.assignmentDCindex]*slowco);
+						cl.setExecStartTime(CloudSim.clock());
+						cl.setFinishTime(CloudSim.clock() + bandDelay);
+						send(cl.getUserId(),bandDelay,CloudSimTags.CLOUDLET_RETURN, cl);
+						
+//						sendNow(cl.getUserId(), CloudSimTags.CLOUDLET_RETURN, cl);
 					} catch (Exception e) {
 						e.printStackTrace();
 					}

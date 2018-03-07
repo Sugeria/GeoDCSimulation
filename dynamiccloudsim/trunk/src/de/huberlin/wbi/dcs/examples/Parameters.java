@@ -110,17 +110,17 @@ public class Parameters {
     
     public static boolean isGurobi = true;
     
-    public static boolean isConcernDCFail = false;
+    public static boolean isConcernDCFail = true;
     
     public static double DCFailThreshold = 0.2d;
     
-    public static boolean isConcernUnstable = false;
+    public static boolean isConcernUnstable = true;
     
     public static boolean isHappendUnstable = true;
     
     public static double acceptProOfJob = 0.05d;
     
-    public static boolean isConcernGeoNet = false;
+    public static boolean isConcernGeoNet = true;
     
     public static boolean isUselessDCuseful = false;
     
@@ -140,7 +140,7 @@ public class Parameters {
     public static int OriginalVmChooseStrategy = 0;
     
     // 1-4
-    public static int copystrategy = 0;
+    public static int copystrategy = 8;
     
     public static int numberOfStrategy = 6;
 
@@ -150,10 +150,10 @@ public class Parameters {
     
     // workflow
     // default 5 workflows each minutes
-    public static double lambda = 0.75d;
+    public static double lambda = 0.00578d;
     // default 3 days workflow
     // defend time exceed INT.MAX_VALUE
-    public static double seconds = 1800d;
+    public static double seconds = 6*60*60;
     public static double greedyTaskNumThreshold = 0;
     /**
      * Scheduling mode
@@ -1434,8 +1434,8 @@ public class Parameters {
 	
 	
 	// datacenter number
-	public static int numberOfDC = 100;
-	public static String BriteFileName = "./100.brite";
+	public static int numberOfDC = 10;
+	public static String BriteFileName = "./10.brite";
 	// upperbound of inputdata
 	public static int ubOfData = 25;
 		
