@@ -124,7 +124,7 @@ public class Parameters {
     
     public static boolean isUselessDCuseful = false;
     
-    public static boolean isExtracte = true;
+    public static boolean isExtracte = false;
     
     public static boolean isDCFailHappen = false;
     
@@ -140,7 +140,7 @@ public class Parameters {
     public static int OriginalVmChooseStrategy = 0;
     
     // 1-4
-    public static int copystrategy = 8;
+    public static int copystrategy = 0;
     
     public static int numberOfStrategy = 6;
 
@@ -150,10 +150,10 @@ public class Parameters {
     
     // workflow
     // default 5 workflows each minutes
-    public static double lambda = 0.00578d;
+    public static double lambda = 0.333d;
     // default 3 days workflow
     // defend time exceed INT.MAX_VALUE
-    public static double seconds = 6*60*60;
+    public static double seconds = 60*60d;
     public static double greedyTaskNumThreshold = 0;
     /**
      * Scheduling mode
@@ -1071,7 +1071,7 @@ public class Parameters {
 			dcindex = I[dccounter]-1;
 			if(dccounter < Large_part) {
 				//Large DC
-				numberOfVMperDC[dcindex] = (int)(Math.random()*1500 + 1500);
+				numberOfVMperDC[dcindex] = (int)(Math.random()*500 + 200);
 				for(int typeindex = 0; typeindex < machineType; typeindex++) {
 					nOpteronOfMachineTypeOfDC[dcindex][typeindex] = 0;
 				}
@@ -1141,7 +1141,7 @@ public class Parameters {
 				
 			}else if(dccounter < Medium_part) {
 				//Medium DC
-				numberOfVMperDC[dcindex] = (int)(Math.random()*500 + 500);
+				numberOfVMperDC[dcindex] = (int)(Math.random()*200 + 50);
 //				int Type = (int)(Math.random()*(machineType-1));
 //				for(int typeindex = 0; typeindex < machineType; typeindex++) {
 //					if(Type == typeindex) {
@@ -1210,7 +1210,7 @@ public class Parameters {
 				
 			}else {
 				//Small DC
-				numberOfVMperDC[dcindex] = (int)(Math.random()*50 + 50);
+				numberOfVMperDC[dcindex] = (int)(Math.random()*50+1);
 //				int Type = (int)(Math.random()*(machineType-1));
 //				for(int typeindex = 0; typeindex < machineType; typeindex++) {
 //					try {
@@ -1434,8 +1434,8 @@ public class Parameters {
 	
 	
 	// datacenter number
-	public static int numberOfDC = 10;
-	public static String BriteFileName = "./10.brite";
+	public static int numberOfDC = 100;
+	public static String BriteFileName = "./100.brite";
 	// upperbound of inputdata
 	public static int ubOfData = 25;
 		

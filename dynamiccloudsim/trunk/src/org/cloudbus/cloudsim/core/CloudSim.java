@@ -81,7 +81,7 @@ public class CloudSim {
 	/** The termination time. */
 	private static double terminateAt = -1;
 	
-	public static int totalRunIndex = 10;
+	public static int totalRunIndex = 0;
 
 	/**
 	 * Initialises all the common attributes.
@@ -1335,7 +1335,7 @@ public class CloudSim {
 		if (time <= clock) {
 			return false;
 		} else {
-			pauseAt = time;
+			pauseAt = time; 
 		}
 		return true;
 	}
