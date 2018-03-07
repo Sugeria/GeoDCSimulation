@@ -50,6 +50,8 @@ public class Job extends Task {
     public List<Task> unscheduledTaskList;
     public List<Task> schedulingTaskList;
     
+    public boolean isLastScheduled;
+    
     // when create the job the two value need be initial
     public Map<Integer, Double> currentGreateRate;
     public Map<Integer, Integer> currentGreatePosition;
@@ -114,6 +116,7 @@ public class Job extends Task {
         this.scheduledTaskList = new ArrayList<>();
         this.unscheduledTaskList = new ArrayList<>();
         this.schedulingTaskList = new ArrayList<>();
+        isLastScheduled = true;
         currentGreateRate = new HashMap<>();
         currentGreatePosition = new HashMap<>();
         unscheduledGreateRate = new HashMap<>();

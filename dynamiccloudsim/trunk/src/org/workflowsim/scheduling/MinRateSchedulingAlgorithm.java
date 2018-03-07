@@ -54,7 +54,8 @@ public class MinRateSchedulingAlgorithm extends BaseSchedulingAlgorithm{
         // compute the optimal rate for the current job
         for(int jobindex = 0; jobindex < size; jobindex++) {
         	Job job = (Job)getCloudletList().get(jobindex);
-        	
+        	if(job.isLastScheduled == false)
+        		continue;
         	int jobId = job.getCloudletId();
         	
         	List<Task> tasklist = job.unscheduledTaskList;
@@ -62,9 +63,12 @@ public class MinRateSchedulingAlgorithm extends BaseSchedulingAlgorithm{
         	int vnumplusone = 1 + tasklist.size()*Parameters.numberOfDC;
         	int vnum = tasklist.size()*Parameters.numberOfDC;
         	double[] muParaOfTaskInDC = new double[vnum];
+        	job.muParaOfTaskInDC = new double[vnum];
         	double[] sigmaParaOfTaskInDC = new double[vnum];
+        	job.sigmaParaOfTaskInDC = new double[vnum];
         	// 
         	int[] uselessDCforTask = new int[vnum];
+        	job.uselessDCforTask = new int[vnum];
         	for(int index = 0; index < uselessDCforTask.length; index++) {
         		uselessDCforTask[index] = -1;
         	}
@@ -73,16 +77,22 @@ public class MinRateSchedulingAlgorithm extends BaseSchedulingAlgorithm{
         	double[][] probArray = new double[Parameters.numberOfDC][2];
 			double[] unstablecoOfDC = new double[Parameters.numberOfDC];
 			int[] data = new int[numberOfTask];
+			job.data = new int[numberOfTask];
 			double[][] datapos = new double[numberOfTask][Parameters.ubOfData];
+			job.datapos = new double[numberOfTask][Parameters.ubOfData];
 			double[][] bandwidth = new double[vnum][Parameters.ubOfData];
+			job.bandwidth = new double[vnum][Parameters.ubOfData];
 			double[][] bandwidth_dataDelayOfTaskInDC = new double[1][vnum];
 			double[][] bandwidth_dataDelay_co = new double[vnum][Parameters.ubOfData];
 			double[][] SlotArray = new double[1][Parameters.numberOfDC];
 			double[][] UpArray = new double[1][Parameters.numberOfDC];
 			double[][] DownArray = new double[1][Parameters.numberOfDC];
 			double[][] allRateMuArray = new double[1][vnum];
+			job.allRateMuArray = new double[1][vnum];
 			double[][] allRateSigmaArray = new double[1][vnum];
+			job.allRateSigmaArray = new double[1][vnum];
 			double[] workloadArray = new double[vnum];
+			job.workloadArray = new double[vnum];
 			int uselessConstraintsNum = 0;
 			//probArray
 			for (int dcindex = 0; dcindex < Parameters.numberOfDC; dcindex++) {
@@ -150,6 +160,7 @@ public class MinRateSchedulingAlgorithm extends BaseSchedulingAlgorithm{
 			}
 			
 			double[] TotalTransferDataSize = new double[numberOfTask*Parameters.numberOfDC];
+			job.TotalTransferDataSize = new double[numberOfTask*Parameters.numberOfDC];
 			double[][] transferDataSize = new double[numberOfTask*Parameters.numberOfDC][Parameters.ubOfData];
 			// bandwidth 
 			for (int tindex = 0; tindex < numberOfTask; tindex++) {
@@ -205,12 +216,14 @@ public class MinRateSchedulingAlgorithm extends BaseSchedulingAlgorithm{
 			
 			Map<Integer, HashMap<Integer, Double>> objParaOfTaskInDC = new HashMap<>();
 			Map<Integer, HashMap<Integer, Double>> objTimeParaOfTaskInDC = new HashMap<>();
+			job.objTimeParaOfTaskInDC = new HashMap<>();
 			
 			for(int tindex = 0; tindex < numberOfTask; tindex++) {
 				Task task = tasklist.get(tindex);
 				int taskId = task.getCloudletId();
 				objParaOfTaskInDC.put(taskId, new HashMap<>());
 				objTimeParaOfTaskInDC.put(taskId, new HashMap<>());
+				job.objTimeParaOfTaskInDC.put(taskId, new HashMap<>());
 			}
 			
 			WorkflowScheduler scheduler = (WorkflowScheduler)workflowScheduler;
@@ -408,12 +421,16 @@ public class MinRateSchedulingAlgorithm extends BaseSchedulingAlgorithm{
                 					- Parameters.r * allRateSigmaArray[0][xindex]);
 	            			objTimeParaOfTaskInDC.get(task.getCloudletId()).put(dcindex, 
 	            					time);
+	            			job.objTimeParaOfTaskInDC.get(task.getCloudletId()).put(dcindex, 
+	            					time);
 	            		}else {
 	            			allRateMuArray[0][xindex] = 0;
 	            			allRateSigmaArray[0][xindex] = 0;
 	            			objParaOfTaskInDC.get(task.getCloudletId()).put(dcindex, 
 	            					0d);
 	            			objTimeParaOfTaskInDC.get(task.getCloudletId()).put(dcindex, 
+	            					1e20d);
+	            			job.objTimeParaOfTaskInDC.get(task.getCloudletId()).put(dcindex, 
 	            					1e20d);
 	            		}
         			}else {
@@ -423,6 +440,8 @@ public class MinRateSchedulingAlgorithm extends BaseSchedulingAlgorithm{
             			objParaOfTaskInDC.get(task.getCloudletId()).put(dcindex, 
             					0d);
             			objTimeParaOfTaskInDC.get(task.getCloudletId()).put(dcindex, 
+            					1e20d);
+            			job.objTimeParaOfTaskInDC.get(task.getCloudletId()).put(dcindex, 
             					1e20d);
         			}
         			task.rateExpectation[dcindex] = objParaOfTaskInDC.get(task.getCloudletId()).get(dcindex);
@@ -451,23 +470,43 @@ public class MinRateSchedulingAlgorithm extends BaseSchedulingAlgorithm{
 			
 			// store the data into the job
 			
-			job.muParaOfTaskInDC = muParaOfTaskInDC;
-			job.sigmaParaOfTaskInDC = sigmaParaOfTaskInDC;
-			
+//			job.muParaOfTaskInDC = muParaOfTaskInDC;
+//			job.sigmaParaOfTaskInDC = sigmaParaOfTaskInDC;
+			for(int j=0; j<vnum; j++) {
+				job.muParaOfTaskInDC[j] = muParaOfTaskInDC[j];
+				job.sigmaParaOfTaskInDC[j] = sigmaParaOfTaskInDC[j];
+			}
 			job.probArray = probArray;
-			job.data = data;
-			job.datapos = datapos;
-			job.bandwidth = bandwidth;
+			
+			for(int j=0; j<numberOfTask; j++) {
+				job.data[j] = data[j];
+				for(int z=0;z<Parameters.ubOfData; z++) {
+					job.datapos[j][z] = datapos[j][z];
+				}
+			}
+//			job.data = data;
+//			job.datapos = datapos;
+			
+//			job.bandwidth = bandwidth;
+			for(int j=0; j<vnum; j++) {
+				job.bandwidth[j] = bandwidth[j];
+				job.allRateMuArray[0][j] = allRateMuArray[0][j];
+				job.allRateSigmaArray[0][j] = allRateSigmaArray[0][j];
+				job.workloadArray[j] = workloadArray[j];
+			}
 			job.bandwidth_dataDelayOfTaskInDC = bandwidth_dataDelayOfTaskInDC;
 			job.bandwidth_dataDelay_co = bandwidth_dataDelay_co;
 
-			job.allRateMuArray = allRateMuArray;
-			job.allRateSigmaArray = allRateSigmaArray;
-			job.workloadArray = workloadArray;
+//			job.allRateMuArray = allRateMuArray;
+//			job.allRateSigmaArray = allRateSigmaArray;
+//			job.workloadArray = workloadArray;
 			
 			job.objParaOfTaskInDC = objParaOfTaskInDC;
-		    job.objTimeParaOfTaskInDC = objTimeParaOfTaskInDC;
-			job.TotalTransferDataSize = TotalTransferDataSize;
+//		    job.objTimeParaOfTaskInDC = objTimeParaOfTaskInDC;
+//			job.TotalTransferDataSize = TotalTransferDataSize;
+			for(int j=0; j<numberOfTask*Parameters.numberOfDC;j++) {
+				job.TotalTransferDataSize[j]=TotalTransferDataSize[j];
+			}
 			job.transferDataSize = transferDataSize;
 			
 //			job.currentGreatePosition.clear();
@@ -639,7 +678,9 @@ public class MinRateSchedulingAlgorithm extends BaseSchedulingAlgorithm{
 //			
 			
 			job.uselessConstraintsNum = uselessConstraintsNum;
-			job.uselessDCforTask = uselessDCforTask;
+			for(int j = 0; j<vnum; j++)
+				job.uselessDCforTask[j] = uselessDCforTask[j];
+//			job.uselessDCforTask = uselessDCforTask;
         	
         	if(Parameters.isGurobi == false && job.sortedflag == false) {
 
