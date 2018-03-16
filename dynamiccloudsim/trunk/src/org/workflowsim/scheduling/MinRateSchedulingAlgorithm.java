@@ -1501,34 +1501,35 @@ public class MinRateSchedulingAlgorithm extends BaseSchedulingAlgorithm{
         
         for (int i = 0; i < size; i++) {
             int minIndex = 0;
-            Job minJob = null;
-            for (int j = 0; j < size; j++) {
-                Job job = (Job) getCloudletList().get(j);
-                if (!hasChecked.get(j)) {
-                    minJob = job;
-                    minIndex = j;
-                    break;
-                }
-            }
-            if (minJob == null) {
-                break;
-            }
-
-
-            for (int j = 0; j < size; j++) {
-            	Job job = (Job) getCloudletList().get(j);
-                if (hasChecked.get(j)) {
-                    continue;
-                }
-                double utility = job.getJobUtility();
-                if (utility < minJob.getJobUtility()) {
-                    minJob = job;
-                    minIndex = j;
-                }
-            }
-            hasChecked.set(minIndex, true);
-
-            
+//            Job minJob = null;
+            Job minJob = (Job) getCloudletList().get(i);
+//            for (int j = 0; j < size; j++) {
+//                Job job = (Job) getCloudletList().get(j);
+//                if (!hasChecked.get(j)) {
+//                    minJob = job;
+//                    minIndex = j;
+//                    break;
+//                }
+//            }
+//            if (minJob == null) {
+//                break;
+//            }
+//
+//
+//            for (int j = 0; j < size; j++) {
+//            	Job job = (Job) getCloudletList().get(j);
+//                if (hasChecked.get(j)) {
+//                    continue;
+//                }
+//                double utility = job.getJobUtility();
+//                if (utility < minJob.getJobUtility()) {
+//                    minJob = job;
+//                    minIndex = j;
+//                }
+//            }
+//            hasChecked.set(minIndex, true);
+//
+//            
             //getScheduledList().add(minCloudlet);
             getRankedList().add(minJob);
         }

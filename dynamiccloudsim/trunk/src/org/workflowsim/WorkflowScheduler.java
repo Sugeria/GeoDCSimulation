@@ -449,7 +449,7 @@ public class WorkflowScheduler extends DatacenterBroker {
     				rescheduleTasks(job.getTaskList());
     			}
 			}
-        	int preAssignedSlots = (int)Math.round(slotNum/srptJobNum);
+        	int preAssignedSlots = (int)Math.ceil(slotNum/srptJobNum);
         	preAssignedSlots -= usedSlotsOfJob.get(job.getCloudletId());
         	int unscheduledTaskNum = job.unscheduledTaskList.size();
         	int greatAssignedTaskNum = unscheduledTaskNum - job.failedAssignTaskIndexInGreateAssign.size();

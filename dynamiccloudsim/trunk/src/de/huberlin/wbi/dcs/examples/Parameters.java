@@ -124,7 +124,7 @@ public class Parameters {
     
     public static boolean isUselessDCuseful = false;
     
-    public static boolean isExtracte = false;
+    public static boolean isExtracte = true;
     
     public static boolean isDCFailHappen = false;
     
@@ -150,7 +150,7 @@ public class Parameters {
     
     // workflow
     // default 5 workflows each minutes
-    public static double lambda = 0.333d;
+    public static double lambda = 0.07d;
     // default 3 days workflow
     // defend time exceed INT.MAX_VALUE
     public static double seconds = 60*60d;
@@ -726,7 +726,7 @@ public class Parameters {
 
     public static double r = 1d;
     
-    public static double epsilon = 0.7d;
+    public static double epsilon = 1.0d;
     
 	public static boolean considerDataLocality = false;
 	
