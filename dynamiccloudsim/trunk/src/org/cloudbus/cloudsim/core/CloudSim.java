@@ -1370,7 +1370,10 @@ public class CloudSim {
 			if(integerclock != lastclock) {
 				lastclock = integerclock;
 				System.out.println("Time: "+lastclock);
-				
+				if(lastclock == 6989846) {
+					int a = 1;
+					a = a + 1;
+				}
 				// VmProcessing in one new second
 //				Datacenter.isVmProcessingDealedInSeconds = false;
 			}
