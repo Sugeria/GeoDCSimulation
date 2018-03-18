@@ -81,7 +81,7 @@ public class CloudSim {
 	/** The termination time. */
 	private static double terminateAt = -1;
 	
-	public static int totalRunIndex = 0;
+	public static int totalRunIndex = 1;
 
 	/**
 	 * Initialises all the common attributes.
@@ -524,7 +524,7 @@ public class CloudSim {
 			queue_empty = false;
 			SimEvent first = it.next();
 			processEvent(first);
-			future.remove(first);
+			boolean whether = future.remove(first);
 
 			it = future.iterator();
 
@@ -549,12 +549,12 @@ public class CloudSim {
 				}
 			}
 
-			future.removeAll(toRemove);
+			whether = future.removeAll(toRemove);
 
 		} else {
 			
 
-			if((Parameters.isRunExeList == false && CloudSim.totalRunIndex < 29)
+			if((Parameters.isRunExeList == false && CloudSim.totalRunIndex < 11)
 					|| (Parameters.isRunExeList == true && Parameters.exeIndex < (Parameters.exelist.length - 1))) {
 //				List<Job> outputList0 = WorkflowEngine.getJobsReceivedList();
 //        		WorkflowExample.sortJobId(outputList0);
@@ -1370,7 +1370,7 @@ public class CloudSim {
 			if(integerclock != lastclock) {
 				lastclock = integerclock;
 				System.out.println("Time: "+lastclock);
-				if(lastclock == 6989846) {
+				if(lastclock > 6989846) {
 					int a = 1;
 					a = a + 1;
 				}

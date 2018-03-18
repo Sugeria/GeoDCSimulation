@@ -150,10 +150,10 @@ public class Parameters {
     
     // workflow
     // default 5 workflows each minutes
-    public static double lambda = 0.07d;
+    public static double lambda = 0.02d;
     // default 3 days workflow
     // defend time exceed INT.MAX_VALUE
-    public static double seconds = 60*60d;
+    public static double seconds = 12600d;
     public static double greedyTaskNumThreshold = 0;
     /**
      * Scheduling mode
