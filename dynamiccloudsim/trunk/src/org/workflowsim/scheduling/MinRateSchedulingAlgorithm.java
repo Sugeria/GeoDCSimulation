@@ -56,6 +56,10 @@ public class MinRateSchedulingAlgorithm extends BaseSchedulingAlgorithm{
         	Job job = (Job)getCloudletList().get(jobindex);
         	if(job.isLastScheduled == false)
         		continue;
+			job.currentGreatePosition.clear();
+			job.currentGreateRate.clear();
+			 
+			job.failedAssignTaskIndexInGreateAssign.clear();
         	int jobId = job.getCloudletId();
         	
         	List<Task> tasklist = job.unscheduledTaskList;
